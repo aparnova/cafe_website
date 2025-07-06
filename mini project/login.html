@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Westley's Resto Cafe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.3s ease;
+    }
+    
+    body {
+      background: #f2f2f2;
+      color: #333;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .left-panel {
+      width: 50%;
+      background: url("cake.jpg") no-repeat center center/cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 40px;
+      color: #fff;
+      position: relative;
+    }
+    
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+    
+    .left-panel h2, 
+    .left-panel p {
+      position: relative;
+      z-index: 1;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    
+    .left-panel h2 {
+      font-size: 28px;
+      margin: 0;
+    }
+    
+    .left-panel p {
+      font-size: 14px;
+      margin-top: 10px;
+      opacity: 0.9;
+    }
+    
+    .right-panel {
+      width: 50%;
+      background: #fff;
+      padding: 60px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .right-panel h2 {
+      margin-bottom: 20px;
+      color: #0C1E17;
+      font-size: 24px;
+    }
+    
+    .login-form {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      color: #555;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .form-group input:hover {
+      border-color: #999;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #000;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-group input.error {
+      border-color: #ff4444;
+    }
+    
+    .error-message {
+      color: #ff4444;
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .login-btn {
+      margin-top: 20px;
+      padding: 14px;
+      background-color: #000;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    
+    .login-btn:hover {
+      background-color: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-btn:active {
+      transform: translateY(0);
+    }
+    
+    .login-btn.loading {
+      background-color: #666;
+      pointer-events: none;
+    }
+    
+    .login-btn.loading::after {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 8px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .forgot-password {
+      text-align: right;
+      margin-top: 10px;
+    }
+    
+    .forgot-password a {
+      color: #666;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    
+    .forgot-password a:hover {
+      color: #000;
+      text-decoration: underline;
+    }
+    
+    .or-line {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #999;
+    }
+    
+    .or-line hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid #ddd;
+    }
+    
+    .or-line span {
+      margin: 0 10px;
+      font-size: 14px;
+    }
+    
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #000;
+    }
+    
+    .register-link a {
+      color: #000;
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+    }
+    
+    .register-link a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -2px;
+      left: 0;
+      background-color: #000;
+      transition: width 0.3s;
+    }
+    
+    .register-link a:hover::after {
+      width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    
+      .left-panel, .right-panel {
+        width: 100%;
+        height: 50%;
+      }
+    
+      .right-panel {
+        padding: 40px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Image Panel -->
+    <div class="left-panel">
+      <h2>Welcome to Westley's Resto Cafe</h2>
+      <p>Login to enjoy our delicious meals and services</p>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="right-panel">
+      <h2>Login to Your Account</h2>
+      
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+          <div class="error-message" id="email-error"></div>
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+          <div class="error-message" id="password-error"></div>
+        </div>
+        
+        <div class="forgot-password">
+          <a href="forgot_password.html">Forgot Password?</a>
+        </div>
+        
+        <button type="submit" class="login-btn" id="loginButton">Login</button>
+      </form>
+      
+      <div class="or-line">
+        <hr><span>OR</span><hr>
+      </div>
+      
+      <div class="register-link">
+        Don't have an account? <a href="register.html">Register</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('loginForm');
+      const loginButton = document.getElementById('loginButton');
+      
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+        
+        const username = document.getElementById('username');
+        const password = document.getElementById('password');
+        const usernameError = document.getElementById('username-error');
+        const passwordError = document.getElementById('password-error');
+        
+        // Clear previous errors
+        username.classList.remove('error');
+        password.classList.remove('error');
+        usernameError.style.display = 'none';
+        passwordError.style.display = 'none';
+        
+        // Validate username
+        if (username.value.trim() === '') {
+          username.classList.add('error');
+          usernameError.textContent = 'Please enter your username/email';
+          usernameError.style.display = 'block';
+          isValid = false;
+        }
+        
+        // Validate password
+        if (password.value.trim() === '') {
+          password.classList.add('error');
+          passwordError.textContent = 'Please enter your password';
+          passwordError.style.display = 'block';
+          isValid = false;
+        } else if (password.value.trim().length < 6) {
+          password.classList.add('error');
+          passwordError.textContent = 'Password must be at least 6 characters';
+          passwordError.style.display = 'block';
+          isValid = false;
+        }
+        
+        if (isValid) {
+          // Show loading state
+          loginButton.classList.add('loading');
+          loginButton.disabled = true;
+          
+          // Prepare form data
+          const formData = new FormData(form);
+          
+          // AJAX request
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', 'login.php', true);
+          xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+          
+          xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+              loginButton.classList.remove('loading');
+              loginButton.disabled = false;
+              
+              try {
+                const response = JSON.parse(xhr.responseText);
+                
+                if (xhr.status === 200) {
+                  // Successful login
+                  if (response.success) {
+                    window.location.href = response.redirect || 'dashboard.html';
+                  } else {
+                    // Show error message
+                    if (response.errors) {
+                      if (response.errors.username) {
+                        username.classList.add('error');
+                        usernameError.textContent = response.errors.username;
+                        usernameError.style.display = 'block';
+                      }
+                      if (response.errors.password) {
+                        password.classList.add('error');
+                        passwordError.textContent = response.errors.password;
+                        passwordError.style.display = 'block';
+                      }
+                    } else if (response.message) {
+                      // General error message
+                      username.classList.add('error');
+                      usernameError.textContent = response.message;
+                      usernameError.style.display = 'block';
+                    }
+                  }
+                } else {
+                  // Server error
+                  username.classList.add('error');
+                  usernameError.textContent = 'An error occurred. Please try again.';
+                  usernameError.style.display = 'block';
+                }
+              } catch (e) {
+                // JSON parse error
+                username.classList.add('error');
+                usernameError.textContent = 'Invalid server response. Please try again.';
+                usernameError.style.display = 'block';
+              }
+            }
+          };
+          
+          xhr.onerror = function() {
+            // Network error
+            loginButton.classList.remove('loading');
+            loginButton.disabled = false;
+            username.classList.add('error');
+            usernameError.textContent = 'Network error. Please check your connection.';
+            usernameError.style.display = 'block';
+          };
+          
+          xhr.send(formData);
+        }
+      });
+      
+      // Clear errors when typing
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('input', function() {
+          this.classList.remove('error');
+          const errorId = this.id + '-error';
+          document.getElementById(errorId).style.display = 'none';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
