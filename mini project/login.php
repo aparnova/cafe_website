@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($user_type === 'delivery') {
                     header('Location: delivery_dashboard.php');
                 } else {
-                    header('Location: user_dashboard.php');
+                    header('Location: homepage.html');
                 }
                 exit();
             } else {
@@ -322,14 +322,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
       
       <form id="loginForm" class="login-form" method="POST" action="login.php">
-        <div class="form-group">
-          <label for="user_type">Login As</label>
-          <select id="user_type" name="user_type" required>
-            <option value="user">Customer</option>
-            <option value="admin">Admin</option>
-            <option value="delivery">Delivery Boy</option>
-          </select>
-        </div>
         
         <div class="form-group">
           <label for="email">Email</label>
@@ -342,7 +334,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <div class="forgot-password">
-          <a href="forgot_password.php">Forgot Password?</a>
+          <a href="forgot_password.html">Forgot Password?</a>
         </div>
         
         <button type="submit" class="login-btn" id="loginButton">Login</button>
@@ -353,7 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       
       <div class="register-link">
-        Don't have an account? <a href="register.php">Register as Customer</a>
+        Don't have an account? <a href="register.php">Register</a>
       </div>
     </div>
   </div>

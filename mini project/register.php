@@ -47,6 +47,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['confirm_password'] = 'Passwords do not match';
     }
     
+    // In register.php, add password strength validation
+if (strlen($password) < 8) {
+    $errors['password'] = 'Password must be at least 8 characters';
+} elseif (!preg_match('/[A-Z]/', $password)) {
+    $errors['password'] = 'Password must contain at least one uppercase letter';
+} elseif (!preg_match('/[a-z]/', $password)) {
+    $errors['password'] = 'Password must contain at least one lowercase letter';
+} elseif (!preg_match('/[0-9]/', $password)) {
+    $errors['password'] = 'Password must contain at least one number';
+}
+
+function isPasswordCompromised($password) {
+    $hash = sha1($password);
+    $prefix = substr($hash, 0, 5);
+    $suffix = substr($hash, 5);
+    
+    $response = file_get_contents("https://api.pwnedpasswords.com/range/".$prefix);
+    return strpos($response, strtoupper($suffix)) !== false;
+}
+
+// Usage in registration:
+if (isPasswordCompromised($password)) {
+    $errors['password'] = 'This password has been compromised in a data breach. Please choose a different one.';
+}
+
     // If no errors, register user
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
