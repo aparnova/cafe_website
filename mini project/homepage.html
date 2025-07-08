@@ -892,207 +892,355 @@ section,
     font-size: 18px;
   }
 }
-/*--------------------------------------------------------------
-    # Starter Section - Animated
-    --------------------------------------------------------------*/
-    .starter-section {
-      position: relative;
-      overflow: hidden;
-      padding: 100px 0;
-      background-color: var(--background-color);
-    }
-    
-    .animated-title {
-       font-size: 3rem;
-      font-weight: 600;
-      text-align: center;
-      margin-bottom: 2rem;
-      color: white;
-      animation: float 3s ease-in-out infinite;
-      
-    }
-    
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-15px); }
-      100% { transform: translateY(0px); }
-    }
 
-    .image-gallery {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2rem;
-      padding: 2rem 0;
-    }
-    
-    .gallery-item {
-      position: relative;
-      width: 250px;
-      height: 250px;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
-      cursor: pointer;
-    }
-    
-    .gallery-item:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 15px 35px rgba(205, 164, 94, 0.4);
-    }
-    
-    .gallery-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s ease;
-    }
-    
-    .gallery-item:hover img {
-      transform: scale(1.1);
-    }
-    
-    .gallery-item::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom, rgba(12, 11, 9, 0.1), rgba(12, 11, 9, 0.7));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .gallery-item:hover::after {
-      opacity: 1;
-    }
-    
-    .item-caption {
-      position: absolute;
-      bottom: -50px;
-      left: 0;
-      width: 100%;
-      padding: 1rem;
-      background: rgba(205, 164, 94, 0.9);
-      color: #0c0b09;
-      text-align: center;
-      font-weight: 600;
-      transition: bottom 0.3s ease;
-      z-index: 2;
-    }
-    
-    .gallery-item:hover .item-caption {
-      bottom: 0;
-    }
-    
-    /* Animation for items */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .gallery-item:nth-child(1) {
-      animation: fadeInUp 0.6s ease forwards;
-    }
-    
-    .gallery-item:nth-child(2) {
-      animation: fadeInUp 0.8s ease forwards;
-    }
-    
-    .gallery-item:nth-child(3) {
-      animation: fadeInUp 1s ease forwards;
-    }
-    
-    .gallery-item:nth-child(4) {
-      animation: fadeInUp 1.2s ease forwards;
-    }
-    
-    /* Modal styles for enlarged view */
-    .image-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(12, 11, 9, 0.9);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .image-modal.active {
-      display: flex;
-      opacity: 1;
-    }
-    
-    .modal-content {
-      position: relative;
-      max-width: 80%;
-      max-height: 80%;
-      animation: zoomIn 0.3s ease forwards;
-    }
-    
-    @keyframes zoomIn {
-      from {
-        transform: scale(0.5);
-      }
-      to {
-        transform: scale(1);
-      }
-    }
-    
-    .modal-content img {
-      max-width: 100%;
-      max-height: 80vh;
-      border: 3px solid var(--accent-color);
-      border-radius: 5px;
-    }
-    
-    .close-modal {
-      position: absolute;
-      top: -40px;
-      right: -40px;
-      color: white;
-      font-size: 2rem;
-      cursor: pointer;
-      transition: color 0.3s ease;
-    }
-    
-    .close-modal:hover {
-      color: var(--accent-color);
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .gallery-item {
-        width: 150px;
-        height: 150px;
-      }
-      
-      .animated-title {
-        font-size: 2rem;
-      }
-      
-      .modal-content {
-        max-width: 95%;
-      }
-      
-      .close-modal {
-        top: -30px;
-        right: 0;
-      }
-    }
+/*--------------------------------------------------------------
+# Today's Special Section - Enhanced with Modern Animations
+--------------------------------------------------------------*/
+.todays-special {
+  position: relative;
+  padding: 100px 0;
+  background: linear-gradient(135deg, #0c0b09 0%, #1a1814 100%);
+  overflow: hidden;
+}
+
+.todays-special::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('assets/img/dot-pattern.png') repeat;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.special-header {
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.special-header h2 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #cda45e, #f8e5b5, #cda45e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+  position: relative;
+  display: inline-block;
+}
+
+.special-header h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(to right, transparent, #cda45e, transparent);
+}
+
+.special-header p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+
+.special-item {
+  position: relative;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  background: #1a1814;
+  border: 1px solid rgba(205, 164, 94, 0.2);
+}
+
+.special-item.featured {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: row;
+}
+
+.special-item.featured .special-image {
+  flex: 1;
+  min-height: 300px;
+}
+
+.special-item.featured .special-content {
+  flex: 1;
+  padding: 100px;
+}
+
+.special-image {
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+}
+
+.special-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.special-item:hover .special-image img {
+  transform: scale(1.1);
+}
+
+.special-content {
+  padding: 20px;
+  position: relative;
+}
+
+.special-price {
+  position: absolute;
+  top: -25px;
+  right: 20px;
+  background: whitesmoke;
+  color: #0c0b09;
+  font-weight: bold;
+  padding: 1px 15px;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  
+}
+
+.special-title {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: white;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.special-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background: #cda45e;
+}
+
+.special-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.special-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.special-tag {
+  background: rgba(205, 164, 94, 0.1);
+  color: whitesmoke;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  border: 1px solid rgba(205, 164, 94, 0.3);
+}
+
+.special-button {
+  display: inline-block;
+  padding: 8px 20px;
+  background: transparent;
+  color: whitesmoke;
+  border: 1px solid #cda45e;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.special-button:hover {
+  background: #cda45e;
+  color: #0c0b09;
+  transform: translateY(-3px);
+}
+
+.special-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.special-rating .stars {
+  color: #cda45e;
+  margin-right: 10px;
+}
+
+.special-rating .reviews {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+}
+
+/* Featured Item Animation */
+.featured .special-badge {
+  top: 20px;
+  right: 20px;
+  font-size: 0.5rem;
+  padding: 8px 20px;
+}
+
+.featured .special-price {
+  top: 20px;
+  right: 20px;
+  font-size: 1.5rem;
+  padding: 15px 25px;
+}
+
+.featured .special-title {
+  font-size: 2rem;
+}
+
+.featured .special-description {
+  font-size: 1.1rem;
+}
+
+.featured .special-button {
+  padding: 12px 30px;
+  font-size: 1rem;
+}
+
+/* Hover Effects */
+.special-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(205, 164, 94, 0.1) 0%, rgba(205, 164, 94, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.special-item:hover::before {
+  opacity: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .special-item.featured {
+    grid-column: span 1;
+    flex-direction: column;
+  }
+  
+  .special-header h2 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .special-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .special-header h2 {
+    font-size: 2rem;
+  }
+  
+  .special-header p {
+    font-size: 1rem;
+  }
+}
+
+/* Floating Animation */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Image Modal */
+.image-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(12, 11, 9, 0.9);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.image-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-content {
+  position: relative;
+  max-width: 80%;
+  max-height: 80%;
+  animation: zoomIn 0.3s ease forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.5);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.modal-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  border: 3px solid var(--accent-color);
+  border-radius: 5px;
+}
+
+.close-modal {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-modal:hover {
+  color: var(--accent-color);
+}
 
   </style>
 
@@ -1149,43 +1297,126 @@ section,
   </div>
 </div><!-- End Page Title -->
 
-    <!-- Starter Section Section -->
-
-    <!-- Section Title -->
-<section id="starter-section" class="starter-section section">
+    <!-- Today's Special Section -->
+    <section id="todays-special" class="todays-special section">
       <div class="container">
-        <div class="section-title text-center" data-aos="fade-up">
-        <h2 class="animated-title">Goodness is Served Here!</h2>
+        <div class="special-header">
+          <h2>Today's Specials</h2>
+          <p>Chef's carefully curated selection of the finest dishes, prepared with seasonal ingredients</p>
         </div>
         
-        <div class="image-gallery">
-          <div class="gallery-item">
-            <img src="hero-bg.jpg" alt="Restaurant Interior">
-            <div class="item-caption">Elegant Dining Space</div>
+          <!-- Featured Special Item -->
+          <div class="special-item" data-aos="fade-up" data-aos-delay="200">
+          
+            <div class="special-image">
+              <img src="hero-bg.jpg" alt="Savory Spice Fusion">
+            </div>
+            <div class="special-content">
+              <div class="special-price">190</div>
+              <h3 class="special-title">Savory Spice Fusion</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star"></i>
+                </div>
+                <div class="reviews">(50 reviews)</div>
+              </div>
+              <p class="special-description">A harmonious blend of exotic spices with premium cuts of meat, slow-cooked to perfection and served with our signature sauce.</p>
+              <div class="special-tags">
+                <span class="special-tag">Spicy</span>
+                <span class="special-tag">Noodles</span>
+                <span class="special-tag">Seasonal</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
           </div>
-          <div class="gallery-item">
-            <img src="r3.jpg" alt="Delicious Food">
-            <div class="item-caption">Signature Dishes</div>
+            
+          <!-- Regular Special Items -->
+          <div class="special-item" data-aos="fade-up" data-aos-delay="200">
+            
+            <div class="special-image">
+              <img src="r3.jpg" alt="Blazing Inferno Noodles">
+            </div>
+            <div class="special-content">
+              <div class="special-price">180</div>
+              <h3 class="special-title">Blazing Inferno Noodles</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star"></i>
+                </div>
+                <div class="reviews">(36 reviews)</div>
+              </div>
+              <p class="special-description">Hand-pulled noodles tossed with our fiery chili oil blend, fresh vegetables, and your choice of protein.</p>
+              <div class="special-tags">
+                <span class="special-tag">Spicy</span>
+                <span class="special-tag">Chef's Special</span>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
           </div>
-          <div class="gallery-item">
-            <img src="r2.jpg" alt="Chef's Special">
-            <div class="item-caption">Chef's Special</div>
+          
+          <div class="special-item" data-aos="fade-up" data-aos-delay="300">
+            
+            <div class="special-image">
+              <img src="r2.jpg" alt="Sunny Berry Cloud Waffles">
+            </div>
+            <div class="special-content">
+              <div class="special-price">$14.99</div>
+              <h3 class="special-title">Sunny Berry Cloud Waffles</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="reviews">(29 reviews)</div>
+              </div>
+              <p class="special-description">Light as air waffles topped with fresh seasonal berries, whipped cream, and a drizzle of honey.</p>
+              <div class="special-tags">
+                <span class="special-tag">Dessert</span>
+                <span class="special-tag">Vegetarian</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
           </div>
-          <div class="gallery-item">
-            <img src="r4.jpg" alt="Dessert Selection">
-            <div class="item-caption">Decadent Desserts</div>
+          
+          <div class="special-item" data-aos="fade-up" data-aos-delay="400">
+            
+            <div class="special-image">
+              <img src="r4.jpg" alt="Molten Midnight Souffle">
+            </div>
+            <div class="special-content">
+              <div class="special-price">280</div>
+              <h3 class="special-title">Molten Midnight Souffle</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-half"></i>
+                </div>
+                <div class="reviews">(42 reviews)</div>
+              </div>
+              <p class="special-description">Dark chocolate soufflé with a molten center, served with vanilla bean ice cream and fresh raspberries.</p>
+              <div class="special-tags">
+                <span class="special-tag">Dessert</span>
+                <span class="special-tag">Chocolate</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
           </div>
         </div>
       </div>
-      
-      <!-- Image Modal -->
-      <div class="image-modal" id="imageModal">
-        <span class="close-modal">&times;</span>
-        <div class="modal-content">
-          <img id="modalImage" src="" alt="Enlarged view">
-        </div>
-      </div>
-    </section><!-- /Starter Section Section -->
+    </section><!-- End Today's Special Section -->
 
   </main>
 
@@ -1246,16 +1477,17 @@ section,
     <script>
   // Image modal functionality
     document.addEventListener('DOMContentLoaded', function() {
-      const galleryItems = document.querySelectorAll('.gallery-item');
+      const galleryItems = document.querySelectorAll('.special-item');
       const modal = document.getElementById('imageModal');
       const modalImg = document.getElementById('modalImage');
       const closeModal = document.querySelector('.close-modal');
       
       // Open modal when gallery item is clicked
       galleryItems.forEach(item => {
-        item.addEventListener('click', function() {
-          const imgSrc = this.querySelector('img').src;
-          modalImg.src = imgSrc;
+        const image = item.querySelector('.special-image img');
+        image.addEventListener('click', function(e) {
+          e.stopPropagation();
+          modalImg.src = this.src;
           modal.classList.add('active');
           document.body.style.overflow = 'hidden';
         });
@@ -1275,6 +1507,33 @@ section,
         }
       });
       
+      // Animate special items on scroll
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = 1;
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+      
+      document.querySelectorAll('.special-item').forEach(item => {
+        item.style.opacity = 0;
+        item.style.transform = 'translateY(30px)';
+        item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(item);
+      });
+      
+      // Pulsing animation for featured item badge
+      const featuredBadge = document.querySelector('.featured .special-badge');
+      if (featuredBadge) {
+        setInterval(() => {
+          featuredBadge.style.transform = 'rotate(15deg) scale(1.05)';
+          setTimeout(() => {
+            featuredBadge.style.transform = 'rotate(15deg) scale(1)';
+          }, 500);
+        }, 2000);
+      }
   </script>
 </body>
 </html>
