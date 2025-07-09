@@ -894,11 +894,11 @@ section,
 }
 
 /*--------------------------------------------------------------
-# Today's Special Section - Enhanced with Modern Animations
+# Today's Special Section - Compact Version
 --------------------------------------------------------------*/
 .todays-special {
   position: relative;
-  padding: 100px 0;
+  padding: 60px 0;
   background: linear-gradient(135deg, #0c0b09 0%, #1a1814 100%);
   overflow: hidden;
 }
@@ -917,14 +917,14 @@ section,
 
 .special-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 40px;
   position: relative;
 }
 
 .special-header h2 {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   background: linear-gradient(to right, #cda45e, #f8e5b5, #cda45e);
   -webkit-background-clip: text;
   background-clip: text;
@@ -938,18 +938,18 @@ section,
 .special-header h2::after {
   content: "";
   position: absolute;
-  bottom: -10px;
+  bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 100px;
-  height: 3px;
+  width: 80px;
+  height: 2px;
   background: linear-gradient(to right, transparent, #cda45e, transparent);
 }
 
 .special-header p {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: white;
-  max-width: 700px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
@@ -962,35 +962,42 @@ section,
   }
 }
 
+.special-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
 
 .special-item {
   position: relative;
-  border-radius: 15px;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
   background: #1a1814;
   border: 1px solid rgba(205, 164, 94, 0.2);
+  transform: translateY(0) scale(1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.special-item:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+  border-color: rgba(205, 164, 94, 0.5);
 }
 
 .special-item.featured {
-  grid-column: span 2;
+  grid-column: span 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 }
 
 .special-item.featured .special-image {
-  flex: 1;
-  min-height: 300px;
-}
-
-.special-item.featured .special-content {
-  flex: 1;
-  padding: 100px;
+  min-height: 200px;
 }
 
 .special-image {
-  height: 300px;
+  height: 180px;
   position: relative;
   overflow: hidden;
 }
@@ -999,37 +1006,43 @@ section,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.3s ease;
 }
 
 .special-item:hover .special-image img {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .special-content {
-  padding: 20px;
+  padding: 15px;
   position: relative;
 }
 
 .special-price {
   position: absolute;
-  top: -25px;
-  right: 20px;
+  top: -18px;
+  right: 15px;
   background: whitesmoke;
   color: #0c0b09;
   font-weight: bold;
-  padding: 0.1px 15px;
-  border-radius: 30px;
-  font-size: 1rem;
-  
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.special-item:hover .special-price {
+  transform: scale(1.1);
+  background-color: var(--accent-color);
+  color: var(--contrast-color);
 }
 
 .special-title {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
   color: white;
   position: relative;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 .special-title::after {
@@ -1037,94 +1050,150 @@ section,
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 50px;
+  width: 40px;
   height: 2px;
   background: #cda45e;
+  transition: width 0.3s ease;
+}
+
+.special-item:hover .special-title::after {
+  width: 60px;
 }
 
 .special-description {
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 15px;
-  font-size: 0.95rem;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+
+.special-item:hover .special-description {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .special-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .special-tag {
   background: rgba(205, 164, 94, 0.1);
   color: whitesmoke;
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 15px;
+  font-size: 0.8rem;
   border: 1px solid rgba(205, 164, 94, 0.3);
+  transition: all 0.3s ease;
+}
+
+.special-item:hover .special-tag {
+  background: rgba(205, 164, 94, 0.3);
+  border-color: var(--accent-color);
 }
 
 .special-button {
   display: inline-block;
-  padding: 8px 20px;
+  padding: 6px 15px;
   background: transparent;
   color: whitesmoke;
   border: 1px solid #cda45e;
-  border-radius: 30px;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
 }
 
 .special-button:hover {
-  background: #cda45e;
-  color: #0c0b09;
-  transform: translateY(-3px);
+  background: var(--accent-color);
+  color: var(--contrast-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(205, 164, 94, 0.3);
+}
+
+/* Ripple effect for button */
+.special-button:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.special-button:focus:not(:active)::after {
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20);
+    opacity: 0;
+  }
 }
 
 .special-rating {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .special-rating .stars {
   color: #cda45e;
-  margin-right: 10px;
+  margin-right: 8px;
+  font-size: 0.9rem;
 }
 
 .special-rating .reviews {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  transition: color 0.3s ease;
 }
 
-/* Featured Item Animation */
+.special-item:hover .special-rating .reviews {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Featured Item Adjustments */
 .featured .special-badge {
-  top: 20px;
-  right: 20px;
-  font-size: 0.5rem;
-  padding: 8px 20px;
+  top: 15px;
+  right: 15px;
+  font-size: 0.7rem;
+  padding: 5px 15px;
 }
 
 .featured .special-price {
-  top: 20px;
-  right: 20px;
-  font-size: 1.5rem;
-  padding: 15px 25px;
+  top: 15px;
+  right: 15px;
+  font-size: 1.1rem;
+  padding: 10px 20px;
 }
 
 .featured .special-title {
-  font-size: 2rem;
+  font-size: 1.4rem;
 }
 
 .featured .special-description {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
 .featured .special-button {
-  padding: 12px 30px;
-  font-size: 1rem;
+  padding: 8px 20px;
+  font-size: 0.9rem;
 }
 
 /* Hover Effects */
@@ -1146,41 +1215,25 @@ section,
 }
 
 /* Responsive Adjustments */
-@media (max-width: 992px) {
-  .special-item.featured {
-    grid-column: span 1;
-    flex-direction: column;
-  }
-  
-  .special-header h2 {
-    font-size: 2.5rem;
-  }
-}
-
 @media (max-width: 768px) {
-  .special-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .special-header h2 {
     font-size: 2rem;
   }
   
   .special-header p {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
-}
-
-/* Floating Animation */
-@keyframes float {
-  0% {
-    transform: translateY(0px);
+  
+  .special-grid {
+    grid-template-columns: 1fr;
   }
-  50% {
-    transform: translateY(-15px);
+  
+  .special-image {
+    height: 160px;
   }
-  100% {
-    transform: translateY(0px);
+  
+  .special-item:hover {
+    transform: translateY(-5px);
   }
 }
 
@@ -1224,22 +1277,39 @@ section,
 .modal-content img {
   max-width: 100%;
   max-height: 80vh;
-  border: 3px solid var(--accent-color);
+  border: 2px solid var(--accent-color);
   border-radius: 5px;
 }
 
 .close-modal {
   position: absolute;
-  top: -40px;
-  right: -40px;
+  top: -30px;
+  right: -30px;
   color: white;
-  font-size: 2rem;
+  font-size: 1.5rem;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
 .close-modal:hover {
   color: var(--accent-color);
+}
+
+/* Pulse animation for special items */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(205, 164, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(205, 164, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(205, 164, 94, 0);
+  }
+}
+
+.special-item:hover {
+  animation: pulse 1.5s infinite;
 }
 
   </style>
@@ -1305,9 +1375,9 @@ section,
           <p>Chef's carefully curated selection of the finest dishes, prepared with seasonal ingredients.</p>
         </div>
         
+        <div class="special-grid">
           <!-- Featured Special Item -->
           <div class="special-item" data-aos="fade-up" data-aos-delay="200">
-          
             <div class="special-image">
               <img src="hero-bg.jpg" alt="Savory Spice Fusion">
             </div>
@@ -1324,7 +1394,7 @@ section,
                 </div>
                 <div class="reviews">(50 reviews)</div>
               </div>
-              <p class="special-description">A harmonious blend of exotic spices with premium cuts of meat, slow-cooked to perfection and served with our signature sauce.</p>
+              <p class="special-description">A harmonious blend of exotic spices with premium cuts of meat, slow-cooked to perfection.</p>
               <div class="special-tags">
                 <span class="special-tag">Spicy</span>
                 <span class="special-tag">Noodles</span>
@@ -1336,7 +1406,6 @@ section,
             
          <!-- Regular Special Items -->
           <div class="special-item" data-aos="fade-up" data-aos-delay="300">
-            
             <div class="special-image">
               <img src="r3.jpg" alt="Blazing Inferno Noodles">
             </div>
@@ -1353,7 +1422,7 @@ section,
                 </div>
                 <div class="reviews">(36 reviews)</div>
               </div>
-              <p class="special-description">Hand-pulled noodles tossed with our fiery chili oil blend, fresh vegetables, and your choice of protein.</p>
+              <p class="special-description">Hand-pulled noodles tossed with our fiery chili oil blend and fresh vegetables.</p>
               <div class="special-tags">
                 <span class="special-tag">Spicy</span>
                 <span class="special-tag">Chef's Special</span>
@@ -1361,36 +1430,35 @@ section,
               <a href="#order" class="special-button">Order Now</a>
             </div>
           </div>
-          
-          <div class="special-item" data-aos="fade-up" data-aos-delay="400">
-            
-            <div class="special-image">
-              <img src="r2.jpg" alt="Sunny Berry Cloud Waffles">
-            </div>
-            <div class="special-content">
-              <div class="special-price">₹170</div>
-              <h3 class="special-title">Sunny Berry Cloud Waffles</h3>
-              <div class="special-rating">
-                <div class="stars">
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                  <i class="bi bi-star-fill"></i>
-                </div>
-                <div class="reviews">(29 reviews)</div>
-              </div>
-              <p class="special-description">Light as air waffles topped with fresh seasonal berries, whipped cream, and a drizzle of honey.</p>
-              <div class="special-tags">
-                <span class="special-tag">Dessert</span>
-                <span class="special-tag">Vegetarian</span>
-              </div>
-              <a href="#order" class="special-button">Order Now</a>
-            </div>
-          </div>
-          
+
+
           <div class="special-item" data-aos="fade-up" data-aos-delay="500">
-            
+  <div class="special-image">
+    <img src="r7.jpg" alt="Golden Crispy Tempura Platter">
+  </div>
+  <div class="special-content">
+    <div class="special-price">₹320</div>
+    <h3 class="special-title">Golden Crispy Tempura Platter</h3>
+    <div class="special-rating">
+      <div class="stars">
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+      </div>
+      <div class="reviews">(58 reviews)</div>
+    </div>
+    <p class="special-description">Light and crispy assorted tempura featuring shrimp, vegetables, and lotus root with dipping sauce.</p>
+    <div class="special-tags">
+      <span class="special-tag">Crispy</span>
+      <span class="special-tag">Japanese</span>
+    </div>
+    <a href="#order" class="special-button">Order Now</a>
+  </div>
+</div>
+          
+<div class="special-item" data-aos="fade-up" data-aos-delay="500">
             <div class="special-image">
               <img src="r4.jpg" alt="Molten Midnight Souffle">
             </div>
@@ -1407,7 +1475,7 @@ section,
                 </div>
                 <div class="reviews">(42 reviews)</div>
               </div>
-              <p class="special-description">Dark chocolate soufflé with a molten center, served with vanilla bean ice cream and fresh raspberries.</p>
+              <p class="special-description">Dark chocolate soufflé with a molten center, served with vanilla ice cream.</p>
               <div class="special-tags">
                 <span class="special-tag">Dessert</span>
                 <span class="special-tag">Chocolate</span>
@@ -1415,8 +1483,62 @@ section,
               <a href="#order" class="special-button">Order Now</a>
             </div>
           </div>
+          
+          <div class="special-item" data-aos="fade-up" data-aos-delay="600">
+  <div class="special-image">
+    <img src="r8.jpg" alt="Tandoori Harvest Platter">
+  </div>
+  <div class="special-content">
+    <div class="special-price">₹250</div>
+    <h3 class="special-title">Tandoori Harvest Platter</h3>
+    <div class="special-rating">
+      <div class="stars">
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star-fill"></i>
+        <i class="bi bi-star"></i>
+      </div>
+      <div class="reviews">(29 reviews)</div>
+    </div>
+    <p class="special-description">Assorted seasonal vegetables marinated in aromatic spices and cooked in traditional clay oven.</p>
+    <div class="special-tags">
+      <span class="special-tag">Vegetarian</span>
+      <span class="special-tag">Tandoori</span>
+    </div>
+    <a href="#order" class="special-button">Order Now</a>
+  </div>
+</div>
+
+          <div class="special-item" data-aos="fade-up" data-aos-delay="600">
+            <div class="special-image">
+              <img src="r2.jpg" alt="Sunny Berry Cloud Waffles">
+            </div>
+            <div class="special-content">
+              <div class="special-price">₹170</div>
+              <h3 class="special-title">Sunny Berry Cloud Waffles</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="reviews">(29 reviews)</div>
+              </div>
+              <p class="special-description">Light as air waffles topped with fresh seasonal berries and whipped cream.</p>
+              <div class="special-tags">
+                <span class="special-tag">Dessert</span>
+                <span class="special-tag">Vegetarian</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
+          </div>
         </div>
       </div>
+
+
     </section><!-- End Today's Special Section -->
 
   </main>
@@ -1508,6 +1630,67 @@ section,
         }
       });
       
+      // Enhanced hover effects for special items
+      const specialItems = document.querySelectorAll('.special-item');
+      
+      specialItems.forEach(item => {
+        // Add mouseenter event
+        item.addEventListener('mouseenter', function() {
+          this.style.transition = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+          this.style.transform = 'translateY(-10px) scale(1.02)';
+          this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.3)';
+          
+          // Add pulse animation
+          this.style.animation = 'pulse 1.5s infinite';
+          
+          // Highlight the order button
+          const button = this.querySelector('.special-button');
+          if (button) {
+            button.style.transform = 'translateY(-2px)';
+            button.style.boxShadow = '0 4px 8px rgba(205, 164, 94, 0.3)';
+          }
+        });
+        
+        // Add mouseleave event
+        item.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0) scale(1)';
+          this.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+          this.style.animation = 'none';
+          
+          // Reset button
+          const button = this.querySelector('.special-button');
+          if (button) {
+            button.style.transform = '';
+            button.style.boxShadow = '';
+          }
+        });
+        
+        // Add click effect to order button
+        const button = item.querySelector('.special-button');
+        if (button) {
+          button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Ripple effect
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+            this.appendChild(ripple);
+            
+            // Remove ripple after animation
+            setTimeout(() => {
+              ripple.remove();
+            }, 600);
+            
+            // Simulate order action
+            console.log('Order placed for: ' + item.querySelector('.special-title').textContent);
+            
+            // You can replace this with actual order functionality
+            alert('Added to cart: ' + item.querySelector('.special-title').textContent);
+          });
+        }
+      });
+      
       // Animate special items on scroll
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1524,17 +1707,7 @@ section,
         item.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
         observer.observe(item);
       });
-      
-      // Pulsing animation for featured item badge
-      const featuredBadge = document.querySelector('.featured .special-badge');
-      if (featuredBadge) {
-        setInterval(() => {
-          featuredBadge.style.transform = 'rotate(15deg) scale(1.05)';
-          setTimeout(() => {
-            featuredBadge.style.transform = 'rotate(15deg) scale(1)';
-          }, 500);
-        }, 2000);
-      }
+    });
   </script>
 </body>
 </html>
