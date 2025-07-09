@@ -61,27 +61,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Login | Westley's Resto Cafe</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       font-family: 'Poppins', sans-serif;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     
     body {
-      background: #f2f2f2;
+      background-color:whitesmoke;
       color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-out;
     }
     
     .container {
       display: flex;
-      height: 100vh;
+      width: 75%;
+      max-width: 1000px;
+      height: 75vh;
+      min-height: 550px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      overflow: hidden;
+      animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: center center;
+    }
+
+    @keyframes zoomIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
     
     .left-panel {
-      width: 50%;
+      width: 45%;
       background: url("cake.jpg") no-repeat center center/cover;
       display: flex;
       flex-direction: column;
@@ -100,6 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       bottom: 0;
       background: rgba(0, 0, 0, 0.5);
       z-index: 0;
+      transition: all 0.5s ease;
+    }
+
+    .left-panel:hover::before {
+      background: rgba(0, 0, 0, 0.4);
     }
     
     .left-panel h2, 
@@ -107,6 +138,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       position: relative;
       z-index: 1;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.8s ease-out 0.3s forwards;
+    }
+
+    @keyframes slideUpFadeIn {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
     
     .left-panel h2 {
@@ -118,21 +159,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-size: 14px;
       margin-top: 10px;
       opacity: 0.9;
+      animation-delay: 0.5s;
     }
     
     .right-panel {
-      width: 50%;
+      width: 55%;
       background: #fff;
-      padding: 60px 80px;
+      padding: 40px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      position: relative;
     }
     
     .right-panel h2 {
       margin-bottom: 20px;
       color: #0C1E17;
       font-size: 24px;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.8s ease-out 0.4s forwards;
     }
     
     .login-form {
@@ -150,29 +196,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-bottom: 5px;
       font-size: 14px;
       color: #555;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out forwards;
     }
+
+    /* Staggered animations for form elements */
+    .form-group:nth-child(1) label { animation-delay: 0.5s; }
+    .form-group:nth-child(2) label { animation-delay: 0.6s; }
     
-    .form-group input, .form-group select {
+    .form-group input {
       width: 100%;
       padding: 14px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 14px;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out forwards;
     }
+
+    .form-group:nth-child(1) input { animation-delay: 0.6s; }
+    .form-group:nth-child(2) input { animation-delay: 0.7s; }
     
-    .form-group input:hover, .form-group select:hover {
+    .form-group input:hover {
       border-color: #999;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      transform: translateY(-3px);
     }
     
-    .form-group input:focus, .form-group select:focus {
+    .form-group input:focus {
       outline: none;
       border-color: #000;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+      transform: translateY(-5px);
     }
     
-    .form-group input.error, .form-group select.error {
+    .form-group input.error {
       border-color: #ff4444;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
     }
     
     .error-message {
@@ -180,6 +248,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-size: 12px;
       margin-top: 5px;
       display: block;
+      transform: translateY(5px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.3s ease-out forwards;
     }
     
     .login-btn {
@@ -192,17 +263,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-weight: bold;
       cursor: pointer;
       font-size: 15px;
-      transition: background-color 0.3s, transform 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out 0.8s forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .login-btn:hover::before {
+      left: 100%;
     }
     
     .login-btn:hover {
       background-color: #333;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 7px 14px rgba(0, 0, 0, 0.2);
     }
     
     .login-btn:active {
-      transform: translateY(0);
+      transform: translateY(1px);
     }
     
     .login-btn.loading {
@@ -229,17 +321,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .forgot-password {
       text-align: right;
       margin-top: 10px;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out 0.9s forwards;
     }
     
     .forgot-password a {
       color: #666;
       font-size: 13px;
       text-decoration: none;
+      position: relative;
+    }
+    
+    .forgot-password a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 1px;
+      bottom: -2px;
+      left: 0;
+      background-color: #666;
+      transition: width 0.3s;
+    }
+    
+    .forgot-password a:hover::after {
+      width: 100%;
     }
     
     .forgot-password a:hover {
       color: #000;
-      text-decoration: underline;
     }
     
     .or-line {
@@ -247,6 +357,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       margin: 20px 0;
       color: #999;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out 1s forwards;
     }
     
     .or-line hr {
@@ -265,6 +378,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-top: 20px;
       font-size: 14px;
       color: #000;
+      transform: translateY(10px);
+      opacity: 0;
+      animation: slideUpFadeIn 0.5s ease-out 1.1s forwards;
     }
     
     .register-link a {
@@ -288,19 +404,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .register-link a:hover::after {
       width: 100%;
     }
+
+    /* Close button for popup effect */
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 30px;
+      height: 30px;
+      background: #f2f2f2;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    .close-btn:hover {
+      opacity: 1;
+      transform: rotate(90deg);
+      background: #e6e6e6;
+    }
+
+    .close-btn::before, .close-btn::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 2px;
+      background: #333;
+    }
+
+    .close-btn::before {
+      transform: rotate(45deg);
+    }
+
+    .close-btn::after {
+      transform: rotate(-45deg);
+    }
     
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
+        width: 90%;
+        height: auto;
+        min-height: auto;
+        animation: fadeInUp 0.5s ease-out;
       }
     
       .left-panel, .right-panel {
         width: 100%;
-        height: 50%;
+        height: auto;
+      }
+    
+      .left-panel {
+        min-height: 200px;
       }
     
       .right-panel {
-        padding: 40px 30px;
+        padding: 30px;
       }
     }
   </style>
@@ -315,10 +479,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Right Form Panel -->
     <div class="right-panel">
+      <div class="close-btn" onclick="window.location.href='homepage.html'"></div>
+      
       <h2>Login to Your Account</h2>
       
       <?php if (!empty($error)): ?>
-        <div class="error-message" style="margin-bottom: 20px;"><?php echo htmlspecialchars($error); ?></div>
+        <div class="error-message animate__animated animate__shakeX" style="margin-bottom: 20px;"><?php echo htmlspecialchars($error); ?></div>
       <?php endif; ?>
       
       <form id="loginForm" class="login-form" method="POST" action="login.php">
@@ -369,6 +535,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Show loading state
         loginButton.classList.add('loading');
         loginButton.disabled = true;
+      });
+
+      // Add focus animations to inputs
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.style.transform = 'translateY(-5px)';
+          this.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.15)';
+        });
+        
+        input.addEventListener('blur', function() {
+          this.style.transform = 'translateY(0)';
+          this.style.boxShadow = '0 0 0 3px rgba(0, 0, 0, 0.1)';
+        });
       });
     });
   </script>
