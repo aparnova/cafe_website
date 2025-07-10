@@ -964,8 +964,10 @@ section,
 
 .special-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns */
+  gap: 30px; /* Increased gap for better spacing */
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .special-item {
@@ -997,7 +999,7 @@ section,
 }
 
 .special-image {
-  height: 180px;
+  height: 200px; /* Fixed height for uniform images */
   position: relative;
   overflow: hidden;
 }
@@ -1014,7 +1016,7 @@ section,
 }
 
 .special-content {
-  padding: 15px;
+  padding: 20px; /* Increased padding */
   position: relative;
 }
 
@@ -1215,6 +1217,12 @@ section,
 }
 
 /* Responsive Adjustments */
+@media (max-width: 992px) {
+  .special-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+  }
+}
+
 @media (max-width: 768px) {
   .special-header h2 {
     font-size: 2rem;
@@ -1225,11 +1233,11 @@ section,
   }
   
   .special-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* 1 column on small screens */
   }
   
   .special-image {
-    height: 160px;
+    height: 180px;
   }
   
   .special-item:hover {
@@ -1376,7 +1384,8 @@ section,
         </div>
         
         <div class="special-grid">
-          <!-- Featured Special Item -->
+          <!-- Row 1 -->
+          <!-- Special Item 1 -->
           <div class="special-item" data-aos="fade-up" data-aos-delay="200">
             <div class="special-image">
               <img src="hero-bg.jpg" alt="Savory Spice Fusion">
@@ -1404,13 +1413,13 @@ section,
             </div>
           </div>
             
-         <!-- Regular Special Items -->
+          <!-- Special Item 2 -->
           <div class="special-item" data-aos="fade-up" data-aos-delay="300">
             <div class="special-image">
               <img src="r3.jpg" alt="Blazing Inferno Noodles">
             </div>
             <div class="special-content">
-              <div class="special-price">₹180</div>
+              <div class="special-price">₹280</div>
               <h3 class="special-title">Blazing Inferno Noodles</h3>
               <div class="special-rating">
                 <div class="stars">
@@ -1431,34 +1440,36 @@ section,
             </div>
           </div>
 
-
-          <div class="special-item" data-aos="fade-up" data-aos-delay="500">
-  <div class="special-image">
-    <img src="r7.jpg" alt="Golden Crispy Tempura Platter">
-  </div>
-  <div class="special-content">
-    <div class="special-price">₹320</div>
-    <h3 class="special-title">Golden Crispy Tempura Platter</h3>
-    <div class="special-rating">
-      <div class="stars">
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-      </div>
-      <div class="reviews">(58 reviews)</div>
-    </div>
-    <p class="special-description">Light and crispy assorted tempura featuring shrimp, vegetables, and lotus root with dipping sauce.</p>
-    <div class="special-tags">
-      <span class="special-tag">Crispy</span>
-      <span class="special-tag">Japanese</span>
-    </div>
-    <a href="#order" class="special-button">Order Now</a>
-  </div>
-</div>
+          <!-- Special Item 3 -->
+          <div class="special-item" data-aos="fade-up" data-aos-delay="400">
+            <div class="special-image">
+              <img src="r7.jpg" alt="Golden Crispy Tempura Platter">
+            </div>
+            <div class="special-content">
+              <div class="special-price">₹320</div>
+              <h3 class="special-title">Golden Crispy Tempura Platter</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="reviews">(58 reviews)</div>
+              </div>
+              <p class="special-description">Light and crispy assorted tempura featuring shrimp, vegetables, and lotus root with dipping sauce.</p>
+              <div class="special-tags">
+                <span class="special-tag">Crispy</span>
+                <span class="special-tag">Japanese</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
+          </div>
           
-<div class="special-item" data-aos="fade-up" data-aos-delay="500">
+          <!-- Row 2 -->
+          <!-- Special Item 4 -->
+          <div class="special-item" data-aos="fade-up" data-aos-delay="500">
             <div class="special-image">
               <img src="r4.jpg" alt="Molten Midnight Souffle">
             </div>
@@ -1484,38 +1495,40 @@ section,
             </div>
           </div>
           
+          <!-- Special Item 5 -->
           <div class="special-item" data-aos="fade-up" data-aos-delay="600">
-  <div class="special-image">
-    <img src="r8.jpg" alt="Tandoori Harvest Platter">
-  </div>
-  <div class="special-content">
-    <div class="special-price">₹250</div>
-    <h3 class="special-title">Tandoori Harvest Platter</h3>
-    <div class="special-rating">
-      <div class="stars">
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star-fill"></i>
-        <i class="bi bi-star"></i>
-      </div>
-      <div class="reviews">(29 reviews)</div>
-    </div>
-    <p class="special-description">Assorted seasonal vegetables marinated in aromatic spices and cooked in traditional clay oven.</p>
-    <div class="special-tags">
-      <span class="special-tag">Vegetarian</span>
-      <span class="special-tag">Tandoori</span>
-    </div>
-    <a href="#order" class="special-button">Order Now</a>
-  </div>
-</div>
+            <div class="special-image">
+              <img src="r8.jpg" alt="Tandoori Harvest Platter">
+            </div>
+            <div class="special-content">
+              <div class="special-price">₹250</div>
+              <h3 class="special-title">Tandoori Harvest Platter</h3>
+              <div class="special-rating">
+                <div class="stars">
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star-fill"></i>
+                  <i class="bi bi-star"></i>
+                </div>
+                <div class="reviews">(29 reviews)</div>
+              </div>
+              <p class="special-description">Assorted seasonal vegetables marinated in aromatic spices and cooked in traditional clay oven.</p>
+              <div class="special-tags">
+                <span class="special-tag">Vegetarian</span>
+                <span class="special-tag">Tandoori</span>
+              </div>
+              <a href="#order" class="special-button">Order Now</a>
+            </div>
+          </div>
 
-          <div class="special-item" data-aos="fade-up" data-aos-delay="600">
+          <!-- Special Item 6 -->
+          <div class="special-item" data-aos="fade-up" data-aos-delay="700">
             <div class="special-image">
               <img src="r2.jpg" alt="Sunny Berry Cloud Waffles">
             </div>
             <div class="special-content">
-              <div class="special-price">₹170</div>
+              <div class="special-price">₹350</div>
               <h3 class="special-title">Sunny Berry Cloud Waffles</h3>
               <div class="special-rating">
                 <div class="stars">
@@ -1537,8 +1550,6 @@ section,
           </div>
         </div>
       </div>
-
-
     </section><!-- End Today's Special Section -->
 
   </main>
