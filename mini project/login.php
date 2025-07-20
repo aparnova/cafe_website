@@ -5,54 +5,63 @@ require 'db.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $user_type = $_POST['user_type'] ?? 'user'; // Default to user
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
-    // Validate inputs
-    if (empty($email) || empty($password)) {
-        $error = 'Please enter both email and password';
-    } else {
-        try {
-            $table = '';
-            switch ($user_type) {
-                case 'admin':
-                    $table = 'admins';
-                    break;
-                case 'delivery':
-                    $table = 'delivery_boys';
-                    break;
-                default:
-                    $table = 'users';
-            }
+    // 1. Check Admin table
+    $stmt = $conn->prepare("SELECT * FROM admins WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $adminResult = $stmt->get_result();
 
-            $stmt = $pdo->prepare("SELECT * FROM $table WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['email'] = $user['email'];
-                $_SESSION['user_type'] = $user_type;
-                
-                // Redirect based on user type
-                if ($user_type === 'admin') {
-                    header('Location: admin_dashboard.php');
-                } elseif ($user_type === 'delivery') {
-                    header('Location: delivery_dashboard.php');
-                } else {
-                    header('Location: homepage.html');
-                }
-                exit();
-            } else {
-                $error = 'Invalid email or password';
-            }
-        } catch (PDOException $e) {
-            $error = 'Database error: ' . $e->getMessage();
+    if ($adminResult->num_rows === 1) {
+        $admin = $adminResult->fetch_assoc();
+        if ($admin['password'] === $password) {
+            $_SESSION['user'] = $admin['name'];
+            $_SESSION['role'] = 'admin';
+            header("Location: admin_dashboard.php");
+            exit();
         }
     }
+
+    // 2. Check Delivery Boy table
+    $stmt = $conn->prepare("SELECT * FROM delivery_boys WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $deliveryResult = $stmt->get_result();
+
+    if ($deliveryResult->num_rows === 1) {
+        $delivery = $deliveryResult->fetch_assoc();
+        if ($delivery['password'] === $password) {
+            $_SESSION['user'] = $delivery['name'];
+            $_SESSION['role'] = 'delivery';
+            $_SESSION['delivery_id'] = $delivery['id'];
+            header("Location: delivery_dashboard.php");
+            exit();
+        }
+    }
+
+    // 3. Check Users (Customers) table
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $userResult = $stmt->get_result();
+
+    if ($userResult->num_rows === 1) {
+        $user = $userResult->fetch_assoc();
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user'] = $user['fullname'];
+            $_SESSION['role'] = 'customer';
+            $_SESSION['user_id'] = $user['id'];
+            header("Location: homepage.php");
+            exit();
+        }
+    }
+
+    $error = "Invalid email or password!";
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -201,7 +210,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       animation: slideUpFadeIn 0.5s ease-out forwards;
     }
 
-    /* Staggered animations for form elements */
     .form-group:nth-child(1) label { animation-delay: 0.5s; }
     .form-group:nth-child(2) label { animation-delay: 0.6s; }
     
@@ -232,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: translateY(-5px);
     }
     
-    .form-group input.error {
+    .form-group input.error-field {
       border-color: #ff4444;
       animation: shake 0.5s ease-in-out;
     }
@@ -243,14 +251,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       40%, 80% { transform: translateX(5px); }
     }
     
-    .error-message {
+    .form-error {
+      color: #ff4444;
+      font-size: 14px;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: rgba(255, 68, 68, 0.1);
+      border-left: 3px solid #ff4444;
+      display: none;
+      animation: slideUpFadeIn 0.3s ease-out;
+    }
+    
+    .field-error {
       color: #ff4444;
       font-size: 12px;
       margin-top: 5px;
-      display: block;
-      transform: translateY(5px);
-      opacity: 0;
-      animation: slideUpFadeIn 0.3s ease-out forwards;
+      display: none;
+      animation: slideUpFadeIn 0.3s ease-out;
     }
     
     .login-btn {
@@ -295,27 +313,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     .login-btn:active {
       transform: translateY(1px);
-    }
-    
-    .login-btn.loading {
-      background-color: #666;
-      pointer-events: none;
-    }
-    
-    .login-btn.loading::after {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 8px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
     }
     
     .forgot-password {
@@ -405,7 +402,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       width: 100%;
     }
 
-    /* Close button for popup effect */
     .close-btn {
       position: absolute;
       top: 15px;
@@ -476,27 +472,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <h2>Welcome to Westley's Resto Cafe</h2>
       <p>Login to enjoy our delicious meals and services</p>
     </div>
-
+     
     <!-- Right Form Panel -->
     <div class="right-panel">
-      <div class="close-btn" onclick="window.location.href='homepage.html'"></div>
+      <div class="close-btn" onclick="window.location.href='homepage.php'"></div>
       
       <h2>Login to Your Account</h2>
       
-      <?php if (!empty($error)): ?>
-        <div class="error-message animate__animated animate__shakeX" style="margin-bottom: 20px;"><?php echo htmlspecialchars($error); ?></div>
-      <?php endif; ?>
-      
+      <!-- Form error message -->
+      <div id="form-error" class="form-error" <?php echo empty($error) ? 'style="display: none;"' : ''; ?>>
+        <?php echo htmlspecialchars($error); ?>
+      </div>
+    
       <form id="loginForm" class="login-form" method="POST" action="login.php">
-        
         <div class="form-group">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" required>
+          <div id="email-error" class="field-error"></div>
         </div>
         
         <div class="form-group">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" required>
+          <div id="password-error" class="field-error"></div>
         </div>
         
         <div class="forgot-password">
@@ -520,24 +518,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     document.addEventListener('DOMContentLoaded', function() {
       const form = document.getElementById('loginForm');
       const loginButton = document.getElementById('loginButton');
+      const formError = document.getElementById('form-error');
+      const emailError = document.getElementById('email-error');
+      const passwordError = document.getElementById('password-error');
+      
+      function clearErrors() {
+        formError.style.display = 'none';
+        emailError.style.display = 'none';
+        passwordError.style.display = 'none';
+        document.getElementById('email').classList.remove('error-field');
+        document.getElementById('password').classList.remove('error-field');
+      }
+      
+      function showFieldError(field, message) {
+        const errorElement = document.getElementById(field + '-error');
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        document.getElementById(field).classList.add('error-field');
+      }
       
       form.addEventListener('submit', function(e) {
-        // Client-side validation
-        const email = document.getElementById('email');
-        const password = document.getElementById('password');
+        e.preventDefault();
+        clearErrors();
         
-        if (!email.value || !password.value) {
-          e.preventDefault();
-          alert('Please fill in all fields');
-          return false;
+        // Client-side validation
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        let isValid = true;
+        
+        if (!email) {
+          showFieldError('email', 'Email is required');
+          isValid = false;
+        } else if (!validateEmail(email)) {
+          showFieldError('email', 'Please enter a valid email address');
+          isValid = false;
         }
         
-        // Show loading state
-        loginButton.classList.add('loading');
-        loginButton.disabled = true;
+        if (!password) {
+          showFieldError('password', 'Password is required');
+          isValid = false;
+        }
+        
+        if (!isValid) return false;
+        
+        // Submit the form if validation passes
+        form.submit();
       });
 
-      // Add focus animations to inputs
+      function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+      }
+      
+      // Input field focus/blur effects
       const inputs = document.querySelectorAll('input');
       inputs.forEach(input => {
         input.addEventListener('focus', function() {

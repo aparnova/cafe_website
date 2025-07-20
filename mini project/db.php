@@ -1,12 +1,14 @@
 <?php
-$host = 'localhost';
-$dbname = 'westleys_resto_cafe';
-$username = 'root'; // Your MySQL username
-$password = ''; // Your MySQL password
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "westleys_resto_cafe";
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+?>

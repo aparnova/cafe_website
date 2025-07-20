@@ -460,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Right Form Panel -->
     <div class="right-panel">
-      <div class="close-btn" onclick="window.location.href='homepage.html'"></div>
+      <div class="close-btn" onclick="window.location.href='homepage.php'"></div>
       
       <h2>Create Customer Account</h2>
       
