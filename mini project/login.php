@@ -484,7 +484,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php echo htmlspecialchars($error); ?>
       </div>
     
-      <form id="loginForm" class="login-form" method="POST" action="login.php">
+      <form id="loginForm" class="login-form" method="POST" action="login.php" autocomplete="off">
         <div class="form-group">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" required>

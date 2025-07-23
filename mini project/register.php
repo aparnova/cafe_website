@@ -1,8 +1,7 @@
 <?php
 session_start();
-require_once 'db.php'; // Make sure this path is correct
+require 'db.php'; // Make sure this path is correct
 
-// Rest of your code...
 $errors = [];
 $success = '';
 
@@ -23,10 +22,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email';
     } else {
-        // Check if email already exists
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
+        // Check if email already exists - USING MYSQLI NOW
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
             $errors['email'] = 'Email already registered';
         }
     }
@@ -41,15 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['password'] = 'Password is required';
     } elseif (strlen($password) < 8) {
         $errors['password'] = 'Password must be at least 8 characters';
-    }
-    
-    if ($password !== $confirm_password) {
-        $errors['confirm_password'] = 'Passwords do not match';
-    }
-    
-    // In register.php, add password strength validation
-    if (strlen($password) < 8) {
-        $errors['password'] = 'Password must be at least 8 characters';
     } elseif (!preg_match('/[A-Z]/', $password)) {
         $errors['password'] = 'Password must contain at least one uppercase letter';
     } elseif (!preg_match('/[a-z]/', $password)) {
@@ -57,38 +49,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/[0-9]/', $password)) {
         $errors['password'] = 'Password must contain at least one number';
     }
-
-    function isPasswordCompromised($password) {
-        $hash = sha1($password);
-        $prefix = substr($hash, 0, 5);
-        $suffix = substr($hash, 5);
-        
-        $response = file_get_contents("https://api.pwnedpasswords.com/range/".$prefix);
-        return strpos($response, strtoupper($suffix)) !== false;
+    
+    if ($password !== $confirm_password) {
+        $errors['confirm_password'] = 'Passwords do not match';
     }
 
-    // Usage in registration:
-    if (isPasswordCompromised($password)) {
-        $errors['password'] = 'This password has been compromised in a data breach. Please choose a different one.';
-    }
-
-    // If no errors, register user
+    // If no errors, register user - USING MYSQLI NOW
     if (empty($errors)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         
         try {
-            $stmt = $pdo->prepare("INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$fullname, $email, $phone, $hashed_password]);
+            $stmt = $conn->prepare("INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $fullname, $email, $phone, $hashed_password);
+            $stmt->execute();
             
-            $success = 'Registration successful! You can now login.';
-            
-            // Clear form
-            $fullname = $email = $phone = $password = $confirm_password = '';
-        } catch (PDOException $e) {
+            if ($stmt->affected_rows === 1) {
+                $success = 'Registration successful! You can now login.';
+                // Clear form
+                $fullname = $email = $phone = $password = $confirm_password = '';
+            } else {
+                $errors['database'] = 'Registration failed. Please try again.';
+            }
+        } catch (mysqli_sql_exception $e) {
             $errors['database'] = 'Registration failed: ' . $e->getMessage();
         }
     }
 }
+// Rest of your HTML code remains the same
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -462,17 +449,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="right-panel">
       <div class="close-btn" onclick="window.location.href='homepage.php'"></div>
       
-      <h2>Create Customer Account</h2>
+      <h2>Create Account</h2>
       
       <?php if ($success): ?>
-        <div class="success-message animate__animated animate__pulse"><?php echo htmlspecialchars($success); ?></div>
+        <div class="success-message animate_animated animate_pulse"><?php echo htmlspecialchars($success); ?></div>
       <?php endif; ?>
       
       <?php if (isset($errors['database'])): ?>
         <div class="error-message"><?php echo htmlspecialchars($errors['database']); ?></div>
       <?php endif; ?>
       
-      <form id="registerForm" method="POST" action="register.php">
+      <form id="registerForm" method="POST" action="register.php" autocomplete="off">
         <input type="text" id="fullname" name="fullname" placeholder="Full Name" value="<?php echo htmlspecialchars($fullname ?? ''); ?>" required>
         <?php if (isset($errors['fullname'])): ?>
           <div class="error-message"><?php echo htmlspecialchars($errors['fullname']); ?></div>
