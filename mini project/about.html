@@ -160,24 +160,28 @@
     }
 
    /* Video Container Styles */
-    .about-video-container {
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-      border: 6px solid color-mix(in srgb, var(--default-color), transparent 80%);
-      border-radius: 5px;
-    }
+.about-video-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+  overflow: hidden;
+  border: 6px solid color-mix(in srgb, var(--default-color), transparent 80%);
+  border-radius: 5px;
+}
 
-    .about-video {
-      width: 100%;
-      height: auto;
-      display: block;
-      transition: transform 0.3s;
-    }
+.about-video {
+  width: 100%;
+  max-width: 1000px; /* Adjust this value as needed */
+  height: auto;
+  transition: transform 0.3s;
+}
 
-    .about-video:hover {
-      transform: scale(1.03);
-    }
+.about-video:hover {
+  transform: scale(1.03);
+}
 
     /* Why Us Section */
     .why-us {
@@ -462,10 +466,12 @@
         </div>
         <div class="row">
 
-          <video class="about-video" autoplay muted loop playsinline>
-  <source src="cook1.mp4" type="video/mp4">
-  <img src="assets/img/about.jpg" class="img-fluid" alt="Our Restaurant">
-   </video>
+          <div class="about-video-container">
+  <video class="about-video" autoplay muted loop playsinline>
+    <source src="cook1.mp4" type="video/mp4">
+    <img src="assets/img/about.jpg" class="img-fluid" alt="Our Restaurant">
+  </video>
+</div>
 
           <div class="col-lg-6 order-2 order-lg-1 content">
             <h3>Our Culinary Journey</h3>
@@ -499,7 +505,7 @@
             <div class="member-info">
               <h4>Walter White</h4>
               <span>Master Chef</span>
-              <p>With over 25 years of experience, Chef Walter has earned three Michelin stars. Trained in Paris and Tokyo, he brings a unique fusion of French techniques and Japanese precision to our kitchen. His signature dish "Molecular Symphony" has been featured in Gourmet Magazine.</p>
+              <p>3 Michelin-starred chef blending French techniques with Japanese precision. Creator of the acclaimed "Molecular Symphony" dish featured in Gourmet Magazine.</p>
             </div>
           </div>
 
@@ -508,7 +514,7 @@
             <div class="member-info">
               <h4>Sarah Jhonson</h4>
               <span>Patissier</span>
-              <p>Pastry Chef Sarah, graduate of Le Cordon Bleu, has won numerous awards including the World Pastry Championship. Her desserts are celebrated for their perfect balance of flavor and artistry. She pioneered the "Deconstructed Tiramisu" that became an Instagram sensation.</p>
+              <p>Le Cordon Bleu graduate and World Pastry Champion. Famous for her Instagram-famous "Deconstructed Tiramisu".</p>
             </div>
           </div>
 
@@ -517,7 +523,7 @@
             <div class="member-info">
               <h4>William Anderson</h4>
               <span>Executive Sous Chef</span>
-              <p>Chef William, named "Young Chef of the Year" by Culinary Arts Magazine, specializes in modern interpretations of classic dishes using innovative molecular gastronomy techniques. His "Liquid Olive Spheres" appetizer has been featured on Food Network.</p>
+              <p>Culinary Arts Magazine's "Young Chef of the Year". Specializes in modern classics with molecular gastronomy techniques.</p>
             </div>
           </div>
         </div>
