@@ -315,40 +315,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: translateY(1px);
     }
     
-    .forgot-password {
-      text-align: right;
-      margin-top: 10px;
-      transform: translateY(10px);
-      opacity: 0;
-      animation: slideUpFadeIn 0.5s ease-out 0.9s forwards;
-    }
-    
-    .forgot-password a {
-      color: #666;
-      font-size: 13px;
-      text-decoration: none;
-      position: relative;
-    }
-    
-    .forgot-password a::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 1px;
-      bottom: -2px;
-      left: 0;
-      background-color: #666;
-      transition: width 0.3s;
-    }
-    
-    .forgot-password a:hover::after {
-      width: 100%;
-    }
-    
-    .forgot-password a:hover {
-      color: #000;
-    }
-    
     .or-line {
       display: flex;
       align-items: center;
@@ -496,10 +462,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="password" id="password" name="password" required>
           <div id="password-error" class="field-error"></div>
         </div>
-        
-        <div class="forgot-password">
-          <a href="forgot_password.html">Forgot Password?</a>
-        </div>
+  
         
         <button type="submit" class="login-btn" id="loginButton">Login</button>
       </form>

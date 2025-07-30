@@ -1,222 +1,464 @@
-<!-- Menu Section -->
-    <section id="menu" class="menu section">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu - Restaurant Name</title>
+  <style>
+    /* Font & Color Variables */
+    :root {
+      --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      --heading-font: "Playfair Display", sans-serif;
+      --nav-font: "Poppins", sans-serif;
+      --background-color: #0c0b09;
+      --default-color: rgba(255, 255, 255, 0.7);
+      --heading-color: #ffffff;
+      --accent-color: #cda45e;
+      --surface-color: #29261f;
+      --contrast-color: #0c0b09;
+    }
 
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Menu</h2>
-        <p>Check Our Tasty Menu</p>
-      </div><!-- End Section Title -->
+    /* General Styles */
+    body {
+      color: var(--default-color);
+      background-color: var(--background-color);
+      font-family: var(--default-font);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
 
-      <div class="container isotope-layout" data-default-filter="*" data-layout="masonry" data-sort="original-order">
+    a {
+      color: var(--accent-color);
+      text-decoration: none;
+      transition: 0.3s;
+    }
 
-        <div class="row" data-aos="fade-up" data-aos-delay="100">
-          <div class="col-lg-12 d-flex justify-content-center">
-            <ul class="menu-filters isotope-filters">
-              <li data-filter="*" class="filter-active">All</li>
-              <li data-filter=".filter-starters">Starters</li>
-              <li data-filter=".filter-salads">Salads</li>
-              <li data-filter=".filter-specialty">Specialty</li>
-            </ul>
-          </div>
-        </div><!-- Menu Filters -->
+    a:hover {
+      color: color-mix(in srgb, var(--accent-color), transparent 25%);
+    }
 
-        <div class="row isotope-container" data-aos="fade-up" data-aos-delay="200">
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--heading-color);
+      font-family: var(--heading-font);
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-starters">
-            <img src="assets/img/menu/lobster-bisque.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Lobster Bisque</a><span>$5.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Lorem, deren, trataro, filede, nerada
-            </div>
-          </div><!-- Menu Item -->
+    .container {
+      width: 100%;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-specialty">
-            <img src="assets/img/menu/bread-barrel.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Bread Barrel</a><span>$6.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Lorem, deren, trataro, filede, nerada
-            </div>
-          </div><!-- Menu Item -->
+    .section {
+      padding: 60px 0;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-starters">
-            <img src="assets/img/menu/cake.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Crab Cake</a><span>$7.95</span>
-            </div>
-            <div class="menu-ingredients">
-              A delicate crab cake served on a toasted roll with lettuce and tartar sauce
-            </div>
-          </div><!-- Menu Item -->
+    .section-title {
+      padding-bottom: 60px;
+      position: relative;
+      text-align: center;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-salads">
-            <img src="assets/img/menu/caesar.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Caesar Selections</a><span>$8.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Lorem, deren, trataro, filede, nerada
-            </div>
-          </div><!-- Menu Item -->
+    .section-title h2 {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 0;
+      line-height: 1px;
+      margin: 0;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--default-color), transparent 30%);
+      position: relative;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-specialty">
-            <img src="assets/img/menu/tuscan-grilled.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Tuscan Grilled</a><span>$9.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Grilled chicken with provolone, artichoke hearts, and roasted red pesto
-            </div>
-          </div><!-- Menu Item -->
+    .section-title h2::after {
+      content: "";
+      width: 120px;
+      height: 1px;
+      display: inline-block;
+      background: var(--accent-color);
+      margin: 4px 10px;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-starters">
-            <img src="assets/img/menu/mozzarella.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Mozzarella Stick</a><span>$4.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Lorem, deren, trataro, filede, nerada
-            </div>
-          </div><!-- Menu Item -->
+    .section-title p {
+      color: var(--accent-color);
+      margin: 0;
+      font-size: 36px;
+      font-weight: 600;
+      font-family: var(--heading-font);
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-salads">
-            <img src="assets/img/menu/greek-salad.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Greek Salad</a><span>$9.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Fresh spinach, crisp romaine, tomatoes, and Greek olives
-            </div>
-          </div><!-- Menu Item -->
+    /* Menu Section */
+    .menu {
+      background-color: color-mix(in srgb, var(--background-color) 90%, white 5%);
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-salads">
-            <img src="assets/img/menu/spinach-salad.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Spinach Salad</a><span>$9.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Fresh spinach with mushrooms, hard boiled egg, and warm bacon vinaigrette
-            </div>
-          </div><!-- Menu Item -->
+    .menu .menu-filters {
+      padding: 0;
+      margin: 0 auto;
+      list-style: none;
+      text-align: center;
+      border-radius: 50px;
+    }
 
-          <div class="col-lg-6 menu-item isotope-item filter-specialty">
-            <img src="assets/img/menu/lobster-roll.jpg" class="menu-img" alt="">
-            <div class="menu-content">
-              <a href="#">Lobster Roll</a><span>$12.95</span>
-            </div>
-            <div class="menu-ingredients">
-              Plump lobster meat, mayo and crisp lettuce on a toasted bulky roll
-            </div>
-          </div><!-- Menu Item -->
+    .menu .menu-filters li {
+      color: var(--default-color);
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: inline-block;
+      padding: 8px 12px 10px 12px;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1;
+      transition: all ease-in-out 0.3s;
+      font-family: var(--nav-font);
+    }
 
-        </div><!-- Menu Container -->
+    .menu .menu-filters li:hover,
+    .menu .menu-filters li.filter-active {
+      color: var(--accent-color);
+    }
 
+    .menu .menu-item {
+      margin-top: 50px;
+      position: relative;
+    }
+
+    .menu .menu-img {
+      width: 80px;
+      border-radius: 50%;
+      float: left;
+      border: 8px solid color-mix(in srgb, var(--default-color), transparent 90%);
+    }
+
+    .menu .menu-content {
+      margin-left: 95px;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .menu .menu-content::after {
+      content: "......................................................................" "...................................................................." "....................................................................";
+      position: absolute;
+      left: 20px;
+      right: 0;
+      top: -4px;
+      z-index: 1;
+      color: color-mix(in srgb, var(--default-color), transparent 60%);
+      font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    }
+
+    .menu .menu-content a {
+      color: var(--heading-color);
+      background: var(--background-color);
+      padding-right: 10px;
+      position: relative;
+      z-index: 3;
+      font-weight: 700;
+      transition: 0.3s;
+    }
+
+    .menu .menu-content a:hover {
+      color: var(--accent-color);
+    }
+
+    .menu .menu-content span {
+      background: var(--background-color);
+      color: var(--accent-color);
+      position: relative;
+      z-index: 3;
+      padding: 0 10px;
+      font-weight: 600;
+    }
+
+    .menu .menu-ingredients {
+      margin-left: 95px;
+      font-style: italic;
+      font-size: 14px;
+      font-family: var(--nav-font);
+      color: color-mix(in srgb, var(--default-color), transparent 50%);
+    }
+
+    /* Specials Section */
+    .specials {
+      overflow: hidden;
+    }
+
+    .specials .nav-tabs {
+      border: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .specials .nav-link {
+      border: 0;
+      padding: 12px 15px;
+      transition: 0.3s;
+      color: var(--heading-color);
+      border-radius: 0;
+      border-right: 2px solid var(--accent-color);
+      font-weight: 600;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    .specials .nav-link:hover {
+      color: var(--accent-color);
+    }
+
+    .specials .nav-link.active {
+      color: var(--contrast-color);
+      background-color: var(--accent-color);
+    }
+
+    .specials .tab-pane {
+      display: none;
+    }
+
+    .specials .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .specials .details h3 {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .specials .details p {
+      color: color-mix(in srgb, var(--default-color), transparent 20%);
+    }
+
+    .specials .details p:last-child {
+      margin-bottom: 0;
+    }
+
+    .specials .details .fst-italic {
+      font-style: italic;
+      color: color-mix(in srgb, var(--default-color), transparent 30%);
+    }
+
+    /* Grid System */
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -15px;
+    }
+
+    .col-lg-3, .col-lg-4, .col-lg-6, .col-lg-8, .col-lg-9, .col-lg-12 {
+      padding: 0 15px;
+    }
+
+    @media (min-width: 992px) {
+      .col-lg-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+      }
+      .col-lg-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+      }
+      .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+      .col-lg-8 {
+        flex: 0 0 66.666667%;
+        max-width: 66.666667%;
+      }
+      .col-lg-9 {
+        flex: 0 0 75%;
+        max-width: 75%;
+      }
+      .col-lg-12 {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+
+    /* Utility Classes */
+    .text-center {
+      text-align: center;
+    }
+
+    .img-fluid {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .d-flex {
+      display: flex;
+    }
+
+    .justify-content-center {
+      justify-content: center;
+    }
+
+    .mt-4 {
+      margin-top: 1.5rem;
+    }
+
+    .mt-lg-0 {
+      margin-top: 0;
+    }
+
+    .order-1 {
+      order: 1;
+    }
+
+    .order-2 {
+      order: 2;
+    }
+
+    @media (min-width: 992px) {
+      .order-lg-1 {
+        order: 1;
+      }
+      .order-lg-2 {
+        order: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Menu Section -->
+  <section id="menu" class="menu section">
+    <div class="container section-title">
+      <h2>Menu</h2>
+      <p>Check Our Tasty Menu</p>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-12 d-flex justify-content-center">
+          <ul class="menu-filters">
+            <li class="filter-active">All</li>
+            <li>Starters</li>
+            <li>Salads</li>
+            <li>Specialty</li>
+          </ul>
+        </div>
       </div>
 
-    </section><!-- /Menu Section -->
-
-    <!-- Specials Section -->
-    <section id="specials" class="specials section">
-
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <h2>Specials</h2>
-        <p>Check Our Specials</p>
-      </div><!-- End Section Title -->
-
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-        <div class="row">
-          <div class="col-lg-3">
-            <ul class="nav nav-tabs flex-column">
-              <li class="nav-item">
-                <a class="nav-link active show" data-bs-toggle="tab" href="#specials-tab-1">Modi sit est</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#specials-tab-2">Unde praesentium sed</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#specials-tab-3">Pariatur explicabo vel</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#specials-tab-4">Nostrum qui quasi</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="tab" href="#specials-tab-5">Iusto ut expedita aut</a>
-              </li>
-            </ul>
+      <div class="row">
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/lobster-bisque.jpg" class="menu-img" alt="Lobster Bisque">
+          <div class="menu-content">
+            <a href="#">Lobster Bisque</a><span>$5.95</span>
           </div>
-          <div class="col-lg-9 mt-4 mt-lg-0">
-            <div class="tab-content">
-              <div class="tab-pane active show" id="specials-tab-1">
-                <div class="row">
-                  <div class="col-lg-8 details order-2 order-lg-1">
-                    <h3>Architecto ut aperiam autem id</h3>
-                    <p class="fst-italic">Qui laudantium consequatur laborum sit qui ad sapiente dila parde sonata raqer a videna mareta paulona marka</p>
-                    <p>Et nobis maiores eius. Voluptatibus ut enim blanditiis atque harum sint. Laborum eos ipsum ipsa odit magni. Incidunt hic ut molestiae aut qui. Est repellat minima eveniet eius et quis magni nihil. Consequatur dolorem quaerat quos qui similique accusamus nostrum rem vero</p>
-                  </div>
-                  <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="assets/img/specials-1.png" alt="" class="img-fluid">
-                  </div>
+          <div class="menu-ingredients">
+            Lorem, deren, trataro, filede, nerada
+          </div>
+        </div>
+
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/bread-barrel.jpg" class="menu-img" alt="Bread Barrel">
+          <div class="menu-content">
+            <a href="#">Bread Barrel</a><span>$6.95</span>
+          </div>
+          <div class="menu-ingredients">
+            Lorem, deren, trataro, filede, nerada
+          </div>
+        </div>
+
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/cake.jpg" class="menu-img" alt="Crab Cake">
+          <div class="menu-content">
+            <a href="#">Crab Cake</a><span>$7.95</span>
+          </div>
+          <div class="menu-ingredients">
+            A delicate crab cake served on a toasted roll with lettuce and tartar sauce
+          </div>
+        </div>
+
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/caesar.jpg" class="menu-img" alt="Caesar Salad">
+          <div class="menu-content">
+            <a href="#">Caesar Selections</a><span>$8.95</span>
+          </div>
+          <div class="menu-ingredients">
+            Lorem, deren, trataro, filede, nerada
+          </div>
+        </div>
+
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/tuscan-grilled.jpg" class="menu-img" alt="Tuscan Grilled">
+          <div class="menu-content">
+            <a href="#">Tuscan Grilled</a><span>$9.95</span>
+          </div>
+          <div class="menu-ingredients">
+            Grilled chicken with provolone, artichoke hearts, and roasted red pesto
+          </div>
+        </div>
+
+        <div class="col-lg-6 menu-item">
+          <img src="assets/img/menu/mozzarella.jpg" class="menu-img" alt="Mozzarella Stick">
+          <div class="menu-content">
+            <a href="#">Mozzarella Stick</a><span>$4.95</span>
+          </div>
+          <div class="menu-ingredients">
+            Lorem, deren, trataro, filede, nerada
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Specials Section -->
+  <section id="specials" class="specials section">
+    <div class="container section-title">
+      <h2>Specials</h2>
+      <p>Check Our Specials</p>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3">
+          <ul class="nav nav-tabs flex-column">
+            <li class="nav-item">
+              <a class="nav-link active show">Modi sit est</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link">Unde praesentium sed</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link">Pariatur explicabo vel</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link">Nostrum qui quasi</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link">Iusto ut expedita aut</a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-lg-9 mt-4 mt-lg-0">
+          <div class="tab-content">
+            <div class="tab-pane active show">
+              <div class="row">
+                <div class="col-lg-8 details order-2 order-lg-1">
+                  <h3>Architecto ut aperiam autem id</h3>
+                  <p class="fst-italic">Qui laudantium consequatur laborum sit qui ad sapiente dila parde sonata raqer a videna mareta paulona marka</p>
+                  <p>Et nobis maiores eius. Voluptatibus ut enim blanditiis atque harum sint. Laborum eos ipsum ipsa odit magni. Incidunt hic ut molestiae aut qui. Est repellat minima eveniet eius et quis magni nihil. Consequatur dolorem quaerat quos qui similique accusamus nostrum rem vero</p>
                 </div>
-              </div>
-              <div class="tab-pane" id="specials-tab-2">
-                <div class="row">
-                  <div class="col-lg-8 details order-2 order-lg-1">
-                    <h3>Et blanditiis nemo veritatis excepturi</h3>
-                    <p class="fst-italic">Qui laudantium consequatur laborum sit qui ad sapiente dila parde sonata raqer a videna mareta paulona marka</p>
-                    <p>Ea ipsum voluptatem consequatur quis est. Illum error ullam omnis quia et reiciendis sunt sunt est. Non aliquid repellendus itaque accusamus eius et velit ipsa voluptates. Optio nesciunt eaque beatae accusamus lerode pakto madirna desera vafle de nideran pal</p>
-                  </div>
-                  <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="assets/img/specials-2.png" alt="" class="img-fluid">
-                  </div>
-                </div>
-              </div>
-              <div class="tab-pane" id="specials-tab-3">
-                <div class="row">
-                  <div class="col-lg-8 details order-2 order-lg-1">
-                    <h3>Impedit facilis occaecati odio neque aperiam sit</h3>
-                    <p class="fst-italic">Eos voluptatibus quo. Odio similique illum id quidem non enim fuga. Qui natus non sunt dicta dolor et. In asperiores velit quaerat perferendis aut</p>
-                    <p>Iure officiis odit rerum. Harum sequi eum illum corrupti culpa veritatis quisquam. Neque necessitatibus illo rerum eum ut. Commodi ipsam minima molestiae sed laboriosam a iste odio. Earum odit nesciunt fugiat sit ullam. Soluta et harum voluptatem optio quae</p>
-                  </div>
-                  <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="assets/img/specials-3.png" alt="" class="img-fluid">
-                  </div>
-                </div>
-              </div>
-              <div class="tab-pane" id="specials-tab-4">
-                <div class="row">
-                  <div class="col-lg-8 details order-2 order-lg-1">
-                    <h3>Fuga dolores inventore laboriosam ut est accusamus laboriosam dolore</h3>
-                    <p class="fst-italic">Totam aperiam accusamus. Repellat consequuntur iure voluptas iure porro quis delectus</p>
-                    <p>Eaque consequuntur consequuntur libero expedita in voluptas. Nostrum ipsam necessitatibus aliquam fugiat debitis quis velit. Eum ex maxime error in consequatur corporis atque. Eligendi asperiores sed qui veritatis aperiam quia a laborum inventore</p>
-                  </div>
-                  <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="assets/img/specials-4.png" alt="" class="img-fluid">
-                  </div>
-                </div>
-              </div>
-              <div class="tab-pane" id="specials-tab-5">
-                <div class="row">
-                  <div class="col-lg-8 details order-2 order-lg-1">
-                    <h3>Est eveniet ipsam sindera pad rone matrelat sando reda</h3>
-                    <p class="fst-italic">Omnis blanditiis saepe eos autem qui sunt debitis porro quia.</p>
-                    <p>Exercitationem nostrum omnis. Ut reiciendis repudiandae minus. Omnis recusandae ut non quam ut quod eius qui. Ipsum quia odit vero atque qui quibusdam amet. Occaecati sed est sint aut vitae molestiae voluptate vel</p>
-                  </div>
-                  <div class="col-lg-4 text-center order-1 order-lg-2">
-                    <img src="assets/img/specials-5.png" alt="" class="img-fluid">
-                  </div>
+                <div class="col-lg-4 text-center order-1 order-lg-2">
+                  <img src="assets/img/specials-1.png" alt="Special 1" class="img-fluid">
                 </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
-
-    </section><!-- /Specials Section -->
-
-    
+    </div>
+  </section>
+</body>
+</html>

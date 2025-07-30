@@ -162,7 +162,7 @@
             }
             
             // Here you would typically send the data to your server
-            alert(`Password has been reset for ${email}`);
+            alert(Password has been reset for ${email});
             
             // In a real application, you would:
             // 1. Validate all fields

@@ -159,7 +159,7 @@ document.getElementById('resetForm').addEventListener('submit', function(e) {
     
     const email = document.getElementById('email').value;
     
-    alert(`Password reset link has been sent to ${email}`);
+    alert(Password reset link has been sent to ${email});
 });
 </script>
 

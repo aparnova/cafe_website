@@ -1350,7 +1350,7 @@ section,
         <ul class="ms-auto">
   <li><a href="homepage.php">Home</a></li>
   <li><a href="about.html">About</a></li>
-  <li><a href="#menu">Menu</a></li>
+  <li><a href="menu.php">Menu</a></li>
   <li><a href="#specials">Gallery</a></li>
   <li><a href="#contact">Contact</a></li>
   <li><a href="#book-a-table">Book Table</a></li>
@@ -1377,7 +1377,7 @@ section,
     
     <div class="page-title-buttons d-flex justify-content-center gap-3 mt-4">
 
-      <a href="#menu" class="btn-our-menu">Our Menu</a>
+      <a href="menu.php" class="btn-our-menu">Our Menu</a>
 
       <a href="#book-a-table" class="btn-order-now">Order Now</a>
     </div>
