@@ -631,7 +631,7 @@
         category: "starters",
         price: 6.75,
         description: "Mushroom caps filled with herbed cream cheese and breadcrumbs",
-        image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "stuffed.jpg"
       },
       {
         id: 6,
@@ -655,7 +655,7 @@
         category: "starters",
         price: 9.95,
         description: "Chilled shrimp served with cocktail sauce",
-        image: "https://images.unsplash.com/photo-1568031813264-d394c5d474b9?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "shrimb.jpg"
       },
       {
         id: 9,
@@ -671,7 +671,7 @@
         category: "starters",
         price: 7.50,
         description: "Fresh mozzarella, tomatoes and basil drizzled with balsamic glaze",
-        image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "salad.jpg"
       },
       
       // Main Course (10 items)
@@ -721,7 +721,7 @@
         category: "main",
         price: 32.95,
         description: "8oz Maine lobster tail with drawn butter",
-        image: "https://images.unsplash.com/photo-1565035015391-516539ab0f5c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "lobster.jpg"
       },
       {
         id: 17,
@@ -745,7 +745,7 @@
         category: "main",
         price: 15.95,
         description: "Breaded eggplant layered with cheese and marinara",
-        image: "https://images.unsplash.com/photo-1572457281644-49b19a1b1a24?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "eggplant.jpg"
       },
       {
         id: 20,
@@ -771,7 +771,7 @@
         category: "desserts",
         price: 7.95,
         description: "Classic vanilla custard with caramelized sugar",
-        image: "https://images.unsplash.com/photo-1558636801-1fbaa1af3a04?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "bruceleee.jpg"
       },
       {
         id: 23,
@@ -811,7 +811,7 @@
         category: "desserts",
         price: 7.25,
         description: "Tart and sweet Florida specialty",
-        image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "key_lime.jpg"
       },
       {
         id: 28,
@@ -819,7 +819,7 @@
         category: "desserts",
         price: 6.95,
         description: "Warm pudding with bourbon sauce",
-        image: "https://images.unsplash.com/photo-1600188769045-bc602cdb2b1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "bread_pudding.jpg"
       },
       {
         id: 29,
@@ -845,7 +845,7 @@
         category: "beverages",
         price: 9.95,
         description: "Glass of premium Cabernet Sauvignon",
-        image: "https://images.unsplash.com/photo-1551218378-a5b0e0b8e7b1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "red_wine.jpg"
       },
       {
         id: 32,
@@ -861,7 +861,7 @@
         category: "beverages",
         price: 6.95,
         description: "Rotating selection of craft brews",
-        image: "https://images.unsplash.com/photo-1513309914637-65c20a5962e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/3660307/pexels-photo-3660307.jpeg"
       },
       {
         id: 34,
@@ -877,7 +877,7 @@
         category: "beverages",
         price: 4.50,
         description: "Homemade with fresh lemons",
-        image: "https://images.unsplash.com/photo-1558643523-f4a30bc8a0ec?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "leomanade.jpg"
       },
       {
         id: 36,
@@ -901,7 +901,7 @@
         category: "beverages",
         price: 8.95,
         description: "Glass of Chardonnay or Sauvignon Blanc",
-        image: "https://images.unsplash.com/photo-1551218378-a5b0e0b8e7b1?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "white_name.jpg"
       },
       {
         id: 39,
@@ -909,7 +909,7 @@
         category: "beverages",
         price: 3.50,
         description: "Imported Italian sparkling water",
-        image: "https://images.unsplash.com/photo-1561043433-aaf687c4cf04?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "sparkiling.jpg"
       },
       {
         id: 40,
@@ -917,7 +917,7 @@
         category: "beverages",
         price: 5.50,
         description: "Daily selection of fresh squeezed juices",
-        image: "https://images.unsplash.com/photo-1603569283847-aa295f0d016a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "juice.jpg"
       }
     ];
 
