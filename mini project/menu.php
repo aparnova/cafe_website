@@ -536,7 +536,7 @@
       <div class="container">
         <div class="logo">
           <img src="img.png" alt="Westley's Resto Cafe">
-          <h1>Westley's Resto Cafe</h1>
+          <h1> Resto Cafe</h1>
         </div>
         <div class="header-cart" id="header-cart">
           <i class="fas fa-shopping-cart header-cart-icon"></i>
