@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About Us - Restaurant Name</title>
+  <title>About Us - Westley's Resto Cafe</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Font & Color Variables */
+    /* Font & Color Variables - Exact copy from menu page */
     :root {
-      --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
       --heading-font: "Playfair Display", sans-serif;
       --nav-font: "Poppins", sans-serif;
       --background-color: #0c0b09;
@@ -18,7 +19,7 @@
       --contrast-color: #0c0b09;
     }
 
-    /* General Styles */
+    /* General Styles - Exact copy from menu page */
     body {
       color: var(--default-color);
       background-color: var(--background-color);
@@ -51,9 +52,53 @@
     }
 
     .section {
-      padding: 80px 0;
+      padding: 60px 0;
     }
 
+    /* Header Styles - Exact copy from menu page */
+    .header {
+      --background-color: rgba(12, 11, 9, 0.61);
+      color: var(--default-color);
+      transition: all 0.5s;
+      z-index: 997;
+      position: fixed;
+      width: 100%;
+      top: 0;
+    }
+
+    .header .branding {
+      background-color: var(--background-color);
+      min-height: 60px;
+      padding: 10px 0;
+      transition: 0.3s;
+      border-bottom: 1px solid var(--background-color);
+    }
+
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .logo {
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .header .logo img {
+      height: 50px;
+      margin-right: 15px;
+    }
+
+    .header .logo h1 {
+      font-size: 24px;
+      margin: 0;
+      color: var(--heading-color);
+      font-family: var(--heading-font);
+    }
+
+    /* Section Title with Underline Animation - Exact copy from menu page */
     .section-title {
       padding-bottom: 60px;
       position: relative;
@@ -83,22 +128,23 @@
 
     .section-title p {
       color: var(--accent-color);
-      margin: 0;
+      margin: 15px 0 0;
       font-size: 36px;
       font-weight: 600;
       font-family: var(--heading-font);
       position: relative;
       display: inline-block;
+      cursor: pointer;
     }
 
     .section-title p::after {
-      content: "";
+      content: '';
       position: absolute;
       width: 0;
       height: 2px;
-      bottom: -5px;
+      background: var(--accent-color);
+      bottom: -10px;
       left: 0;
-      background-color: var(--accent-color);
       transition: width 0.3s ease;
     }
 
@@ -106,7 +152,12 @@
       width: 100%;
     }
 
-    /* About Section */
+    /* Main Content Padding - Matching menu page */
+    .main-content {
+      padding-top: 80px;
+    }
+
+    /* About Section - Using menu page's background approach */
     .about {
       background: url("assets/img/about-bg.jpg") center center;
       background-size: cover;
@@ -126,62 +177,8 @@
 
     .about .container {
       position: relative;
+      z-index: 2;
     }
-
-    .about .content h3 {
-      font-size: 1.75rem;
-      font-weight: 700;
-    }
-
-    .about .content .fst-italic {
-      color: color-mix(in srgb, var(--default-color), var(--contrast-color) 50%);
-      font-style: italic;
-    }
-
-    .about .content ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    .about .content ul li {
-      padding: 10px 0 0 0;
-      display: flex;
-    }
-
-    .about .content ul i {
-      color: var(--accent-color);
-      margin-right: 0.5rem;
-      line-height: 1.2;
-      font-size: 1.25rem;
-    }
-
-    .about .content p:last-child {
-      margin-bottom: 0;
-    }
-
-   /* Video Container Styles */
-.about-video-container {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 30px;
-  overflow: hidden;
-  border: 6px solid color-mix(in srgb, var(--default-color), transparent 80%);
-  border-radius: 5px;
-}
-
-.about-video {
-  width: 100%;
-  max-width: 1000px; /* Adjust this value as needed */
-  height: auto;
-  transition: transform 0.3s;
-}
-
-.about-video:hover {
-  transform: scale(1.03);
-}
 
     /* Why Us Section */
     .why-us {
@@ -311,85 +308,72 @@
       margin-bottom: 0;
     }
 
-    /* Header Styles */
-    .header {
-      background-color: var(--background-color);
-      color: var(--default-color);
-      padding: 15px 0;
-      position: fixed;
+    /* Video Container Styles */
+    .about-video-container {
+      position: relative;
       width: 100%;
-      top: 0;
-      left: 0;
-      z-index: 999;
-      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .header-container {
       display: flex;
-      align-items: center;
       justify-content: center;
-      position: relative;
-      max-width: 1140px;
-      margin: 0 auto;
-      padding: 0 15px;
-    }
-    
-    .logo {
-      position: absolute;
-      left: 15px;
-      display: flex;
       align-items: center;
-    }
-    
-    .logo img {
-      height: 50px;
-      margin-right: 15px;
-    }
-    
-    .logo h1 {
-      font-size: 24px;
-      margin: 0;
-      color: var(--heading-color);
-      font-family: var(--heading-font);
-    }
-    
-    .page-title {
-      font-size: 30px;
-      margin: 0;
-      color: var(--accent-color);
-      font-family: var(--heading-font);
-      position: relative;
-      cursor: pointer;
-    }
-    
-    .page-title::after {
-      content: "";
-      position: absolute;
-      width: 0;
-      height: 2px;
-      bottom: -5px;
-      left: 0;
-      background-color: var(--accent-color);
-      transition: width 0.3s ease;
-    }
-    
-    .page-title:hover::after {
-      width: 100%;
-    }
-    
-    /* Main Content Padding */
-    .main-content {
-      padding-top: 80px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      border: 6px solid color-mix(in srgb, var(--default-color), transparent 80%);
+      border-radius: 5px;
     }
 
-    /* Responsive Adjustments */
+    .about-video {
+      width: 100%;
+      max-width: 1000px;
+      height: auto;
+      transition: transform 0.3s;
+    }
+
+    .about-video:hover {
+      transform: scale(1.03);
+    }
+
+    /* Content Styles */
+    .content h3 {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .content .fst-italic {
+      color: color-mix(in srgb, var(--default-color), var(--contrast-color) 50%);
+      font-style: italic;
+    }
+
+    .content ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .content ul li {
+      padding: 10px 0 0 0;
+      display: flex;
+    }
+
+    .content ul i {
+      color: var(--accent-color);
+      margin-right: 0.5rem;
+      line-height: 1.2;
+      font-size: 1.25rem;
+    }
+
+    .content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Responsive adjustments - Exact copy from menu page with about additions */
     @media (max-width: 992px) {
-      .chefs .chefs-container {
+      .chefs .chefs-container,
+      .why-us .card-container {
         flex-direction: column;
         align-items: center;
       }
       
-      .chefs .member {
+      .chefs .member,
+      .why-us .card-item {
         width: 100%;
         max-width: 400px;
         margin-bottom: 30px;
@@ -397,32 +381,33 @@
     }
 
     @media (max-width: 768px) {
-      .header-container {
-        flex-direction: column;
-        text-align: center;
-      }
-      
-      .logo {
-        position: static;
-        margin-bottom: 15px;
-        justify-content: center;
-      }
-      
-      .section {
+      .about,
+      .why-us,
+      .chefs {
         padding: 60px 0;
+      }
+      
+      .section-title p {
+        font-size: 28px;
+      }
+      
+      .header .logo h1 {
+        font-size: 24px;
       }
     }
   </style>
 </head>
 <body>
 
+  <!-- Header - Exact copy from menu page -->
   <header class="header">
-    <div class="header-container">
-      <a href="homepage.php" class="logo">
-        <img src="img.png" alt="Restaurant Logo">
-        <h1>Westley's Resto Cafe</h1>
-      </a>
-      <h2 class="page-title">About Us</h2>
+    <div class="branding">
+      <div class="container">
+        <div class="logo">
+          <img src="img.png" alt="Westley's Resto Cafe">
+          <h1>Westley's Resto Cafe </h1>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -467,11 +452,11 @@
         <div class="row">
 
           <div class="about-video-container">
-  <video class="about-video" autoplay muted loop playsinline>
-    <source src="cook1.mp4" type="video/mp4">
-    <img src="assets/img/about.jpg" class="img-fluid" alt="Our Restaurant">
-  </video>
-</div>
+            <video class="about-video" autoplay muted loop playsinline>
+              <source src="cook1.mp4" type="video/mp4">
+              <img src="assets/img/about.jpg" class="img-fluid" alt="Our Restaurant">
+            </video>
+          </div>
 
           <div class="col-lg-6 order-2 order-lg-1 content">
             <h3>Our Culinary Journey</h3>

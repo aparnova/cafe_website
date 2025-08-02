@@ -1352,7 +1352,7 @@ section,
   <li><a href="about.html">About</a></li>
   <li><a href="menu.php">Menu</a></li>
   <li><a href="#specials">Gallery</a></li>
-  <li><a href="#contact">Contact</a></li>
+  <li><a href="contact.php">Contact</a></li>
   <li><a href="#book-a-table">Book Table</a></li>
   <li><a href="login.php">Login</a></li>
 </ul>
