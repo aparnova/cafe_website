@@ -540,7 +540,6 @@
         </div>
         <div class="header-cart" id="header-cart">
           <i class="fas fa-shopping-cart header-cart-icon"></i>
-          
           <span class="header-cart-count" id="header-cart-count">0</span>
         </div>
       </div>
@@ -579,7 +578,7 @@
       <!-- Cart items will be added here -->
     </div>
     <div class="cart-total">
-      Total: $<span id="cart-total">0.00</span>
+      Total: ₹<span id="cart-total">0</span>
     </div>
     <button class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
   </div>
@@ -597,81 +596,81 @@
         id: 1,
         name: "Lobster Bisque",
         category: "starters",
-        price: 5.95,
+        price: 900 ,
         description: "Creamy soup with fresh lobster meat",
-        image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/17598231/pexels-photo-17598231.jpeg"
       },
       {
         id: 2,
         name: "Bread Barrel",
         category: "starters",
-        price: 6.95,
+        price: 200,
         description: "Freshly baked artisan bread assortment",
-        image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg"
       },
       {
         id: 3,
         name: "Crab Cake",
         category: "starters",
-        price: 7.95,
+        price: 700,
         description: "Maryland-style crab cakes with remoulade",
-        image: "https://images.unsplash.com/photo-1559847844-5315695dadae?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/17321100/pexels-photo-17321100.jpeg"
       },
       {
         id: 4,
         name: "Bruschetta",
         category: "starters",
-        price: 5.50,
+        price: 350,
         description: "Grilled bread rubbed with garlic and topped with olive oil, salt and tomato",
-        image: "https://images.unsplash.com/photo-1529563021893-cc83c992d75d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/5150304/pexels-photo-5150304.jpeg"
       },
       {
         id: 5,
         name: "Stuffed Mushrooms",
         category: "starters",
-        price: 6.75,
+        price: 400,
         description: "Mushroom caps filled with herbed cream cheese and breadcrumbs",
-        image: "stuffed.jpg"
+        image: "https://images.pexels.com/photos/9219091/pexels-photo-9219091.jpeg"
       },
       {
         id: 6,
         name: "Calamari",
         category: "starters",
-        price: 8.50,
+        price: 600,
         description: "Crispy fried squid served with marinara sauce",
-        image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/15801007/pexels-photo-15801007.jpeg"
       },
       {
         id: 7,
         name: "Spinach Artichoke Dip",
         category: "starters",
-        price: 7.25,
+        price: 500,
         description: "Creamy blend of spinach, artichokes and cheeses served with tortilla chips",
-        image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/6544374/pexels-photo-6544374.jpeg"
       },
       {
         id: 8,
         name: "Shrimp Cocktail",
         category: "starters",
-        price: 9.95,
+        price: 650,
         description: "Chilled shrimp served with cocktail sauce",
-        image: "shrimb.jpg"
+        image:"https://images.pexels.com/photos/5192396/pexels-photo-5192396.jpeg"
       },
       {
         id: 9,
         name: "Chicken Wings",
         category: "starters",
-        price: 8.95,
+        price: 300,
         description: "Crispy wings tossed in your choice of sauce",
-        image: "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/11299734/pexels-photo-11299734.jpeg"
       },
       {
         id: 10,
         name: "Caprese Salad",
         category: "starters",
-        price: 7.50,
-        description: "Fresh mozzarella, tomatoes and basil drizzled with balsamic glaze",
-        image: "salad.jpg"
+        price: 400,
+        description: "Fresh mozzarella, tomatoes, basil, and balsamic glaze",
+        image: "https://images.pexels.com/photos/19295809/pexels-photo-19295809.jpeg"
       },
       
       // Main Course (10 items)
@@ -679,81 +678,81 @@
         id: 11,
         name: "Grilled Salmon",
         category: "main",
-        price: 18.95,
+        price: 1000,
         description: "Fresh salmon with lemon butter sauce",
-        image: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/262959/pexels-photo-262959.jpeg"
       },
       {
         id: 12,
         name: "Beef Tenderloin",
         category: "main",
-        price: 24.95,
+        price: 1300,
         description: "8oz premium cut with roasted vegetables",
-        image: "https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/7627422/pexels-photo-7627422.jpeg"
       },
       {
         id: 13,
         name: "Mushroom Risotto",
         category: "main",
-        price: 16.95,
+        price: 550,
         description: "Creamy arborio rice with wild mushrooms",
-        image: "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/7883782/pexels-photo-7883782.jpeg"
       },
       {
         id: 14,
         name: "Chicken Parmesan",
         category: "main",
-        price: 17.50,
+        price: 600,
         description: "Breaded chicken topped with marinara and mozzarella",
-        image: "https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/29285458/pexels-photo-29285458.jpeg"
       },
       {
         id: 15,
         name: "Filet Mignon",
         category: "main",
-        price: 29.95,
+        price: 1500,
         description: "8oz center-cut filet with red wine reduction",
-        image: "https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/16064370/pexels-photo-16064370.jpeg"
       },
       {
         id: 16,
         name: "Lobster Tail",
         category: "main",
-        price: 32.95,
+        price: 1200,
         description: "8oz Maine lobster tail with drawn butter",
-        image: "lobster.jpg"
+        image: "https://images.pexels.com/photos/18675295/pexels-photo-18675295.jpeg"
       },
       {
         id: 17,
         name: "Vegetable Paella",
         category: "main",
-        price: 16.50,
+        price: 600,
         description: "Spanish rice with saffron and seasonal vegetables",
-        image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/31710628/pexels-photo-31710628.jpeg"
       },
       {
         id: 18,
         name: "Ribeye Steak",
         category: "main",
-        price: 26.95,
+        price: 1400,
         description: "12oz prime ribeye with garlic mashed potatoes",
-        image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/16444386/pexels-photo-16444386.jpeg"
       },
       {
         id: 19,
         name: "Eggplant Parmesan",
         category: "main",
-        price: 15.95,
+        price: 500,
         description: "Breaded eggplant layered with cheese and marinara",
-        image: "eggplant.jpg"
+        image: "https://images.pexels.com/photos/1527602/pexels-photo-1527602.jpeg"
       },
       {
         id: 20,
         name: "Grilled Chicken",
         category: "main",
-        price: 16.95,
+        price: 550,
         description: "Herb-marinated chicken breast with seasonal vegetables",
-        image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/2233729/pexels-photo-2233729.jpeg"
       },
       
       // Desserts (10 items)
@@ -761,81 +760,81 @@
         id: 21,
         name: "Chocolate Lava Cake",
         category: "desserts",
-        price: 8.95,
+        price: 350,
         description: "Warm chocolate cake with molten center",
-        image: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/5163948/pexels-photo-5163948.jpeg"
       },
       {
         id: 22,
-        name: "Crème Brûlée",
+        name: "Creme Brulee",
         category: "desserts",
-        price: 7.95,
+        price: 450,
         description: "Classic vanilla custard with caramelized sugar",
-        image: "bruceleee.jpg"
+        image: "https://images.pexels.com/photos/18976997/pexels-photo-18976997.jpeg"
       },
       {
         id: 23,
         name: "Tiramisu",
         category: "desserts",
-        price: 8.50,
+        price: 500,
         description: "Coffee-flavored Italian dessert with mascarpone",
-        image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/28848709/pexels-photo-28848709.jpeg"
       },
       {
         id: 24,
         name: "Cheesecake",
         category: "desserts",
-        price: 7.95,
+        price: 450,
         description: "New York style with berry compote",
-        image: "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/27721659/pexels-photo-27721659.jpeg"
       },
       {
         id: 25,
         name: "Apple Pie",
         category: "desserts",
-        price: 6.95,
+        price: 350,
         description: "Classic American pie with vanilla ice cream",
-        image: "https://images.unsplash.com/photo-1562007908-859b4ba9a1a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/31020416/pexels-photo-31020416.jpeg"
       },
       {
         id: 26,
         name: "Chocolate Mousse",
         category: "desserts",
-        price: 7.50,
+        price: 300,
         description: "Light and airy chocolate dessert",
-        image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/15023073/pexels-photo-15023073.jpeg"
       },
       {
         id: 27,
         name: "Key Lime Pie",
         category: "desserts",
-        price: 7.25,
+        price: 400,
         description: "Tart and sweet Florida specialty",
-        image: "key_lime.jpg"
+        image: "https://images.pexels.com/photos/8330845/pexels-photo-8330845.jpeg"
       },
       {
         id: 28,
         name: "Bread Pudding",
         category: "desserts",
-        price: 6.95,
+        price: 350,
         description: "Warm pudding with bourbon sauce",
-        image: "bread_pudding.jpg"
+        image: "https://images.pexels.com/photos/28097283/pexels-photo-28097283.jpeg"
       },
       {
         id: 29,
         name: "Ice Cream Sundae",
         category: "desserts",
-        price: 6.50,
+        price: 300,
         description: "Vanilla ice cream with hot fudge and toppings",
-        image: "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/9501344/pexels-photo-9501344.jpeg"
       },
       {
         id: 30,
         name: "Fruit Tart",
         category: "desserts",
-        price: 7.95,
+        price: 400,
         description: "Buttery crust with pastry cream and fresh fruit",
-        image: "https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/461431/pexels-photo-461431.jpeg"
       },
       
       // Beverages (10 items)
@@ -843,23 +842,23 @@
         id: 31,
         name: "Red Wine",
         category: "beverages",
-        price: 9.95,
+        price: 600,
         description: "Glass of premium Cabernet Sauvignon",
-        image: "red_wine.jpg"
+        image: "https://images.pexels.com/photos/95960/pexels-photo-95960.jpeg"
       },
       {
         id: 32,
         name: "Craft Cocktail",
         category: "beverages",
-        price: 12.95,
+        price: 500,
         description: "Seasonal ingredients, house-made syrups",
-        image: "https://images.unsplash.com/photo-1551751299-1b51cab2694c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/8084719/pexels-photo-8084719.jpeg"
       },
       {
         id: 33,
         name: "Local Beer",
         category: "beverages",
-        price: 6.95,
+        price: 250,
         description: "Rotating selection of craft brews",
         image: "https://images.pexels.com/photos/3660307/pexels-photo-3660307.jpeg"
       },
@@ -867,57 +866,57 @@
         id: 34,
         name: "Iced Tea",
         category: "beverages",
-        price: 3.50,
+        price: 150,
         description: "Freshly brewed sweet or unsweetened",
-        image: "https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/16826278/pexels-photo-16826278.jpeg"
       },
       {
         id: 35,
         name: "Lemonade",
         category: "beverages",
-        price: 4.50,
+        price: 130,
         description: "Homemade with fresh lemons",
-        image: "leomanade.jpg"
+        image: "https://images.pexels.com/photos/31000076/pexels-photo-31000076.jpeg"
       },
       {
         id: 36,
         name: "Espresso",
         category: "beverages",
-        price: 3.95,
+        price: 120,
         description: "Single or double shot",
-        image: "lem"
+        image: "https://images.pexels.com/photos/32339281/pexels-photo-32339281.jpeg"
       },
       {
         id: 37,
         name: "Cappuccino",
         category: "beverages",
-        price: 4.95,
+        price: 180,
         description: "Espresso with steamed milk foam",
-        image: "https://images.unsplash.com/photo-1534778101976-62847782c213?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60"
+        image: "https://images.pexels.com/photos/8488379/pexels-photo-8488379.jpeg"
       },
       {
         id: 38,
         name: "White Wine",
         category: "beverages",
-        price: 8.95,
+        price: 600,
         description: "Glass of Chardonnay or Sauvignon Blanc",
-        image: "white_name.jpg"
+        image: "https://images.pexels.com/photos/11238673/pexels-photo-11238673.jpeg"
       },
       {
         id: 39,
         name: "Sparkling Water",
         category: "beverages",
-        price: 3.50,
+        price: 150,
         description: "Imported Italian sparkling water",
-        image: "sparkiling.jpg"
+        image: "https://images.pexels.com/photos/26859058/pexels-photo-26859058.jpeg"
       },
       {
         id: 40,
         name: "Fresh Juice",
         category: "beverages",
-        price: 5.50,
+        price: 180,
         description: "Daily selection of fresh squeezed juices",
-        image: "juice.jpg"
+        image: "https://images.pexels.com/photos/11009201/pexels-photo-11009201.jpeg"
       }
     ];
 
@@ -959,7 +958,7 @@
           <div class="menu-item-content">
             <div class="menu-item-title">
               <span>${item.name}</span>
-              <span class="menu-item-price">$${item.price.toFixed(2)}</span>
+              <span class="menu-item-price">₹${item.price}</span>
             </div>
             <p class="menu-item-desc">${item.description}</p>
             <div class="menu-item-actions">
@@ -1087,7 +1086,7 @@
       
       if (cart.length === 0) {
         cartItems.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Your cart is empty</p>';
-        cartTotal.textContent = '0.00';
+        cartTotal.textContent = '0';
         headerCartCount.textContent = '0';
         return;
       }
@@ -1105,13 +1104,13 @@
           <button class="cart-item-remove" data-id="${item.id}">&times;</button>
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.name}</h4>
-            <div class="cart-item-price">$${item.price.toFixed(2)} × ${item.quantity}</div>
+            <div class="cart-item-price">₹${item.price} × ${item.quantity}</div>
           </div>
         `;
         cartItems.appendChild(cartItem);
       });
       
-      cartTotal.textContent = total.toFixed(2);
+      cartTotal.textContent = total;
       headerCartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
     }
 
