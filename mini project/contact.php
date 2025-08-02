@@ -1,3 +1,82 @@
+<?php
+// Database connection and form processing at the top of the file
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "westleys_resto_cafe";
+
+// Initialize variables
+$name = $email = $phone = $subject = $message = "";
+$errors = [];
+$success = false;
+
+// Process form when submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+    
+    // Validate and sanitize inputs
+    $name = sanitizeInput($_POST["name"]);
+    $email = sanitizeInput($_POST["email"]);
+    $phone = sanitizeInput($_POST["phone"]);
+    $subject = sanitizeInput($_POST["subject"]);
+    $message = sanitizeInput($_POST["message"]);
+    
+    // Validate inputs
+    if (empty($name)) {
+        $errors[] = "Name is required";
+    }
+    
+    if (empty($email)) {
+        $errors[] = "Email is required";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Invalid email format";
+    }
+    
+    if (empty($phone)) {
+        $errors[] = "Phone number is required";
+    }
+    
+    if (empty($subject)) {
+        $errors[] = "Subject is required";
+    }
+    
+    if (empty($message)) {
+        $errors[] = "Message is required";
+    }
+    
+    // If no errors, insert into database
+    if (empty($errors)) {
+        $stmt = $conn->prepare("INSERT INTO contact_submissions (name, email, phone, subject, message) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssss", $name, $email, $phone, $subject, $message);
+        
+        if ($stmt->execute()) {
+            $success = true;
+            // Clear form fields
+            $name = $email = $phone = $subject = $message = "";
+        } else {
+            $errors[] = "Error submitting form. Please try again later.";
+        }
+        
+        $stmt->close();
+    }
+    
+    $conn->close();
+}
+
+// Function to sanitize input
+function sanitizeInput($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -410,7 +489,7 @@
       transform: translateX(5px);
     }
 
-    /* Responsive adjustments - Exact copy from menu page with contact additions */
+    /* Responsive adjustments */
     @media (max-width: 992px) {
       .contact-table,
       .contact-row,
@@ -466,23 +545,80 @@
         font-size: 28px;
       }
     }
+
+    /* Form message styles */
+    .form-message {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+
+    .form-message.success {
+      background: rgba(205, 164, 94, 0.2);
+      border-left: 4px solid var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .form-message.error {
+      background: rgba(220, 53, 69, 0.1);
+      border-left: 4px solid #dc3545;
+      color: #dc3545;
+    }
+
+    .form-message ul {
+      margin: 10px 0 0 20px;
+      padding: 0;
+    }
+
+    /* Notification styles */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background-color: var(--accent-color);
+      color: var(--contrast-color);
+      border-radius: 4px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      z-index: 9999;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification i {
+      font-size: 20px;
+    }
   </style>
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body>
 
-  <!-- Header - Exact copy from menu page -->
+  <!-- Header -->
   <header class="header">
     <div class="branding">
       <div class="container">
         <div class="logo">
           <img src="img.png" alt="Westley's Resto Cafe">
-          <h1>Westley's Resto Cafe </h1>
+          <h1>Westley's Resto Cafe</h1>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Notification -->
+  <div id="notification" class="notification">
+    <i class="bi bi-check-circle-fill"></i>
+    <span>Your message has been sent successfully!</span>
+  </div>
 
   <main class="main-content">
     <!-- Contact Section -->
@@ -540,30 +676,49 @@
             <div class="contact-form-cell">
               <div class="contact-form">
                 <h3>Send Us a Message</h3>
-                <form action="forms/contact.php" method="post">
+                
+                <?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
+                  <?php if ($success): ?>
+                    <div class="form-message success">
+                      <i class="bi bi-check-circle-fill"></i> Your message has been sent successfully!
+                    </div>
+                  <?php elseif (!empty($errors)): ?>
+                    <div class="form-message error">
+                      <i class="bi bi-exclamation-triangle-fill"></i> 
+                      <strong>Error submitting form:</strong>
+                      <ul>
+                        <?php foreach ($errors as $error): ?>
+                          <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                      </ul>
+                    </div>
+                  <?php endif; ?>
+                <?php endif; ?>
+                
+                <form method="post" action="" id="contactForm">
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="text" class="form-control" name="name" placeholder="Your Name" required autocomplete="off">
+                      <input type="text" class="form-control" name="name" placeholder="Your Name" required autocomplete="off" value="<?php echo htmlspecialchars($name); ?>">
                     </div>
                     <div class="form-group half-width">
-                      <input type="email" class="form-control" name="email" placeholder="Your Email" required autocomplete="off">
+                      <input type="email" class="form-control" name="email" placeholder="Your Email" required autocomplete="off" value="<?php echo htmlspecialchars($email); ?>">
                     </div>
                   </div>
                   
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="tel" class="form-control" name="phone" placeholder="Your Phone" required autocomplete="off">
+                      <input type="tel" class="form-control" name="phone" placeholder="Your Phone" required autocomplete="off" value="<?php echo htmlspecialchars($phone); ?>">
                     </div>
                     <div class="form-group half-width">
-                      <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off">
+                      <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off" value="<?php echo htmlspecialchars($subject); ?>">
                     </div>
                   </div>
                   
                   <div class="form-group">
-                    <textarea class="form-control" name="message" placeholder="Your Message" required></textarea>
+                    <textarea class="form-control" name="message" placeholder="Your Message" required><?php echo htmlspecialchars($message); ?></textarea>
                   </div><br>
                   
-                  <button type="submit" class="submit-btn">
+                  <button type="submit" class="submit-btn" id="submitBtn">
                     <span class="btn-text">SEND MESSAGE</span>
                     <i class="bi bi-send icon"></i>
                   </button>
@@ -575,5 +730,43 @@
       </div>
     </section><!-- /Contact Section -->
   </main>
+
+  <script>
+    // JavaScript to enhance form submission
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const btnText = submitBtn.querySelector('.btn-text');
+      
+      // Show loading state
+      btnText.textContent = 'SENDING...';
+      submitBtn.disabled = true;
+      
+      // If the form is valid and being submitted
+      if (this.checkValidity()) {
+        // After form submission, show notification if successful
+        <?php if ($success): ?>
+          showNotification();
+        <?php endif; ?>
+      }
+    });
+
+    // Function to show notification
+    function showNotification() {
+      const notification = document.getElementById('notification');
+      notification.classList.add('show');
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Show notification if form was successfully submitted
+    <?php if ($success): ?>
+      document.addEventListener('DOMContentLoaded', function() {
+        showNotification();
+      });
+    <?php endif; ?>
+  </script>
 </body>
 </html>
