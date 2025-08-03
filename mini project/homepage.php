@@ -494,7 +494,7 @@ h6 {
     display: block;
   }
 }
-.navmenu ul li a[href="#book-a-table"],
+.navmenu ul li a[href="table_reservation.php"],
 .navmenu ul li a[href="login.php"] {
   border: 1px solid var(--accent-color);
   border-radius: 50px;
@@ -504,7 +504,7 @@ h6 {
   font-size: 14px;
 }
 
-.navmenu ul li a[href="#book-a-table"]:hover,
+.navmenu ul li a[href="table_reservation.php"]:hover,
 .navmenu ul li a[href="login.php"]:hover {
   background-color: var(--accent-color);
   color: var(--default-color);
@@ -1353,7 +1353,7 @@ section,
   <li><a href="menu.php">Menu</a></li>
   <li><a href="#specials">Gallery</a></li>
   <li><a href="contact.php">Contact</a></li>
-  <li><a href="#book-a-table">Book Table</a></li>
+  <li><a href="table_reservation.php">Book Table</a></li>
   <li><a href="login.php">Login</a></li>
 </ul>
 
@@ -1379,7 +1379,7 @@ section,
 
       <a href="menu.php" class="btn-our-menu">Our Menu</a>
 
-      <a href="#book-a-table" class="btn-order-now">Order Now</a>
+      <a href="table_reservation.php" class="btn-order-now">Order Now</a>
     </div>
   </div>
 </div><!-- End Page Title -->
