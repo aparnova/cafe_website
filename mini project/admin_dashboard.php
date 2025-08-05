@@ -428,7 +428,7 @@
   <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
   <a href="view_reservations.php"><i class="fas fa-calendar-check"></i> <span class="menu-text">Reservations</span></a>
   <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
-  <a href="logout.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
 </div>
 
 <button class="toggle-sidebar">
