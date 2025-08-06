@@ -555,7 +555,7 @@ $_SESSION['form_token'] = $form_token;
 
       function updateStepDisplay() {
         steps.forEach(step => step.classList.remove('active'));
-        document.querySelector(.form-step[data-step="${currentStep}"])?.classList.add('active');
+        document.querySelector(`.form-step[data-step="${currentStep}"]`)?.classList.add('active');
         
         progressSteps.forEach(step => {
           const stepNum = parseInt(step.dataset.step);
@@ -577,7 +577,7 @@ $_SESSION['form_token'] = $form_token;
 
         const time = document.getElementById('time').value;
         const ampm = document.querySelector('select[name="time_ampm"]').value;
-        document.getElementById('confirm-time').textContent = time ? ${formatTimeDisplay(time)} ${ampm} : '';
+        document.getElementById('confirm-time').textContent = time ? `${formatTimeDisplay(time)} ${ampm}` : '';
 
         document.getElementById('confirm-people').textContent = document.getElementById('people').value;
         document.getElementById('confirm-message').textContent = document.getElementById('message').value || 'None';
@@ -589,7 +589,7 @@ $_SESSION['form_token'] = $form_token;
         let hours = parseInt(hh, 10);
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12 || 12;
-        return ${hours}:${mm || '00'};
+        return `${hours}:${mm || '00'}`;
       }
 
       function showError(message) {
