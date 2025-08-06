@@ -33,7 +33,7 @@
 
     .sidebar {
       position: fixed;
-      width: 250px;
+      width: 275px;
       height: 100vh;
       background: var(--primary);
       color: #fff;
@@ -52,12 +52,7 @@
     }
 
     .sidebar-collapsed h2 {
-      font-size: 0;
-    }
-
-    .sidebar-collapsed h2::after {
-      content: "WR";
-      font-size: 22px;
+      display: none;
     }
 
     .sidebar h2 {
@@ -109,13 +104,13 @@
 
     .toggle-sidebar {
       position: fixed;
-      top: 20px;
-      left: 210px;
+      top: 10px;
+      left: 250px;
       background: var(--accent);
       color: white;
       border: none;
-      width: 30px;
-      height: 30px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -153,6 +148,7 @@
       color: var(--primary);
       margin: 0;
       position: relative;
+      cursor: pointer;
     }
 
     .header h1::after {
@@ -160,15 +156,14 @@
       position: absolute;
       bottom: -10px;
       left: 0;
-      width: 50px;
+      width: 0;
       height: 3px;
       background: var(--accent);
+      transition: width 0.3s ease;
     }
 
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
+    .header h1:hover::after {
+      width: 100%;
     }
 
     .user-avatar {
@@ -207,6 +202,7 @@
       position: relative;
       overflow: hidden;
       border-top: 3px solid var(--accent);
+      cursor: pointer;
     }
 
     .card:hover {
@@ -375,12 +371,7 @@
       }
       
       .sidebar h2 {
-        font-size: 0;
-      }
-      
-      .sidebar h2::after {
-        content: "WR";
-        font-size: 22px;
+        display: none;
       }
       
       .menu-text {
@@ -438,9 +429,7 @@
 <div class="main">
   <div class="header">
     <h1>Admin Dashboard</h1>
-    <div class="user-info">
-      <div class="user-avatar">A</div>
-    </div>
+    
   </div>
 
   <div class="stats-container">
@@ -467,31 +456,31 @@
   </div>
 
   <div class="card-container">
-    <div class="card animate-fade delay-1">
+    <div class="card animate-fade delay-1" onclick="window.location.href='view_customers.php'">
       <div class="card-icon"><i class="fas fa-users"></i></div>
       <h3>Customer Details</h3>
       <p>View and manage all customer accounts and information</p>
       <a href="view_customers.php">Manage Customers</a>
     </div>
-    <div class="card animate-fade delay-2">
+    <div class="card animate-fade delay-2" onclick="window.location.href='manage_menu.php'">
       <div class="card-icon"><i class="fas fa-utensils"></i></div>
       <h3>Menu Management</h3>
       <p>Add, edit or remove items from your restaurant menu</p>
       <a href="manage_menu.php">Edit Menu</a>
     </div>
-    <div class="card animate-fade delay-3">
+    <div class="card animate-fade delay-3" onclick="window.location.href='view_orders.php'">
       <div class="card-icon"><i class="fas fa-receipt"></i></div>
       <h3>Online Orders</h3>
       <p>View and assign delivery orders to your staff</p>
       <a href="view_orders.php">View Orders</a>
     </div>
-    <div class="card animate-fade delay-4">
+    <div class="card animate-fade delay-4" onclick="window.location.href='view_reservations.php'">
       <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
       <h3>Table Reservations</h3>
       <p>Manage upcoming table reservations and bookings</p>
       <a href="view_reservations.php">Check Reservations</a>
     </div>
-    <div class="card animate-fade delay-5">
+    <div class="card animate-fade delay-5" onclick="window.location.href='view_messages.php'">
       <div class="card-icon"><i class="fas fa-envelope"></i></div>
       <h3>Customer Messages</h3>
       <p>Respond to customer inquiries and feedback</p>
