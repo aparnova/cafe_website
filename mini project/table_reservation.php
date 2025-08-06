@@ -15,7 +15,7 @@ if ($conn->connect_error) {
 
 // Helper: generate unique booking id (8 chars alphanumeric)
 function generateBookingId($conn) {
-    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // avoid ambiguous chars
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
     do {
         $id = '';
         for ($i = 0; $i < 8; $i++) {
