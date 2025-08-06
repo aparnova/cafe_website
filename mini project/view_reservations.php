@@ -1,233 +1,298 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once 'db.php'; // make sure this sets up $conn (mysqli)
 
-// --- Basic note: protect this page with authentication in production ---
-// For example, check if $_SESSION['is_admin'] is set. Here we assume admin access.
-
-//
 // CSRF token for status update
-//
 if (empty($_SESSION['admin_token'])) {
     $_SESSION['admin_token'] = bin2hex(random_bytes(24));
 }
 $admin_token = $_SESSION['admin_token'];
 
-// Handle POST: update status (non-AJAX)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
-    // Simple CSRF check
-    $token = $_POST['admin_token'] ?? '';
-    if (!hash_equals($_SESSION['admin_token'], $token)) {
-        $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Invalid request token.'];
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-
-    $booking_id = trim($_POST['booking_id'] ?? '');
-    $new_status = trim($_POST['status'] ?? '');
-
-    $allowed = ['pending', 'confirmed', 'cancelled'];
-    if (empty($booking_id) || !in_array($new_status, $allowed, true)) {
-        $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Invalid input.'];
-        header("Location: " . $_SERVER['PHP_SELF']);
-        exit;
-    }
-
-    // Update using prepared statement
-    $stmt = $conn->prepare("UPDATE reservations SET status = ? WHERE booking_id = ? LIMIT 1");
-    if ($stmt) {
-        $stmt->bind_param("ss", $new_status, $booking_id);
-        if ($stmt->execute()) {
-            $_SESSION['admin_notice'] = ['type' => 'success', 'text' => "Status updated for $booking_id."];
-        } else {
-            $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Database error: ' . $stmt->error];
+// Handle status updates
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action']) && $_POST['action'] === 'update_status') {
+        // CSRF check
+        $token = $_POST['admin_token'] ?? '';
+        if (!hash_equals($_SESSION['admin_token'], $token)) {
+            $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Invalid request token.'];
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
         }
-        $stmt->close();
-    } else {
-        $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Prepare statement failed: ' . $conn->error];
-    }
 
-    // PRG: redirect back to avoid resubmission
+        $reservation_id = intval($_POST['reservation_id'] ?? 0);
+        $new_status = trim($_POST['status'] ?? '');
+
+        if ($reservation_id <= 0 || !in_array($new_status, ['pending', 'confirmed', 'cancelled'], true)) {
+            $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Invalid input.'];
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
+        // Update status in database
+        $stmt = $conn->prepare("UPDATE reservations SET status = ? WHERE id = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param("si", $new_status, $reservation_id);
+            if ($stmt->execute()) {
+                $_SESSION['admin_notice'] = ['type' => 'success', 'text' => "Status updated for reservation #$reservation_id."];
+            } else {
+                $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Database error: ' . $stmt->error];
+            }
+            $stmt->close();
+        } else {
+            $_SESSION['admin_notice'] = ['type' => 'error', 'text' => 'Prepare statement failed: ' . $conn->error];
+        }
+    }
+    
     header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
 
-// Fetch reservations (latest first)
-$limit = 100; // tune as needed, or add pagination
-$stmt = $conn->prepare("SELECT id, name, email, phone, date, time, people, message, booking_id, status, created_at FROM reservations ORDER BY created_at DESC LIMIT ?");
-$stmt->bind_param("i", $limit);
+// Fetch reservations (latest first) - limit to 200 for safety
+$stmt = $conn->prepare("SELECT id, booking_id, name, email, phone, date, time, people, message, created_at, status FROM reservations ORDER BY created_at DESC LIMIT 200");
+if (!$stmt) {
+    die("DB prepare failed: " . $conn->error);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 $reservations = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
-
-// mapping status -> display message
-function status_text($status) {
-    if ($status === 'confirmed') return 'Your booking is accepted';
-    if ($status === 'cancelled') return 'Sorry, your booking was not accepted';
-    return 'Pending admin approval';
-}
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Admin Dashboard — Reservations</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; background:#f4f4f6; color:#111; padding:20px; }
-    .wrap { max-width:1200px; margin:0 auto; }
-    h1 { margin-bottom:10px; }
-    .notice { padding:10px 14px; border-radius:6px; margin-bottom:12px; }
-    .success { background:#e6ffef; border:1px solid #8fe7b6; color:#0a6b36; }
-    .error { background:#ffecec; border:1px solid #f1a3a3; color:#7a1b1b; }
-    table { width:100%; border-collapse:collapse; background:white; border-radius:6px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
-    th, td { padding:10px 12px; border-bottom:1px solid #eee; text-align:left; font-size:14px; vertical-align:middle; }
-    th { background:#fafafa; font-weight:600; }
-    tr:last-child td { border-bottom:none; }
-    .small { font-size:12px; color:#666; }
-    .controls { display:flex; gap:8px; align-items:center; }
-    .btn { padding:8px 12px; border-radius:6px; border:1px solid #bbb; background:#fff; cursor:pointer; font-size:13px; }
-    .btn-primary { background:#2e8b57; color:white; border-color:#2e8b57; }
-    .btn-danger { background:#d9534f; color:white; border-color:#d9534f; }
-    select { padding:6px 8px; border-radius:6px; }
-    .auto-refresh { margin-left:8px; display:inline-flex; align-items:center; gap:6px; }
-    .meta { margin-bottom:10px; color:#444; }
-    .booking-id { font-family:monospace; background:#f4f4f6; padding:3px 6px; border-radius:4px; font-size:13px; }
-    .status-badge { font-size:13px; padding:6px 8px; border-radius:6px; display:inline-block; color:#fff; }
-    .s-pending { background:#f0ad4e; }
-    .s-confirmed { background:#28a745; }
-    .s-cancelled { background:#d9534f; }
-    .message { white-space:pre-wrap; max-width:320px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>View Reservations</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+:root{
+  --primary:#2d3748; --light:#f7fafc; --lighter:#fff;
+  --border:#e2e8f0; --radius:.375rem; --shadow:0 1px 3px rgba(0,0,0,.08);
+  --success:#38a169; --danger:#e53e3e; --warning:#dd6b20;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+*{box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--light);color:var(--primary);padding:2rem}
+.container{max-width:1200px;margin:0 auto}
+.header{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;position:relative}
+.header h1{font-size:1.8rem;margin-bottom:1rem;animation:fadeIn 0.5s ease-out;text-align:center}
+.header-actions{display:flex;gap:1rem;align-items:center}
+.card{background:var(--lighter);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transform:translateY(0);transition:var(--transition)}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.1)}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--primary);color:#fff;padding:0.75rem;text-align:left;font-size:.85rem}
+td{padding:0.75rem;border-bottom:1px solid var(--border);vertical-align:top;font-size:.9rem;transition:var(--transition)}
+tr{transition:var(--transition)}
+tr:hover{transform:translateX(5px)}
+tr:hover td{background:rgba(237,242,247,0.7)}
+.status{display:inline-block;padding:.25rem .5rem;border-radius:var(--radius);font-size:.75rem;text-transform:capitalize;transition:var(--transition)}
+.status:hover{transform:scale(1.05);box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+.status-pending{background:rgba(221,107,32,0.1);color:var(--warning)}
+.status-confirmed{background:rgba(56,161,105,0.1);color:var(--success)}
+.status-cancelled{background:rgba(229,62,62,0.1);color:var(--danger)}
+.form-inline{display:flex;gap:.5rem;align-items:center}
+select{padding:.4rem;border-radius:var(--radius);border:1px solid var(--border);min-width:130px;transition:var(--transition)}
+select:focus{outline:none;box-shadow:0 0 0 2px rgba(66,153,225,0.5);transform:scale(1.02)}
+.btn{padding:.45rem .75rem;border-radius:var(--radius);border:none;cursor:pointer;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;gap:0.5rem}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
+.btn:active{transform:translateY(0)}
+.btn-sm{font-size:.8rem;padding:.3rem .5rem}
+.btn-update{background:#2b6cb0;color:#fff}
+.btn-update:hover{background:#2c5282}
+.btn-refresh{background:#4a5568;color:#fff}
+.btn-refresh:hover{background:#2d3748}
+.note{padding:0.85rem;margin-bottom:1rem;border-radius:var(--radius);animation:fadeIn 0.5s ease-out}
+.note.success{background:rgba(56,161,105,0.08);border-left:4px solid var(--success);color:var(--success)}
+.note.error{background:rgba(229,62,62,0.06);border-left:4px solid var(--danger);color:var(--danger)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.loading{animation:pulse 1.5s infinite}
+.spin{animation:spin 1s linear infinite}
+.refresh-countdown{position:absolute;right:0;top:0;background:rgba(74,85,104,0.1);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;color:var(--primary)}
+@media (max-width:768px){body{padding:1rem}th,td{padding:.5rem}.header-actions{flex-direction:column;gap:0.5rem}.refresh-countdown{position:static;margin-top:0.5rem}}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Reservations — Admin</h1>
-
-    <div class="meta">
-      Showing latest <?php echo htmlspecialchars($limit); ?> reservations.
-      <label class="auto-refresh">
-        <input type="checkbox" id="autoRefresh" checked /> Auto refresh (every 8s)
-      </label>
-      <button class="btn" onclick="location.reload()">Refresh now</button>
+<div class="container">
+  <div class="header">
+    <h1>Reservations Management</h1>
+    <div class="header-actions">
+      <button id="refreshBtn" class="btn btn-refresh">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+      <div id="refreshCountdown" class="refresh-countdown">Refreshing in 8s</div>
     </div>
+  </div>
 
-    <?php if (!empty($_SESSION['admin_notice'])): 
-        $n = $_SESSION['admin_notice']; 
-        $cls = ($n['type'] === 'success') ? 'success' : 'error';
-    ?>
-      <div class="notice <?php echo $cls; ?>"><?php echo htmlspecialchars($n['text']); ?></div>
-    <?php unset($_SESSION['admin_notice']); endif; ?>
+  <?php if (!empty($_SESSION['admin_notice'])):
+    $n = $_SESSION['admin_notice'];
+    $cls = ($n['type'] === 'success') ? 'success' : 'error';
+  ?>
+    <div class="note <?php echo $cls; ?>">
+      <?php echo htmlspecialchars($n['text']); ?>
+    </div>
+  <?php unset($_SESSION['admin_notice']); endif; ?>
 
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Booking ID</th>
-          <th>Guest</th>
-          <th>Contact</th>
-          <th>Date & Time</th>
-          <th>Guests</th>
-          <th>Message</th>
-          <th>Status</th>
-          <th>Admin Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if (empty($reservations)): ?>
-          <tr><td colspan="9" class="small">No reservations yet.</td></tr>
-        <?php else: ?>
-          <?php foreach ($reservations as $i => $r): ?>
-            <?php
-              $num = $i + 1;
-              $displayDate = date("F j, Y", strtotime($r['date']));
-              $displayTime = date("g:i A", strtotime($r['time']));
-              $status = $r['status'];
-              $statusClass = $status === 'confirmed' ? 's-confirmed' : ($status === 'cancelled' ? 's-cancelled' : 's-pending');
-            ?>
+  <div class="card">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Booking ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Date / Time</th>
+            <th>People</th>
+            <th>Message</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (empty($reservations)): ?>
+            <tr><td colspan="11" style="text-align:center;padding:2rem;color:#718096">No reservations found.</td></tr>
+          <?php else: foreach ($reservations as $r): ?>
             <tr>
-              <td><?php echo $num; ?></td>
-              <td><span class="booking-id"><?php echo htmlspecialchars($r['booking_id']); ?></span>
-                  <div class="small">Created: <?php echo htmlspecialchars($r['created_at']); ?></div>
-              </td>
-              <td>
-                <?php echo htmlspecialchars($r['name']); ?><br>
-                <div class="small"><?php echo htmlspecialchars($r['email']); ?></div>
-              </td>
-              <td><div class="small"><?php echo htmlspecialchars($r['phone']); ?></div></td>
-              <td>
-                <?php echo $displayDate; ?><br>
-                <div class="small"><?php echo $displayTime; ?></div>
-              </td>
+              <td><?php echo (int)$r['id']; ?></td>
+              <td><?php echo htmlspecialchars($r['booking_id']); ?></td>
+              <td><?php echo htmlspecialchars($r['name']); ?></td>
+              <td><?php echo htmlspecialchars($r['email']); ?></td>
+              <td><?php echo htmlspecialchars($r['phone']); ?></td>
+              <td><?php echo htmlspecialchars(date('M j, Y', strtotime($r['date'])) . ' — ' . date('g:i A', strtotime($r['time']))); ?></td>
               <td><?php echo (int)$r['people']; ?></td>
-              <td class="message"><?php echo htmlspecialchars($r['message']); ?></td>
+              <td style="max-width:240px;white-space:pre-wrap;word-break:break-word"><?php echo htmlspecialchars($r['message']); ?></td>
+              <td><?php echo htmlspecialchars(date("M j, Y g:i A", strtotime($r['created_at']))); ?></td>
               <td>
-                <div class="status-badge <?php echo $statusClass; ?>">
-                  <?php echo ucfirst($status); ?>
-                </div>
-                <div class="small"><?php echo htmlspecialchars(status_text($status)); ?></div>
+                <span class="status status-<?php echo strtolower($r['status']); ?>">
+                  <?php echo ucfirst($r['status']); ?>
+                </span>
               </td>
               <td>
-                <!-- Status update form (non-AJAX) -->
-                <form method="post" style="display:flex; gap:6px; align-items:center;">
+                <form method="post" class="form-inline">
                   <input type="hidden" name="action" value="update_status" />
-                  <input type="hidden" name="booking_id" value="<?php echo htmlspecialchars($r['booking_id']); ?>" />
+                  <input type="hidden" name="reservation_id" value="<?php echo (int)$r['id']; ?>" />
                   <input type="hidden" name="admin_token" value="<?php echo $admin_token; ?>" />
                   <select name="status" aria-label="Change status">
-                    <option value="pending" <?php if ($status === 'pending') echo 'selected'; ?>>Pending</option>
-                    <option value="confirmed" <?php if ($status === 'confirmed') echo 'selected'; ?>>Confirm</option>
-                    <option value="cancelled" <?php if ($status === 'cancelled') echo 'selected'; ?>>Cancel</option>
+                    <option value="pending" <?php if ($r['status'] === 'pending') echo 'selected'; ?>>Pending</option>
+                    <option value="confirmed" <?php if ($r['status'] === 'confirmed') echo 'selected'; ?>>Confirmed</option>
+                    <option value="cancelled" <?php if ($r['status'] === 'cancelled') echo 'selected'; ?>>Cancelled</option>
                   </select>
-                  <button type="submit" class="btn btn-primary">Update</button>
+                  <button type="submit" class="btn btn-sm btn-update">Update</button>
                 </form>
               </td>
             </tr>
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </tbody>
-    </table>
-
-    <p class="small" style="margin-top:12px;">
-      Note: For production, protect this page with authentication and use HTTPS. Auto-refresh reloads the page every 8 seconds — it is a full-page refresh (no AJAX).
-    </p>
+          <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+    </div>
   </div>
+</div>
 
 <script>
-  // Auto refresh logic (non-AJAX). Reloads page every 8 seconds when enabled.
-  (function(){
-    var auto = document.getElementById('autoRefresh');
-    var interval = null;
-    function start() {
-      if (interval) clearInterval(interval);
-      interval = setInterval(function() {
-        // only refresh when page is visible (to avoid background reloads)
-        if (document.visibilityState === 'visible') {
-          location.reload();
-        }
-      }, 8000);
-    }
-    function stop() {
-      if (interval) clearInterval(interval);
-      interval = null;
-    }
-    auto.addEventListener('change', function() {
-      if (auto.checked) start(); else stop();
-    });
-    // start by default if checked
-    if (auto.checked) start();
-    // stop refresh if admin focuses any input/select to avoid disruptions
-    document.addEventListener('focusin', function(e){
-      // if focus is on a select or input inside the table, pause autoreload
-      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        stop();
+document.addEventListener('DOMContentLoaded', function() {
+  // Refresh functionality
+  const refreshBtn = document.getElementById('refreshBtn');
+  const countdownElement = document.getElementById('refreshCountdown');
+  let countdown = 8;
+  let refreshInterval;
+  
+  // Start the countdown timer
+  function startCountdown() {
+    countdown = 8;
+    updateCountdown();
+    refreshInterval = setInterval(() => {
+      countdown--;
+      updateCountdown();
+      if (countdown <= 0) {
+        clearInterval(refreshInterval);
+        refreshPage();
+      }
+    }, 1000);
+  }
+  
+  // Update countdown display
+  function updateCountdown() {
+    countdownElement.textContent = `Refreshing in ${countdown}s`;
+  }
+  
+  // Refresh the page
+  function refreshPage() {
+    window.location.reload();
+  }
+  
+  // Manual refresh button
+  refreshBtn.addEventListener('click', function() {
+    // Add spin animation
+    const icon = this.querySelector('i');
+    icon.classList.add('spin');
+    
+    // Refresh after animation completes
+    setTimeout(() => {
+      refreshPage();
+    }, 1000);
+  });
+  
+  // Start the initial countdown
+  startCountdown();
+  
+  // Reset countdown when page gains focus (in case user was away)
+  window.addEventListener('focus', function() {
+    clearInterval(refreshInterval);
+    startCountdown();
+  });
+
+  // Enhanced animations and interactions
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const btn = this.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-circle-notch spin"></i> Updating';
       }
     });
-    // resume when focus out and checkbox is still checked
-    document.addEventListener('focusout', function(){
-      if (auto.checked) start();
+  });
+
+  // Table row hover effects
+  const rows = document.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    row.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateX(5px)';
     });
-  })();
+    row.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateX(0)';
+    });
+  });
+
+  // Status badge hover effects
+  const statusBadges = document.querySelectorAll('.status');
+  statusBadges.forEach(badge => {
+    badge.addEventListener('mouseenter', function() {
+      this.style.transform = 'scale(1.05)';
+    });
+    badge.addEventListener('mouseleave', function() {
+      this.style.transform = 'scale(1)';
+    });
+  });
+
+  // Select focus effects
+  const selects = document.querySelectorAll('select');
+  selects.forEach(select => {
+    select.addEventListener('focus', function() {
+      this.style.transform = 'scale(1.02)';
+      this.style.boxShadow = '0 0 0 2px rgba(66,153,225,0.5)';
+    });
+    select.addEventListener('blur', function() {
+      this.style.transform = 'scale(1)';
+      this.style.boxShadow = 'none';
+    });
+  });
+});
 </script>
 </body>
 </html>
