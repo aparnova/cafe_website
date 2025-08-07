@@ -317,7 +317,7 @@ $_SESSION['form_token'] = $form_token;
           <div class="form-step active" data-step="1">
             <div class="form-group">
               <div class="input-group">
-                <input type="text" name="name" id="name" class="form-control" placeholder=" " required>
+                <input type="text" name="name" id="name" class="form-control" placeholder=" " autocomplete="off" required>
                 <label for="name">Your Name</label>
                 <i class="fas fa-user input-icon"></i>
               </div>
@@ -325,7 +325,7 @@ $_SESSION['form_token'] = $form_token;
 
             <div class="form-group">
               <div class="input-group">
-                <input type="email" name="email" id="email" class="form-control" placeholder=" " required>
+                <input type="email" name="email" id="email" class="form-control" placeholder=" " autocomplete="off" required>
                 <label for="email">Your Email</label>
                 <i class="fas fa-envelope input-icon"></i>
               </div>
@@ -333,7 +333,7 @@ $_SESSION['form_token'] = $form_token;
 
             <div class="form-group">
               <div class="input-group">
-                <input type="tel" name="phone" id="phone" class="form-control" placeholder=" " required>
+                <input type="tel" name="phone" id="phone" class="form-control" placeholder=" " autocomplete="off" required>
                 <label for="phone">Phone Number</label>
                 <i class="fas fa-phone input-icon"></i>
               </div>
@@ -389,7 +389,7 @@ $_SESSION['form_token'] = $form_token;
           <div class="form-step" data-step="3">
             <div class="form-group">
               <div class="input-group">
-                <textarea name="message" id="message" class="form-control" placeholder=" "></textarea>
+                <textarea name="message" id="message" class="form-control" placeholder=" " autocomplete="off"></textarea>
                 <label for="message">Special Requests (Optional)</label>
               </div>
             </div>
