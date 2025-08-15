@@ -419,6 +419,7 @@
   <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
   <a href="view_reservations.php"><i class="fas fa-calendar-check"></i> <span class="menu-text">Reservations</span></a>
   <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
+  <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
   <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
 </div>
 
@@ -485,6 +486,12 @@
       <h3>Customer Messages</h3>
       <p>Respond to customer inquiries and feedback</p>
       <a href="view_messages.php">View Messages</a>
+    </div>
+    <div class="card animate-fade delay-5" onclick="window.location.href='view_gallery.php'">
+      <div class="card-icon"><i class="fas fa-images"></i></div>
+      <h3>Gallery Management</h3>
+      <p>Upload and manage images for restaurant gallery</p>
+      <a href="manage_gallery.php">Manage Gallery</a>
     </div>
   </div>
 

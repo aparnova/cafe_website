@@ -1,0 +1,796 @@
+<?php
+// Database connection
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "westleys_resto_cafe";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Get carousel and grid items
+$carousel_items = $conn->query("SELECT * FROM gallery_carousel ORDER BY display_order ASC");
+$grid_items = $conn->query("SELECT * FROM gallery_grid ORDER BY display_order ASC");
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - Westley's Resto Cafe</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css">
+  <style>
+    /* Font & Color Variables */
+    :root {
+      --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      --heading-font: "Playfair Display", sans-serif;
+      --nav-font: "Poppins", sans-serif;
+      --background-color: #0c0b09;
+      --default-color: rgba(255, 255, 255, 0.7);
+      --heading-color: #ffffff;
+      --accent-color: #cda45e;
+      --surface-color: #29261f;
+      --contrast-color: #0c0b09;
+      --paragraph-spacing: 1.5rem;
+      --line-height: 1.8;
+    }
+
+    /* General Styles */
+    body {
+      color: var(--default-color);
+      background-color: var(--background-color);
+      font-family: var(--default-font);
+      margin: 0;
+      padding: 0;
+      line-height: var(--line-height);
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--accent-color);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    a:hover {
+      color: color-mix(in srgb, var(--accent-color) 75%, transparent);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--heading-color);
+      font-family: var(--heading-font);
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: var(--paragraph-spacing);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    .section {
+      padding: 80px 0;
+    }
+
+    /* Header Styles - Matching Menu Page */
+    .header {
+      --background-color: rgba(12, 11, 9, 0.61);
+      color: var(--default-color);
+      transition: all 0.5s;
+      z-index: 997;
+      position: fixed;
+      width: 100%;
+      top: 0;
+    }
+
+    .header .branding {
+      background-color: var(--background-color);
+      min-height: 60px;
+      padding: 10px 0;
+      transition: 0.3s;
+      border-bottom: 1px solid var(--background-color);
+    }
+
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header .logo {
+      line-height: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .header .logo img {
+      height: 50px;
+      margin-right: 15px;
+    }
+
+    .header .logo h1 {
+      font-size: 24px;
+      margin: 0;
+      color: var(--heading-color);
+      font-family: var(--heading-font);
+    }
+
+    /* Section Title with Underline Animation - Matching Menu Page */
+    .section-title {
+      padding-bottom: 60px;
+      position: relative;
+      text-align: center;
+    }
+
+    .section-title h2 {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 0;
+      line-height: 1px;
+      margin: 0 0 10px 0;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--default-color) 70%, transparent);
+      position: relative;
+    }
+
+    .section-title h2::after {
+      content: "";
+      width: 120px;
+      height: 1px;
+      display: inline-block;
+      background: var(--accent-color);
+      margin: 4px 10px;
+    }
+
+    .section-title p {
+      color: var(--accent-color);
+      margin: 0 0 1.5rem 0;
+      font-size: 36px;
+      font-weight: 600;
+      font-family: var(--heading-font);
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .section-title p::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      background: var(--accent-color);
+      bottom: -10px;
+      left: 0;
+      transition: width 0.3s ease;
+    }
+
+    .section-title p:hover::after {
+      width: 100%;
+    }
+
+    /* Gallery Section */
+    .gallery {
+      padding: 120px 0 80px;
+      position: relative;
+      background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80') center/cover no-repeat;
+    }
+
+    .gallery:before {
+      content: "";
+      background: color-mix(in srgb, var(--background-color) 88%, transparent);
+      position: absolute;
+      bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .gallery .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .gallery-container {
+      position: relative;
+      padding: 0 40px;
+    }
+
+    /* Main Carousel */
+    .swiper {
+      width: 100%;
+      height: 500px;
+      margin-bottom: 40px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .swiper:hover {
+      transform: translateY(-5px);
+    }
+
+    .swiper-slide {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swiper-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .swiper-slide:hover img {
+      transform: scale(1.05);
+    }
+
+    .swiper-slide-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 30px;
+      background: linear-gradient(to top, rgba(12, 11, 9, 0.9), transparent);
+      transform: translateY(100%);
+      transition: transform 0.5s ease;
+      opacity: 0;
+    }
+
+    .swiper-slide:hover .swiper-slide-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .swiper-slide h3 {
+      color: var(--heading-color);
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .swiper-slide p {
+      color: var(--default-color);
+      font-size: 16px;
+      margin: 0 0 10px 0;
+    }
+
+    /* Navigation Arrows */
+    .swiper-button-next,
+    .swiper-button-prev {
+      color: var(--accent-color);
+      width: 50px;
+      height: 50px;
+      background: rgba(12, 11, 9, 0.7);
+      border-radius: 50%;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+    }
+
+    .swiper-button-next::after,
+    .swiper-button-prev::after {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .swiper-button-next:hover,
+    .swiper-button-prev:hover {
+      background: rgba(205, 164, 94, 0.2);
+      transform: scale(1.1);
+    }
+
+    /* Gallery Grid */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 80px;
+    }
+
+    .gallery-item {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 300px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.1);
+    }
+
+    .gallery-item-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(12, 11, 9, 0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .gallery-item:hover .gallery-item-overlay {
+      opacity: 1;
+    }
+
+    .gallery-item-overlay h3 {
+      color: var(--heading-color);
+      font-size: 22px;
+      margin-bottom: 15px;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .gallery-item-overlay p {
+      color: var(--default-color);
+      font-size: 16px;
+      margin-bottom: 20px;
+      transform: translateY(20px);
+      transition: transform 0.3s ease 0.1s;
+    }
+
+    .gallery-item:hover .gallery-item-overlay h3,
+    .gallery-item:hover .gallery-item-overlay p {
+      transform: translateY(0);
+    }
+
+    .view-btn {
+      display: inline-block;
+      padding: 10px 25px;
+      background: var(--accent-color);
+      color: var(--contrast-color);
+      border-radius: 30px;
+      font-weight: 500;
+      transform: translateY(20px);
+      transition: all 0.3s ease 0.2s;
+      margin-top: 10px;
+    }
+
+    .gallery-item:hover .view-btn {
+      transform: translateY(0);
+    }
+
+    .view-btn:hover {
+      background: color-mix(in srgb, var(--accent-color) 80%, transparent);
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(12, 11, 9, 0.95);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      color: var(--heading-color);
+      font-size: 30px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+      color: var(--accent-color);
+    }
+
+    .modal-caption {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      color: var(--default-color);
+      font-size: 18px;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .gallery {
+        padding: 100px 0 60px;
+      }
+
+      .swiper {
+        height: 400px;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 25px;
+      }
+      
+      .section {
+        padding: 60px 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header .branding {
+        min-height: 70px;
+      }
+
+      .header .logo h1 {
+        font-size: 20px;
+      }
+
+      .section-title {
+        padding-bottom: 40px;
+      }
+      
+      .section-title p {
+        font-size: 28px;
+        margin-bottom: 1rem;
+      }
+
+      .swiper {
+        height: 300px;
+        margin-bottom: 30px;
+      }
+
+      .swiper-slide-content {
+        padding: 20px;
+      }
+
+      .swiper-slide h3 {
+        font-size: 20px;
+        margin-bottom: 10px;
+      }
+
+      .swiper-slide p {
+        font-size: 14px;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 60px;
+      }
+
+      .gallery-item {
+        height: 200px;
+      }
+      
+      .gallery-item-overlay h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+      
+      .gallery-item-overlay p {
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .gallery-container {
+        padding: 0 20px;
+      }
+
+      .swiper {
+        height: 250px;
+        margin-bottom: 20px;
+      }
+
+      .swiper-button-next,
+      .swiper-button-prev {
+        width: 40px;
+        height: 40px;
+      }
+
+      .gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .gallery-item {
+        height: 250px;
+      }
+      
+      .section {
+        padding: 50px 0;
+      }
+      
+      .section-title {
+        padding-bottom: 30px;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .animate-fade {
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.8s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: 0.2s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.4s;
+    }
+
+    .delay-3 {
+      animation-delay: 0.6s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header - Matching Menu Page -->
+  <header class="header">
+    <div class="branding">
+      <div class="container">
+        <div class="logo">
+          <img src="img.png" alt="Westley's Resto Cafe">
+          <h1>Westley's Resto Cafe</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Gallery Section -->
+  <section id="gallery" class="gallery section">
+    <div class="container">
+      <div class="section-title animate-slide-up">
+        <h2>Gallery</h2>
+        <p>Experience Our Restaurant</p>
+      </div>
+
+      <!-- Main Carousel -->
+      <div class="gallery-container animate-slide-up delay-1">
+        <div class="swiper main-swiper">
+          <div class="swiper-wrapper">
+            <?php if ($carousel_items->num_rows > 0): ?>
+              <?php while ($item = $carousel_items->fetch_assoc()): ?>
+                <div class="swiper-slide">
+                  <img src="<?php echo htmlspecialchars($item['image_url']); ?>" alt="<?php echo htmlspecialchars($item['title']); ?>">
+                  <div class="swiper-slide-content">
+                    <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                    <p><?php echo htmlspecialchars($item['caption']); ?></p>
+                  </div>
+                </div>
+              <?php endwhile; ?>
+            <?php else: ?>
+              <!-- Default slides if no carousel items in database -->
+              <div class="swiper-slide">
+                <img src="https://images.pexels.com/photos/7955382/pexels-photo-7955382.jpeg" alt="Elegant Dining Area">
+                <div class="swiper-slide-content">
+                  <h3>Elegant Dining Area</h3>
+                  <p>Our beautifully designed main dining room with comfortable seating</p>
+                </div>
+              </div>
+              <div class="swiper-slide">
+                <img src="https://images.pexels.com/photos/1055058/pexels-photo-1055058.jpeg" alt="Private Booth">
+                <div class="swiper-slide-content">
+                  <h3>Private Dining Booth</h3>
+                  <p>Intimate setting for special occasions and romantic dinners</p>
+                </div>
+              </div>
+            <?php endif; ?>
+          </div>
+          <div class="swiper-button-next"></div>
+          <div class="swiper-button-prev"></div>
+        </div>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div class="gallery-grid">
+        <?php if ($grid_items->num_rows > 0): ?>
+          <?php while ($item = $grid_items->fetch_assoc()): ?>
+            <div class="gallery-item animate-fade delay-2">
+              <img src="<?php echo htmlspecialchars($item['image_url']); ?>" alt="<?php echo htmlspecialchars($item['title']); ?>">
+              <div class="gallery-item-overlay">
+                <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                <p><?php echo htmlspecialchars($item['caption']); ?></p>
+                <a href="#" class="view-btn" 
+                   data-img="<?php echo htmlspecialchars($item['image_url']); ?>" 
+                   data-caption="<?php echo htmlspecialchars($item['title'] . ' - ' . $item['caption']); ?>">
+                  <i class="fas fa-expand"></i> View
+                </a>
+              </div>
+            </div>
+          <?php endwhile; ?>
+        <?php else: ?>
+          <!-- Default grid items if no items in database -->
+          <div class="gallery-item animate-fade delay-2">
+            <img src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1365&q=80" alt="Breakfast Platter">
+            <div class="gallery-item-overlay">
+              <h3>Breakfast Platter</h3>
+              <p>Fresh ingredients to start your day right</p>
+              <a href="#" class="view-btn" data-img="https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1365&q=80" data-caption="Breakfast Platter - Fresh ingredients to start your day right">
+                <i class="fas fa-expand"></i> View
+              </a>
+            </div>
+          </div>
+          <div class="gallery-item animate-fade delay-2">
+            <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1310&q=80" alt="Avocado Toast">
+            <div class="gallery-item-overlay">
+              <h3>Avocado Toast</h3>
+              <p>Healthy and delicious morning option</p>
+              <a href="#" class="view-btn" data-img="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1310&q=80" data-caption="Avocado Toast - Healthy and delicious morning option">
+                <i class="fas fa-expand"></i> View
+              </a>
+            </div>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </section>
+
+  <!-- Image Modal -->
+  <div class="modal" id="imageModal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <img id="modalImage" src="" alt="">
+      <div class="modal-caption" id="modalCaption"></div>
+    </div>
+  </div>
+
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize main swiper with corrected navigation config
+      const mainSwiper = new Swiper('.main-swiper', {
+        loop: true,
+        speed: 800,
+        autoplay: {
+          delay: 5000,
+          disableOnInteraction: false,
+        },
+        navigation: {
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev',
+        },
+        effect: 'fade',
+        fadeEffect: {
+          crossFade: true
+        },
+      });
+
+      // Modal functionality
+      const modal = document.getElementById('imageModal');
+      const modalImg = document.getElementById('modalImage');
+      const modalCaption = document.getElementById('modalCaption');
+      const closeModal = document.querySelector('.modal-close');
+      const viewButtons = document.querySelectorAll('.view-btn');
+
+      viewButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          const imgSrc = this.getAttribute('data-img');
+          const caption = this.getAttribute('data-caption');
+          
+          modalImg.src = imgSrc;
+          modalCaption.textContent = caption;
+          modal.classList.add('open');
+          document.body.style.overflow = 'hidden';
+        });
+      });
+
+      closeModal.addEventListener('click', function() {
+        modal.classList.remove('open');
+        document.body.style.overflow = 'auto';
+      });
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.classList.remove('open');
+          document.body.style.overflow = 'auto';
+        }
+      });
+
+      // Keyboard navigation for modal
+      document.addEventListener('keydown', function(e) {
+        if (modal.classList.contains('open')) {
+          if (e.key === 'Escape') {
+            modal.classList.remove('open');
+            document.body.style.overflow = 'auto';
+          }
+          if (e.key === 'ArrowRight') {
+            mainSwiper.slideNext();
+          }
+          if (e.key === 'ArrowLeft') {
+            mainSwiper.slidePrev();
+          }
+        }
+      });
+
+      // Scroll animation
+      const animateElements = document.querySelectorAll('.animate-slide-up, .animate-fade');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = 1;
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+
+      animateElements.forEach(element => {
+        observer.observe(element);
+      });
+    });
+  </script>
+</body>
+</html>
