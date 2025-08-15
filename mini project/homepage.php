@@ -1351,7 +1351,7 @@ section,
   <li><a href="homepage.php">Home</a></li>
   <li><a href="about.html">About</a></li>
   <li><a href="menu.php">Menu</a></li>
-  <li><a href="#specials">Gallery</a></li>
+  <li><a href="gallery.php">Gallery</a></li>
   <li><a href="contact.php">Contact</a></li>
   <li><a href="table_reservation.php">Book Table</a></li>
   <li><a href="login.php">Login</a></li>
