@@ -1,3 +1,19 @@
+<?php
+session_start();
+require 'db.php';
+
+// Check if user is logged in
+$isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['role']);
+$currentUser = null;
+
+if ($isLoggedIn) {
+    $currentUser = [
+        'username' => $_SESSION['user'],
+        'role' => $_SESSION['role']
+    ];
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +71,7 @@
       padding: 60px 0;
     }
 
-    /* Header Styles - Matching About Page */
+    /* Header Styles */
     .header {
       --background-color: rgba(12, 11, 9, 0.61);
       color: var(--default-color);
@@ -98,7 +114,84 @@
       font-family: var(--heading-font);
     }
 
-    /* Section Title with Underline Animation */
+    /* User Controls in Header */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-info {
+      display: none;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info.logged-in {
+      display: flex;
+    }
+
+    .user-welcome {
+      color: var(--default-color);
+      font-family: var(--nav-font);
+      font-size: 14px;
+    }
+
+    .orders-btn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 8px 15px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+      font-family: var(--nav-font);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .orders-btn:hover {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+    }
+
+    .logout-btn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      padding: 8px 15px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+      font-family: var(--nav-font);
+    }
+
+    .logout-btn:hover {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+    }
+
+    .login-btn {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+      font-family: var(--nav-font);
+    }
+
+    .login-btn:hover {
+      background: color-mix(in srgb, var(--accent-color), transparent 20%);
+    }
+
+    /* Section Title */
     .section-title {
       padding-bottom: 60px;
       position: relative;
@@ -152,10 +245,9 @@
       width: 100%;
     }
 
-    /* Menu Section - Matching About Page Background */
+    /* Menu Section */
     .menu {
-      background: url("../img/about-bg.jpg") center center;
-      background-size: cover;
+      background: var(--background-color);
       position: relative;
       padding: 80px 0;
       padding-top: 140px;
@@ -280,6 +372,11 @@
       font-size: 12px;
     }
 
+    .quantity-btn:disabled {
+      background: color-mix(in srgb, var(--accent-color), transparent 50%);
+      cursor: not-allowed;
+    }
+
     .quantity-input {
       width: 30px;
       text-align: center;
@@ -321,7 +418,13 @@
       background: #45a049;
     }
 
-    /* Cart Section - Hidden by default */
+    .add-to-cart:disabled,
+    .order-now:disabled {
+      background: color-mix(in srgb, var(--default-color), transparent 70%);
+      cursor: not-allowed;
+    }
+
+    /* Cart Section */
     .cart-sidebar {
       position: fixed;
       top: 0;
@@ -334,12 +437,12 @@
       z-index: 1000;
       padding: 20px;
       overflow-y: auto;
-      display: none; /* Hidden by default */
+      display: none;
     }
 
     .cart-sidebar.open {
       right: 0;
-      display: block; /* Show when open */
+      display: block;
     }
 
     .cart-header {
@@ -378,24 +481,6 @@
       object-fit: cover;
       border-radius: 5px;
       margin-bottom: 5px;
-    }
-
-    .cart-item-details {
-      padding: 0 5px;
-    }
-
-    .cart-item-title {
-      margin: 0 0 3px;
-      font-size: 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .cart-item-price {
-      color: var(--accent-color);
-      font-size: 13px;
-      font-weight: bold;
     }
 
     .cart-item-remove {
@@ -442,10 +527,14 @@
 
     /* Cart Button in Header */
     .header-cart {
-      display: flex;
+      display: none;
       align-items: center;
       cursor: pointer;
       position: relative;
+    }
+
+    .header-cart.show {
+      display: flex;
     }
 
     .header-cart-icon {
@@ -474,6 +563,83 @@
       font-size: 12px;
     }
 
+    /* Login Required Message */
+    .login-required-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+
+    .login-required-overlay.show {
+      display: flex;
+    }
+
+    .login-required-message {
+      background: var(--surface-color);
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 400px;
+      margin: 20px;
+      border: 2px solid var(--accent-color);
+    }
+
+    .login-required-message h3 {
+      color: var(--accent-color);
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .login-required-message p {
+      color: var(--default-color);
+      margin-bottom: 25px;
+      font-size: 16px;
+    }
+
+    .login-required-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .login-redirect-btn {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+      font-family: var(--nav-font);
+    }
+
+    .login-redirect-btn:hover {
+      background: color-mix(in srgb, var(--accent-color), transparent 20%);
+    }
+
+    .cancel-btn {
+      background: #666;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+
+    .cancel-btn:hover {
+      background: #555;
+    }
+
     /* Notification */
     .notification {
       position: fixed;
@@ -482,11 +648,20 @@
       transform: translateX(-50%);
       background: var(--accent-color);
       color: var(--contrast-color);
-      padding: 10px 20px;
-      border-radius: 5px;
+      padding: 15px 25px;
+      border-radius: 8px;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
       z-index: 1001;
       display: none;
+      font-size: 16px;
+    }
+
+    .notification.error {
+      background: #ff6b6b;
+    }
+
+    .notification.success {
+      background: #4CAF50;
     }
 
     /* Responsive */
@@ -513,12 +688,30 @@
       }
 
       .header .logo h1 {
-        font-size: 24px;
+        font-size: 20px;
       }
-      
       
       .header-cart-icon {
         margin-right: 0;
+      }
+
+      .header-controls {
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .user-welcome {
+        display: none;
+      }
+
+      .orders-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .logout-btn {
+        padding: 6px 10px;
+        font-size: 12px;
       }
     }
 
@@ -530,21 +723,50 @@
   </style>
 </head>
 <body>
-  <!-- Header - Matching About Page -->
+  <!-- Header -->
   <header class="header">
     <div class="branding">
       <div class="container">
         <div class="logo">
           <img src="img.png" alt="Westley's Resto Cafe">
-          <h1>Westley's Resto Cafe </h1>
+          <h1>Westley's Resto Cafe</h1>
         </div>
-        <div class="header-cart" id="header-cart">
-          <i class="fas fa-shopping-cart header-cart-icon"></i>
-          <span class="header-cart-count" id="header-cart-count">0</span>
+        <div class="header-controls">
+          <?php if ($isLoggedIn): ?>
+            <div class="user-info logged-in" id="user-info">
+              <span class="user-welcome" id="user-welcome">Welcome, <?php echo htmlspecialchars($currentUser['username']); ?>!</span>
+              <a href="my_orders.php" class="orders-btn">
+                <i class="fas fa-list"></i>
+                <span>My Orders</span>
+              </a>
+              <button class="logout-btn" id="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+              </button>
+            </div>
+            <div class="header-cart show" id="header-cart">
+              <i class="fas fa-shopping-cart header-cart-icon"></i>
+              <span class="header-cart-count" id="header-cart-count">0</span>
+            </div>
+          <?php else: ?>
+            <button class="login-btn" id="show-login-btn" onclick="window.location.href='login.php'">Login</button>
+          <?php endif; ?>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Login Required Message Overlay -->
+  <div class="login-required-overlay" id="login-required-overlay">
+    <div class="login-required-message">
+      <h3>Login Required</h3>
+      <p>Please login to add items to cart and place orders. If you don't have an account, you can register first.</p>
+      <div class="login-required-buttons">
+        <button class="login-redirect-btn" onclick="window.location.href='login.php'">Login</button>
+        <button class="cancel-btn" id="cancel-login-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Menu Section -->
   <section id="menu" class="menu section">
@@ -568,7 +790,8 @@
     </div>
   </section>
 
-  <!-- Cart Sidebar - Hidden by default -->
+  <?php if ($isLoggedIn): ?>
+  <!-- Cart Sidebar -->
   <div class="cart-sidebar" id="cart-sidebar">
     <div class="cart-header">
       <h3>Your Order</h3>
@@ -582,21 +805,26 @@
     </div>
     <button class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
   </div>
+  <?php endif; ?>
 
   <!-- Notification -->
   <div class="notification" id="notification">
-    New order received!
+    Notification message
   </div>
 
   <script>
-    // Sample menu data - 40 items (10 in each category)
+    // Check if user is logged in from PHP
+    const isLoggedIn = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
+    const currentUser = <?php echo $isLoggedIn ? json_encode($currentUser) : 'null'; ?>;
+
+    // Sample menu data - now with 40 items (10 per category)
     const menuItems = [
       // Starters (10 items)
       {
         id: 1,
         name: "Lobster Bisque",
         category: "starters",
-        price: 900 ,
+        price: 900,
         description: "Creamy soup with fresh lobster meat",
         image: "https://images.pexels.com/photos/17598231/pexels-photo-17598231.jpeg"
       },
@@ -654,7 +882,7 @@
         category: "starters",
         price: 650,
         description: "Chilled shrimp served with cocktail sauce",
-        image:"https://images.pexels.com/photos/5192396/pexels-photo-5192396.jpeg"
+        image: "https://images.pexels.com/photos/5192396/pexels-photo-5192396.jpeg"
       },
       {
         id: 9,
@@ -931,14 +1159,36 @@
     const checkoutBtn = document.getElementById('checkout-btn');
     const notification = document.getElementById('notification');
     const filterButtons = document.querySelectorAll('.menu-filters li');
+    const loginRequiredOverlay = document.getElementById('login-required-overlay');
+    const cancelLoginBtn = document.getElementById('cancel-login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
 
-    // Cart state
+    // App state
     let cart = [];
 
     // Initialize the page
     function init() {
       renderMenu();
       setupEventListeners();
+      if (isLoggedIn) {
+        loadCartFromStorage();
+      }
+    }
+
+    // Load cart from localStorage if user is logged in
+    function loadCartFromStorage() {
+      const savedCart = localStorage.getItem(`cart_${currentUser.username}`);
+      if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCart();
+      }
+    }
+
+    // Save cart to localStorage
+    function saveCartToStorage() {
+      if (isLoggedIn) {
+        localStorage.setItem(`cart_${currentUser.username}`, JSON.stringify(cart));
+      }
     }
 
     // Render menu items
@@ -986,78 +1236,126 @@
           renderMenu(button.dataset.category);
         });
       });
-      
-      // Cart toggle in header
-      headerCart.addEventListener('click', () => {
-        cartSidebar.classList.add('open');
-      });
-      
-      // Close cart
-      closeCart.addEventListener('click', () => {
-        cartSidebar.classList.remove('open');
-      });
-      
-      // Add to cart (delegated)
+
+      // Login required overlay controls
+      if (cancelLoginBtn) {
+        cancelLoginBtn.addEventListener('click', () => {
+          loginRequiredOverlay.classList.remove('show');
+        });
+      }
+
+      if (loginRequiredOverlay) {
+        loginRequiredOverlay.addEventListener('click', (e) => {
+          if (e.target === loginRequiredOverlay) {
+            loginRequiredOverlay.classList.remove('show');
+          }
+        });
+      }
+
+      // Logout functionality
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+          window.location.href = 'logout.php';
+        });
+      }
+
+      // Cart functionality (only if logged in)
+      if (isLoggedIn) {
+        // Cart toggle in header
+        if (headerCart) {
+          headerCart.addEventListener('click', () => {
+            cartSidebar.classList.add('open');
+          });
+        }
+
+        // Close cart
+        if (closeCart) {
+          closeCart.addEventListener('click', () => {
+            cartSidebar.classList.remove('open');
+          });
+        }
+
+        // Checkout button
+        if (checkoutBtn) {
+          checkoutBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+              showNotification('Your cart is empty!', 'error');
+              return;
+            }
+            placeOrder();
+          });
+        }
+
+        // Cart item removal (delegated)
+        if (cartItems) {
+          cartItems.addEventListener('click', (e) => {
+            if (e.target.classList.contains('cart-item-remove')) {
+              const itemId = parseInt(e.target.dataset.id);
+              removeFromCart(itemId);
+            }
+          });
+        }
+      }
+
+      // Menu item actions (delegated)
       menuContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('add-to-cart') || e.target.classList.contains('order-now')) {
+          if (!isLoggedIn) {
+            showNotification('Please login to add items to cart!', 'error');
+            loginRequiredOverlay.classList.add('show');
+            return;
+          }
+        }
+
         if (e.target.classList.contains('add-to-cart')) {
           const itemId = parseInt(e.target.dataset.id);
           const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
           const quantity = parseInt(quantityInput.value);
           addToCart(itemId, quantity);
         }
-        
-        // Order Now (delegated)
+
         if (e.target.classList.contains('order-now')) {
           const itemId = parseInt(e.target.dataset.id);
           const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
           const quantity = parseInt(quantityInput.value);
+          
+          // Add item to cart
           addToCart(itemId, quantity);
-          cartSidebar.classList.add('open');
-          showNotification('Item added to cart. Ready to checkout!');
+          
+          // Save cart and redirect directly to checkout
+          saveCartToStorage();
+          window.location.href = 'checkout.php';
         }
-        
-        // Quantity controls
+
         if (e.target.classList.contains('quantity-btn')) {
           const itemId = parseInt(e.target.dataset.id);
           const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
           let quantity = parseInt(quantityInput.value);
-          
+
           if (e.target.classList.contains('plus')) {
             quantity++;
           } else if (e.target.classList.contains('minus') && quantity > 1) {
             quantity--;
           }
-          
+
           quantityInput.value = quantity;
-        }
-      });
-      
-      // Checkout button
-      checkoutBtn.addEventListener('click', () => {
-        if (cart.length === 0) {
-          showNotification('Your cart is empty!');
-          return;
-        }
-        
-        placeOrder();
-      });
-      
-      // Cart item removal (delegated)
-      cartItems.addEventListener('click', (e) => {
-        if (e.target.classList.contains('cart-item-remove')) {
-          const itemId = parseInt(e.target.dataset.id);
-          removeFromCart(itemId);
         }
       });
     }
 
     // Add item to cart
     function addToCart(itemId, quantity) {
+      if (!isLoggedIn) {
+        showNotification('Please login first!', 'error');
+        loginRequiredOverlay.classList.add('show');
+        return;
+      }
+
       const menuItem = menuItems.find(item => item.id === itemId);
       if (!menuItem) return;
-      
+
       const existingItem = cart.find(item => item.id === itemId);
-      
+
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
@@ -1069,34 +1367,39 @@
           image: menuItem.image
         });
       }
-      
+
       updateCart();
-      showNotification(`${quantity} ${menuItem.name} added to cart`);
+      saveCartToStorage();
+      showNotification(`${quantity} ${menuItem.name} added to cart`, 'success');
     }
 
     // Remove item from cart
     function removeFromCart(itemId) {
       cart = cart.filter(item => item.id !== itemId);
       updateCart();
+      saveCartToStorage();
+      showNotification('Item removed from cart', 'success');
     }
 
     // Update cart display
     function updateCart() {
+      if (!isLoggedIn || !cartItems || !cartTotal || !headerCartCount) return;
+
       cartItems.innerHTML = '';
-      
+
       if (cart.length === 0) {
-        cartItems.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Your cart is empty</p>';
+        cartItems.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--default-color);">Your cart is empty</p>';
         cartTotal.textContent = '0';
         headerCartCount.textContent = '0';
         return;
       }
-      
+
       let total = 0;
-      
+
       cart.forEach(item => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-        
+
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
         cartItem.innerHTML = `
@@ -1109,29 +1412,39 @@
         `;
         cartItems.appendChild(cartItem);
       });
-      
+
       cartTotal.textContent = total;
       headerCartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
     }
 
-    // Place order
+    // Place order - redirect to checkout
     function placeOrder() {
-      // In a real app, this would send the order to your backend
-      console.log('Order placed:', cart);
-      showNotification('Order placed successfully!');
-      cart = [];
-      updateCart();
-      cartSidebar.classList.remove('open');
+      if (!isLoggedIn) {
+        showNotification('Please login first!', 'error');
+        return;
+      }
+
+      if (cart.length === 0) {
+        showNotification('Your cart is empty!', 'error');
+        return;
+      }
+
+      // Save cart to localStorage and redirect to checkout
+      saveCartToStorage();
+      window.location.href = 'checkout.php';
     }
 
     // Show notification
-    function showNotification(message) {
-      notification.textContent = message;
-      notification.style.display = 'block';
+    function showNotification(message, type = 'success') {
+      if (!notification) return;
       
+      notification.textContent = message;
+      notification.className = `notification ${type}`;
+      notification.style.display = 'block';
+
       setTimeout(() => {
         notification.style.display = 'none';
-      }, 3000);
+      }, 4000);
     }
 
     // Initialize the app
