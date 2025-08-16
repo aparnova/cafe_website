@@ -10,6 +10,6 @@ session_start();
 $_SESSION['logout_message'] = 'You have been logged out successfully!';
 
 // Redirect to login page
-header("Location: login.php");
+header("Location: homepage.php");
 exit();
 ?>
