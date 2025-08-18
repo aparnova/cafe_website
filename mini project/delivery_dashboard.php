@@ -1,12 +1,12 @@
 <?php
 session_start();
+require 'db.php';
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'delivery') {
     header("Location: login.php");
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -296,18 +296,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'delivery') {
                 <div class="welcome-message">
                     <h2>Welcome, <?php echo $_SESSION['user']; ?>!</h2>
                     <p>Ready to handle today's deliveries?</p>
-                </div>
-            </div>
-            
-            <!-- Stats Cards -->
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <h3>Assigned Orders</h3>
-                    <p>12</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Completed Today</h3>
-                    <p>8</p>
                 </div>
             </div>
             

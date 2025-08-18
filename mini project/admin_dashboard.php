@@ -433,29 +433,6 @@
     
   </div>
 
-  <div class="stats-container">
-    <div class="stat-card animate-fade delay-1">
-      <div class="stat-title">Total Customers</div>
-      <div class="stat-value">1,248</div>
-      <div class="stat-change positive">+12% from last month</div>
-    </div>
-    <div class="stat-card animate-fade delay-2">
-      <div class="stat-title">Today's Orders</div>
-      <div class="stat-value">47</div>
-      <div class="stat-change positive">+5% from yesterday</div>
-    </div>
-    <div class="stat-card animate-fade delay-3">
-      <div class="stat-title">Pending Orders</div>
-      <div class="stat-value">8</div>
-      <div class="stat-change negative">+2 from yesterday</div>
-    </div>
-    <div class="stat-card animate-fade delay-4">
-      <div class="stat-title">Reservations</div>
-      <div class="stat-value">15</div>
-      <div class="stat-change positive">+3 from yesterday</div>
-    </div>
-  </div>
-
   <div class="card-container">
     <div class="card animate-fade delay-1" onclick="window.location.href='view_customers.php'">
       <div class="card-icon"><i class="fas fa-users"></i></div>
@@ -495,38 +472,7 @@
     </div>
   </div>
 
-  <div class="recent-activity animate-fade">
-    <h3 class="activity-title">Recent Activity</h3>
-    <div class="activity-item">
-      <div class="activity-icon"><i class="fas fa-utensils"></i></div>
-      <div class="activity-content">
-        <div class="activity-message">New menu item "Truffle Pasta" added</div>
-        <div class="activity-time">10 minutes ago</div>
-      </div>
-    </div>
-    <div class="activity-item">
-      <div class="activity-icon"><i class="fas fa-receipt"></i></div>
-      <div class="activity-content">
-        <div class="activity-message">Order #2456 marked as completed</div>
-        <div class="activity-time">25 minutes ago</div>
-      </div>
-    </div>
-    <div class="activity-item">
-      <div class="activity-icon"><i class="fas fa-calendar-check"></i></div>
-      <div class="activity-content">
-        <div class="activity-message">New reservation for 4 people at 7:30 PM</div>
-        <div class="activity-time">1 hour ago</div>
-      </div>
-    </div>
-    <div class="activity-item">
-      <div class="activity-icon"><i class="fas fa-user"></i></div>
-      <div class="activity-content">
-        <div class="activity-message">New customer registered: John Doe</div>
-        <div class="activity-time">2 hours ago</div>
-      </div>
-    </div>
-  </div>
-</div>
+  
 
 <script>
   // Toggle sidebar
