@@ -514,6 +514,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         padding: 30px;
       }
     }
+    
   </style>
 </head>
 <body>
