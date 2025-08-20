@@ -2,6 +2,71 @@
 session_start();
 require 'db.php';
 
+// If it's an AJAX request, handle it differently
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+    $response = ['success' => false, 'message' => 'Invalid email or password!'];
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $email = $_POST['email'];
+        $password = $_POST['password'];
+
+        // 1. Check Admin table
+        $stmt = $conn->prepare("SELECT * FROM admins WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $adminResult = $stmt->get_result();
+
+        if ($adminResult->num_rows === 1) {
+            $admin = $adminResult->fetch_assoc();
+            if ($admin['password'] === $password) {
+                $_SESSION['user'] = $admin['name'];
+                $_SESSION['role'] = 'admin';
+                $response = ['success' => true, 'redirect' => 'admin_dashboard.php'];
+            }
+        }
+
+        // 2. Check Delivery Boy table
+        if (!$response['success']) {
+            $stmt = $conn->prepare("SELECT * FROM delivery_boys WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $deliveryResult = $stmt->get_result();
+
+            if ($deliveryResult->num_rows === 1) {
+                $delivery = $deliveryResult->fetch_assoc();
+                if ($delivery['password'] === $password) {
+                    $_SESSION['user'] = $delivery['name'];
+                    $_SESSION['role'] = 'delivery';
+                    $_SESSION['delivery_id'] = $delivery['id'];
+                    $response = ['success' => true, 'redirect' => 'delivery_dashboard.php'];
+                }
+            }
+        }
+
+        // 3. Check Users (Customers) table
+        if (!$response['success']) {
+            $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $userResult = $stmt->get_result();
+
+            if ($userResult->num_rows === 1) {
+                $user = $userResult->fetch_assoc();
+                if (password_verify($password, $user['password'])) {
+                    $_SESSION['user'] = $user['fullname'];
+                    $_SESSION['role'] = 'customer';
+                    $_SESSION['user_id'] = $user['id'];
+                    $response = ['success' => true, 'redirect' => 'homepage.php'];
+                }
+            }
+        }
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit();
+}
+
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -407,6 +472,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: rotate(-45deg);
     }
     
+    /* Loading spinner */
+    .spinner {
+      display: none;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -10px;
+      margin-left: -10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
@@ -464,7 +549,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
   
         
-        <button type="submit" class="login-btn" id="loginButton">Login</button>
+        <button type="submit" class="login-btn" id="loginButton">
+          <span id="button-text">Login</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
       </form>
       
       <div class="or-line">
@@ -481,6 +569,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     document.addEventListener('DOMContentLoaded', function() {
       const form = document.getElementById('loginForm');
       const loginButton = document.getElementById('loginButton');
+      const buttonText = document.getElementById('button-text');
+      const spinner = document.getElementById('spinner');
       const formError = document.getElementById('form-error');
       const emailError = document.getElementById('email-error');
       const passwordError = document.getElementById('password-error');
@@ -498,6 +588,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
         document.getElementById(field).classList.add('error-field');
+      }
+      
+      function showFormError(message) {
+        formError.textContent = message;
+        formError.style.display = 'block';
+      }
+      
+      function setLoadingState(isLoading) {
+        if (isLoading) {
+          buttonText.style.opacity = '0';
+          spinner.style.display = 'block';
+          loginButton.disabled = true;
+        } else {
+          buttonText.style.opacity = '1';
+          spinner.style.display = 'none';
+          loginButton.disabled = false;
+        }
       }
       
       form.addEventListener('submit', function(e) {
@@ -524,8 +631,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!isValid) return false;
         
-        // Submit the form if validation passes
-        form.submit();
+        // Show loading state
+        setLoadingState(true);
+        
+        // AJAX request
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'login.php', true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onload = function() {
+          setLoadingState(false);
+          
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              
+              if (response.success) {
+                // Redirect on successful login
+                window.location.href = response.redirect;
+              } else {
+                // Show error message
+                showFormError(response.message);
+              }
+            } catch (e) {
+              showFormError('An error occurred. Please try again.');
+            }
+          } else {
+            showFormError('Server error. Please try again later.');
+          }
+        };
+        
+        xhr.onerror = function() {
+          setLoadingState(false);
+          showFormError('Network error. Please check your connection.');
+        };
+        
+        // Send the form data
+        const formData = new FormData(form);
+        const encodedData = new URLSearchParams(formData).toString();
+        xhr.send(encodedData);
       });
 
       function validateEmail(email) {
