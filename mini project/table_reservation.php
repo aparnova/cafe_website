@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 $formatted_date = date("F j, Y", strtotime($date));
                 $response = [
                     'success' => true,
-                    'message' => "Your reservation for $formatted_date at $formatted_time has been confirmed and is pending admin approval. Your Booking ID is <strong>$booking_id</strong>."
+                    'message' => "Your reservation for $formatted_date at $formatted_time has been confirmed . Your Booking ID is <strong>$booking_id</strong>."
                 ];
                 $_SESSION['success_message'] = $response['message'];
                 $_SESSION['last_booking_id'] = $booking_id;
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $status_msg = match($r_status) {
                     'confirmed' => 'Your booking is accepted',
                     'cancelled' => 'Sorry, your booking was not accepted',
-                    default => 'Pending admin approval'
+                    default => 'Pending'
                 };
                 
                 $formatted_date = date("F j, Y", strtotime($r_date));
@@ -483,6 +483,7 @@ $_SESSION['form_token'] = $form_token;
       const statusClose = document.getElementById('close-status-modal');
       const statusCancel = document.getElementById('status-cancel');
       const statusResult = document.getElementById('status-result');
+      const bookingIdInput = document.getElementById('check-booking-id');
 
       let currentStep = 1;
 
@@ -611,9 +612,28 @@ $_SESSION['form_token'] = $form_token;
         loadingMessage.style.display = 'flex';
       });
 
+      // Function to reset the status check form
+      function resetStatusForm() {
+        document.getElementById('status-check-form').reset();
+        const statusResultEl = document.getElementById('status-result');
+        statusResultEl.style.display = 'none';
+        statusResultEl.innerHTML = '';
+        
+        // Reset the floating label position
+        const label = bookingIdInput.nextElementSibling;
+        if (label && label.tagName === 'LABEL') {
+          label.style.top = '15px';
+          label.style.left = '20px';
+          label.style.fontSize = '15px';
+          label.style.background = 'transparent';
+          label.style.color = 'rgba(255,255,255,0.7)';
+        }
+      }
+
       // Status modal handling
       statusIcon.addEventListener('click', function(e) {
         e.stopPropagation();
+        resetStatusForm(); // Reset form when opening modal
         statusModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         document.getElementById('check-booking-id').focus();
@@ -621,6 +641,7 @@ $_SESSION['form_token'] = $form_token;
 
       [statusClose, statusCancel].forEach(btn => {
         btn.addEventListener('click', function() {
+          resetStatusForm(); // Reset form when closing modal
           statusModal.style.display = 'none';
           document.body.style.overflow = '';
         });
@@ -628,6 +649,7 @@ $_SESSION['form_token'] = $form_token;
 
       window.addEventListener('click', function(e) {
         if (e.target === statusModal) {
+          resetStatusForm(); // Reset form when clicking outside modal
           statusModal.style.display = 'none';
           document.body.style.overflow = '';
         }

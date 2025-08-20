@@ -407,6 +407,7 @@
     .delay-3 { animation-delay: 0.3s; }
     .delay-4 { animation-delay: 0.4s; }
     .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
   </style>
 </head>
 <body>
@@ -420,6 +421,7 @@
   <a href="view_reservations.php"><i class="fas fa-calendar-check"></i> <span class="menu-text">Reservations</span></a>
   <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
   <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
+  <a href="view_aboutus.php"><i class="fas fa-info-circle"></i> <span class="menu-text">About Us</span></a>
   <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
 </div>
 
@@ -468,7 +470,13 @@
       <div class="card-icon"><i class="fas fa-images"></i></div>
       <h3>Gallery Management</h3>
       <p>Upload and manage images for restaurant gallery</p>
-      <a href="manage_gallery.php">Manage Gallery</a>
+      <a href="view_gallery.php">Manage Gallery</a>
+    </div>
+    <div class="card animate-fade delay-6" onclick="window.location.href='view_aboutus.php'">
+      <div class="card-icon"><i class="fas fa-info-circle"></i></div>
+      <h3>About Us</h3>
+      <p>Manage the about us content for your restaurant</p>
+      <a href="view_aboutus.php">Edit About Us</a>
     </div>
   </div>
 
