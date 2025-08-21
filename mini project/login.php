@@ -647,7 +647,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           if (xhr.status === 200) {
             try {
               const response = JSON.parse(xhr.responseText);
-              
               if (response.success) {
                 // Redirect on successful login
                 window.location.href = response.redirect;
