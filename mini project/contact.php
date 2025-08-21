@@ -10,16 +10,16 @@ $name = $email = $phone = $subject = $message = "";
 $errors = [];
 $success = false;
 
+// Create connection for form processing
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
 // Process form when submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-    
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-    
     // Validate and sanitize inputs
     $name = sanitizeInput($_POST["name"]);
     $email = sanitizeInput($_POST["email"]);
@@ -65,9 +65,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $stmt->close();
     }
-    
-    $conn->close();
 }
+
+// Fetch contact settings from database
+$maps_url = '';
+$contact_items = [];
+
+// Fetch maps URL
+$maps_result = $conn->query("SELECT maps_url FROM contact_settings LIMIT 1");
+if ($maps_result && $maps_result->num_rows > 0) {
+    $maps_row = $maps_result->fetch_assoc();
+    $maps_url = $maps_row['maps_url'];
+}
+
+// Fetch contact info items
+$contact_result = $conn->query("SELECT * FROM contact_info ORDER BY display_order, id");
+if ($contact_result && $contact_result->num_rows > 0) {
+    while ($row = $contact_result->fetch_assoc()) {
+        $contact_items[] = $row;
+    }
+}
+
+// Close connection
+$conn->close();
 
 // Function to sanitize input
 function sanitizeInput($data) {
@@ -632,44 +652,30 @@ function sanitizeInput($data) {
 
         <!-- Google Maps -->
         <div class="mb-5">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d48389.78314118045!2d-74.006138!3d40.710059!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25a22a3bda30d%3A0xb89d1fe6bc499443!2sDowntown%20Conference%20Center!5e0!3m2!1sen!2sus!4v1676961268712!5m2!1sen!2sus" frameborder="0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <?php if (!empty($maps_url)): ?>
+            <iframe src="<?php echo htmlspecialchars($maps_url); ?>" frameborder="0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <?php else: ?>
+            <p>No maps URL configured. Please set up the Google Maps URL in the admin panel.</p>
+          <?php endif; ?>
         </div><!-- End Google Maps -->
 
         <div class="contact-table">
           <div class="contact-row">
             <div class="contact-info-cell">
               <div class="info-items-container">
-                <div class="info-item">
-                  <i class="bi bi-geo-alt"></i>
-                  <div class="info-item-content">
-                    <h3>Location</h3>
-                    <p>Metro Pillar 481, Ground Floor, Kaliyath Building, Palarivattom,Kerala 682025</p>
-                  </div>
-                </div><!-- End Info Item -->
-
-                <div class="info-item">
-                  <i class="bi bi-clock"></i>
-                  <div class="info-item-content">
-                    <h3>Open Hours</h3>
-                    <p>Monday-Saturday:<br>8:00 AM - 11:00 PM</p>
-                  </div>
-                </div><!-- End Info Item -->
-
-                <div class="info-item">
-                  <i class="bi bi-telephone"></i>
-                  <div class="info-item-content">
-                    <h3>Call Us</h3>
-                    <p>+1 5589 55488 55</p>
-                  </div>
-                </div><!-- End Info Item -->
-
-                <div class="info-item">
-                  <i class="bi bi-envelope"></i>
-                  <div class="info-item-content">
-                    <h3>Email Us</h3>
-                    <p>westleysrestocafe.com</p>
-                  </div>
-                </div><!-- End Info Item -->
+                <?php if (count($contact_items) > 0): ?>
+                  <?php foreach ($contact_items as $item): ?>
+                    <div class="info-item">
+                      <i class="<?php echo htmlspecialchars($item['icon_class']); ?>"></i>
+                      <div class="info-item-content">
+                        <h3><?php echo htmlspecialchars($item['title']); ?></h3>
+                        <p><?php echo nl2br(htmlspecialchars($item['content'])); ?></p>
+                      </div>
+                    </div><!-- End Info Item -->
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <p>No contact information available. Please add contact items in the admin panel.</p>
+                <?php endif; ?>
               </div>
             </div>
 

@@ -408,6 +408,7 @@
     .delay-4 { animation-delay: 0.4s; }
     .delay-5 { animation-delay: 0.5s; }
     .delay-6 { animation-delay: 0.6s; }
+    .delay-7 { animation-delay: 0.7s; }
   </style>
 </head>
 <body>
@@ -422,6 +423,7 @@
   <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
   <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
   <a href="view_aboutus.php"><i class="fas fa-info-circle"></i> <span class="menu-text">About Us</span></a>
+  <a href="view_contact_us.php"><i class="fas fa-phone"></i> <span class="menu-text">Contact Us</span></a>
   <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
 </div>
 
@@ -466,17 +468,23 @@
       <p>Respond to customer inquiries and feedback</p>
       <a href="view_messages.php">View Messages</a>
     </div>
-    <div class="card animate-fade delay-5" onclick="window.location.href='view_gallery.php'">
+    <div class="card animate-fade delay-6" onclick="window.location.href='view_gallery.php'">
       <div class="card-icon"><i class="fas fa-images"></i></div>
       <h3>Gallery Management</h3>
       <p>Upload and manage images for restaurant gallery</p>
       <a href="view_gallery.php">Manage Gallery</a>
     </div>
-    <div class="card animate-fade delay-6" onclick="window.location.href='view_aboutus.php'">
+    <div class="card animate-fade delay-7" onclick="window.location.href='view_aboutus.php'">
       <div class="card-icon"><i class="fas fa-info-circle"></i></div>
       <h3>About Us</h3>
       <p>Manage the about us content for your restaurant</p>
       <a href="view_aboutus.php">Edit About Us</a>
+    </div>
+    <div class="card animate-fade delay-7" onclick="window.location.href='view_contact_us.php'">
+      <div class="card-icon"><i class="fas fa-phone"></i></div>
+      <h3>Contact Us</h3>
+      <p>Manage contact information and location details</p>
+      <a href="view_contact_us.php">Edit Contact Info</a>
     </div>
   </div>
 
