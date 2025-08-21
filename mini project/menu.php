@@ -310,22 +310,35 @@ if ($isLoggedIn) {
       background: var(--surface-color);
       border-radius: 10px;
       overflow: hidden;
-      transition: transform 0.3s;
       position: relative;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: transform 0.5s ease, opacity 0.5s ease, box-shadow 0.3s ease;
+      animation: fadeInUp 0.6s ease forwards;
+      animation-delay: calc(var(--item-index) * 0.1s);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
     .menu-item:hover {
-      transform: translateY(-5px);
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
     }
 
     .menu-item-img {
       width: 100%;
       height: 180px;
       object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .menu-item:hover .menu-item-img {
+      transform: scale(1.05);
     }
 
     .menu-item-content {
       padding: 20px;
+      position: relative;
+      overflow: hidden;
     }
 
     .menu-item-title {
@@ -370,11 +383,17 @@ if ($isLoggedIn) {
       justify-content: center;
       cursor: pointer;
       font-size: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .quantity-btn:hover {
+      transform: scale(1.1);
     }
 
     .quantity-btn:disabled {
       background: color-mix(in srgb, var(--accent-color), transparent 50%);
       cursor: not-allowed;
+      transform: none;
     }
 
     .quantity-input {
@@ -393,9 +412,29 @@ if ($isLoggedIn) {
       padding: 6px 12px;
       border-radius: 50px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s;
       font-size: 14px;
       flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .add-to-cart::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    .add-to-cart:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
     }
 
     .order-now {
@@ -405,23 +444,46 @@ if ($isLoggedIn) {
       padding: 6px 12px;
       border-radius: 50px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s;
       font-size: 14px;
       flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-now::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    .order-now:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
     }
 
     .add-to-cart:hover {
       background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
     }
 
     .order-now:hover {
       background: #45a049;
+      transform: translateY(-2px);
     }
 
     .add-to-cart:disabled,
     .order-now:disabled {
       background: color-mix(in srgb, var(--default-color), transparent 70%);
       cursor: not-allowed;
+      transform: none;
     }
 
     /* Cart Section */
@@ -433,7 +495,7 @@ if ($isLoggedIn) {
       height: 100%;
       background: var(--surface-color);
       box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
-      transition: right 0.3s;
+      transition: right 0.3s ease-out;
       z-index: 1000;
       padding: 20px;
       overflow-y: auto;
@@ -460,6 +522,11 @@ if ($isLoggedIn) {
       color: var(--default-color);
       font-size: 24px;
       cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .close-cart:hover {
+      transform: rotate(90deg);
     }
 
     .cart-items-container {
@@ -473,6 +540,17 @@ if ($isLoggedIn) {
       border-radius: 8px;
       padding: 10px;
       position: relative;
+      animation: slideInRight 0.3s ease forwards;
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    .cart-item:nth-child(odd) {
+      animation-delay: 0.1s;
+    }
+
+    .cart-item:nth-child(even) {
+      animation-delay: 0.2s;
     }
 
     .cart-item-img {
@@ -481,6 +559,11 @@ if ($isLoggedIn) {
       object-fit: cover;
       border-radius: 5px;
       margin-bottom: 5px;
+      transition: transform 0.3s ease;
+    }
+
+    .cart-item:hover .cart-item-img {
+      transform: scale(1.05);
     }
 
     .cart-item-remove {
@@ -498,6 +581,12 @@ if ($isLoggedIn) {
       justify-content: center;
       cursor: pointer;
       font-size: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .cart-item-remove:hover {
+      transform: scale(1.2);
+      background: #ff5252;
     }
 
     .cart-total {
@@ -507,6 +596,7 @@ if ($isLoggedIn) {
       margin: 20px 0;
       padding-top: 15px;
       border-top: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
+      animation: fadeIn 0.5s ease;
     }
 
     .checkout-btn {
@@ -518,11 +608,32 @@ if ($isLoggedIn) {
       border-radius: 5px;
       font-size: 16px;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .checkout-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+
+    .checkout-btn:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
     }
 
     .checkout-btn:hover {
       background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
     }
 
     /* Cart Button in Header */
@@ -531,16 +642,26 @@ if ($isLoggedIn) {
       align-items: center;
       cursor: pointer;
       position: relative;
+      transition: transform 0.2s ease;
     }
 
     .header-cart.show {
       display: flex;
     }
 
+    .header-cart:hover {
+      transform: scale(1.05);
+    }
+
     .header-cart-icon {
       font-size: 22px;
       color: var(--accent-color);
       margin-right: 5px;
+      transition: transform 0.3s ease;
+    }
+
+    .header-cart:hover .header-cart-icon {
+      transform: rotate(-10deg);
     }
 
     .header-cart-text {
@@ -561,6 +682,7 @@ if ($isLoggedIn) {
       align-items: center;
       justify-content: center;
       font-size: 12px;
+      animation: pulse 1.5s infinite;
     }
 
     /* Login Required Message */
@@ -575,6 +697,7 @@ if ($isLoggedIn) {
       align-items: center;
       justify-content: center;
       z-index: 1001;
+      animation: fadeIn 0.3s ease;
     }
 
     .login-required-overlay.show {
@@ -589,6 +712,7 @@ if ($isLoggedIn) {
       max-width: 400px;
       margin: 20px;
       border: 2px solid var(--accent-color);
+      animation: scaleIn 0.3s ease;
     }
 
     .login-required-message h3 {
@@ -617,12 +741,13 @@ if ($isLoggedIn) {
       border-radius: 25px;
       cursor: pointer;
       font-size: 16px;
-      transition: background 0.3s;
+      transition: all 0.3s;
       font-family: var(--nav-font);
     }
 
     .login-redirect-btn:hover {
       background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
     }
 
     .cancel-btn {
@@ -633,11 +758,12 @@ if ($isLoggedIn) {
       border-radius: 25px;
       cursor: pointer;
       font-size: 16px;
-      transition: background 0.3s;
+      transition: all 0.3s;
     }
 
     .cancel-btn:hover {
       background: #555;
+      transform: translateY(-2px);
     }
 
     /* Notification */
@@ -654,6 +780,7 @@ if ($isLoggedIn) {
       z-index: 1001;
       display: none;
       font-size: 16px;
+      animation: slideInUp 0.3s ease, fadeOut 0.5s ease 3.5s forwards;
     }
 
     .notification.error {
@@ -662,6 +789,96 @@ if ($isLoggedIn) {
 
     .notification.success {
       background: #4CAF50;
+    }
+
+    /* Animation Keyframes */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      20% {
+        transform: scale(25, 25);
+        opacity: 0.3;
+      }
+      100% {
+        opacity: 0;
+        transform: scale(40, 40);
+      }
     }
 
     /* Responsive */
@@ -1199,10 +1416,11 @@ if ($isLoggedIn) {
         ? menuItems 
         : menuItems.filter(item => item.category === filter);
       
-      filteredItems.forEach(item => {
+      filteredItems.forEach((item, index) => {
         const menuItem = document.createElement('div');
         menuItem.className = 'menu-item';
         menuItem.dataset.category = item.category;
+        menuItem.style.setProperty('--item-index', index);
         menuItem.innerHTML = `
           <img src="${item.image}" class="menu-item-img" alt="${item.name}">
           <div class="menu-item-content">
@@ -1396,12 +1614,13 @@ if ($isLoggedIn) {
 
       let total = 0;
 
-      cart.forEach(item => {
+      cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
 
         const cartItem = document.createElement('div');
         cartItem.className = 'cart-item';
+        cartItem.style.animationDelay = `${index * 0.1}s`;
         cartItem.innerHTML = `
           <img src="${item.image}" class="cart-item-img" alt="${item.name}">
           <button class="cart-item-remove" data-id="${item.id}">&times;</button>
