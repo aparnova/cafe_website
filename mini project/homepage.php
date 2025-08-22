@@ -950,7 +950,7 @@ section,
     
     <div class="page-title-buttons d-flex justify-content-center gap-3 mt-4">
 
-      <a href="menu.php" class="btn-our-menu">Our Menu</a>
+      <a href="recipes.php" class="btn-our-menu">Recipe Wall</a>
 
       <a href="table_reservation.php" class="btn-order-now">Book a table</a>
     </div>
