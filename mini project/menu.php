@@ -12,6 +12,15 @@ if ($isLoggedIn) {
         'role' => $_SESSION['role']
     ];
 }
+
+// Fetch menu items from database
+$menuItems = [];
+$result = $conn->query("SELECT * FROM menu_items ORDER BY FIELD(category, 'starters','main','desserts','beverages'), id");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $menuItems[] = $row;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -791,6 +800,39 @@ if ($isLoggedIn) {
       background: #4CAF50;
     }
 
+    /* No Items Message */
+    .no-items {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--default-color);
+    }
+
+    .no-items h3 {
+      color: var(--accent-color);
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .no-items p {
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+
+    .no-items .btn {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+      padding: 12px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s;
+      display: inline-block;
+    }
+
+    .no-items .btn:hover {
+      background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
+    }
+
     /* Animation Keyframes */
     @keyframes fadeInUp {
       from {
@@ -993,17 +1035,27 @@ if ($isLoggedIn) {
         <p>Check Our Tasty Menu</p>
       </div>
 
-      <ul class="menu-filters">
-        <li class="filter-active" data-category="all">All</li>
-        <li data-category="starters">Starters</li>
-        <li data-category="main">Main Course</li>
-        <li data-category="desserts">Desserts</li>
-        <li data-category="beverages">Beverages</li>
-      </ul>
+      <?php if (empty($menuItems)): ?>
+        <div class="no-items">
+          <h3>No Menu Items Available</h3>
+          <p>Our menu is being updated. Please check back soon!</p>
+          <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+            <a href="manage_menu.php" class="btn">Add Menu Items</a>
+          <?php endif; ?>
+        </div>
+      <?php else: ?>
+        <ul class="menu-filters">
+          <li class="filter-active" data-category="all">All</li>
+          <li data-category="starters">Starters</li>
+          <li data-category="main">Main Course</li>
+          <li data-category="desserts">Desserts</li>
+          <li data-category="beverages">Beverages</li>
+        </ul>
 
-      <div class="menu-container" id="menu-container">
-        <!-- Menu items will be loaded here by JavaScript -->
-      </div>
+        <div class="menu-container" id="menu-container">
+          <!-- Menu items will be loaded here by JavaScript -->
+        </div>
+      <?php endif; ?>
     </div>
   </section>
 
@@ -1034,336 +1086,14 @@ if ($isLoggedIn) {
     const isLoggedIn = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
     const currentUser = <?php echo $isLoggedIn ? json_encode($currentUser) : 'null'; ?>;
 
-    // Sample menu data - now with 40 items (10 per category)
-    const menuItems = [
-      // Starters (10 items)
-      {
-        id: 1,
-        name: "Lobster Bisque",
-        category: "starters",
-        price: 900,
-        description: "Creamy soup with fresh lobster meat",
-        image: "https://images.pexels.com/photos/17598231/pexels-photo-17598231.jpeg"
-      },
-      {
-        id: 2,
-        name: "Bread Barrel",
-        category: "starters",
-        price: 200,
-        description: "Freshly baked artisan bread assortment",
-        image: "https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg"
-      },
-      {
-        id: 3,
-        name: "Crab Cake",
-        category: "starters",
-        price: 700,
-        description: "Maryland-style crab cakes with remoulade",
-        image: "https://images.pexels.com/photos/17321100/pexels-photo-17321100.jpeg"
-      },
-      {
-        id: 4,
-        name: "Bruschetta",
-        category: "starters",
-        price: 350,
-        description: "Grilled bread rubbed with garlic and topped with olive oil, salt and tomato",
-        image: "https://images.pexels.com/photos/5150304/pexels-photo-5150304.jpeg"
-      },
-      {
-        id: 5,
-        name: "Stuffed Mushrooms",
-        category: "starters",
-        price: 400,
-        description: "Mushroom caps filled with herbed cream cheese and breadcrumbs",
-        image: "https://images.pexels.com/photos/9219091/pexels-photo-9219091.jpeg"
-      },
-      {
-        id: 6,
-        name: "Calamari",
-        category: "starters",
-        price: 600,
-        description: "Crispy fried squid served with marinara sauce",
-        image: "https://images.pexels.com/photos/15801007/pexels-photo-15801007.jpeg"
-      },
-      {
-        id: 7,
-        name: "Spinach Artichoke Dip",
-        category: "starters",
-        price: 500,
-        description: "Creamy blend of spinach, artichokes and cheeses served with tortilla chips",
-        image: "https://images.pexels.com/photos/6544374/pexels-photo-6544374.jpeg"
-      },
-      {
-        id: 8,
-        name: "Shrimp Cocktail",
-        category: "starters",
-        price: 650,
-        description: "Chilled shrimp served with cocktail sauce",
-        image: "https://images.pexels.com/photos/5192396/pexels-photo-5192396.jpeg"
-      },
-      {
-        id: 9,
-        name: "Chicken Wings",
-        category: "starters",
-        price: 300,
-        description: "Crispy wings tossed in your choice of sauce",
-        image: "https://images.pexels.com/photos/11299734/pexels-photo-11299734.jpeg"
-      },
-      {
-        id: 10,
-        name: "Caprese Salad",
-        category: "starters",
-        price: 400,
-        description: "Fresh mozzarella, tomatoes, basil, and balsamic glaze",
-        image: "https://images.pexels.com/photos/19295809/pexels-photo-19295809.jpeg"
-      },
-      
-      // Main Course (10 items)
-      {
-        id: 11,
-        name: "Grilled Salmon",
-        category: "main",
-        price: 1000,
-        description: "Fresh salmon with lemon butter sauce",
-        image: "https://images.pexels.com/photos/262959/pexels-photo-262959.jpeg"
-      },
-      {
-        id: 12,
-        name: "Beef Tenderloin",
-        category: "main",
-        price: 1300,
-        description: "8oz premium cut with roasted vegetables",
-        image: "https://images.pexels.com/photos/7627422/pexels-photo-7627422.jpeg"
-      },
-      {
-        id: 13,
-        name: "Mushroom Risotto",
-        category: "main",
-        price: 550,
-        description: "Creamy arborio rice with wild mushrooms",
-        image: "https://images.pexels.com/photos/7883782/pexels-photo-7883782.jpeg"
-      },
-      {
-        id: 14,
-        name: "Chicken Parmesan",
-        category: "main",
-        price: 600,
-        description: "Breaded chicken topped with marinara and mozzarella",
-        image: "https://images.pexels.com/photos/29285458/pexels-photo-29285458.jpeg"
-      },
-      {
-        id: 15,
-        name: "Filet Mignon",
-        category: "main",
-        price: 1500,
-        description: "8oz center-cut filet with red wine reduction",
-        image: "https://images.pexels.com/photos/16064370/pexels-photo-16064370.jpeg"
-      },
-      {
-        id: 16,
-        name: "Lobster Tail",
-        category: "main",
-        price: 1200,
-        description: "8oz Maine lobster tail with drawn butter",
-        image: "https://images.pexels.com/photos/18675295/pexels-photo-18675295.jpeg"
-      },
-      {
-        id: 17,
-        name: "Vegetable Paella",
-        category: "main",
-        price: 600,
-        description: "Spanish rice with saffron and seasonal vegetables",
-        image: "https://images.pexels.com/photos/31710628/pexels-photo-31710628.jpeg"
-      },
-      {
-        id: 18,
-        name: "Ribeye Steak",
-        category: "main",
-        price: 1400,
-        description: "12oz prime ribeye with garlic mashed potatoes",
-        image: "https://images.pexels.com/photos/16444386/pexels-photo-16444386.jpeg"
-      },
-      {
-        id: 19,
-        name: "Eggplant Parmesan",
-        category: "main",
-        price: 500,
-        description: "Breaded eggplant layered with cheese and marinara",
-        image: "https://images.pexels.com/photos/1527602/pexels-photo-1527602.jpeg"
-      },
-      {
-        id: 20,
-        name: "Grilled Chicken",
-        category: "main",
-        price: 550,
-        description: "Herb-marinated chicken breast with seasonal vegetables",
-        image: "https://images.pexels.com/photos/2233729/pexels-photo-2233729.jpeg"
-      },
-      
-      // Desserts (10 items)
-      {
-        id: 21,
-        name: "Chocolate Lava Cake",
-        category: "desserts",
-        price: 350,
-        description: "Warm chocolate cake with molten center",
-        image: "https://images.pexels.com/photos/5163948/pexels-photo-5163948.jpeg"
-      },
-      {
-        id: 22,
-        name: "Creme Brulee",
-        category: "desserts",
-        price: 450,
-        description: "Classic vanilla custard with caramelized sugar",
-        image: "https://images.pexels.com/photos/18976997/pexels-photo-18976997.jpeg"
-      },
-      {
-        id: 23,
-        name: "Tiramisu",
-        category: "desserts",
-        price: 500,
-        description: "Coffee-flavored Italian dessert with mascarpone",
-        image: "https://images.pexels.com/photos/28848709/pexels-photo-28848709.jpeg"
-      },
-      {
-        id: 24,
-        name: "Cheesecake",
-        category: "desserts",
-        price: 450,
-        description: "New York style with berry compote",
-        image: "https://images.pexels.com/photos/27721659/pexels-photo-27721659.jpeg"
-      },
-      {
-        id: 25,
-        name: "Apple Pie",
-        category: "desserts",
-        price: 350,
-        description: "Classic American pie with vanilla ice cream",
-        image: "https://images.pexels.com/photos/31020416/pexels-photo-31020416.jpeg"
-      },
-      {
-        id: 26,
-        name: "Chocolate Mousse",
-        category: "desserts",
-        price: 300,
-        description: "Light and airy chocolate dessert",
-        image: "https://images.pexels.com/photos/15023073/pexels-photo-15023073.jpeg"
-      },
-      {
-        id: 27,
-        name: "Key Lime Pie",
-        category: "desserts",
-        price: 400,
-        description: "Tart and sweet Florida specialty",
-        image: "https://images.pexels.com/photos/8330845/pexels-photo-8330845.jpeg"
-      },
-      {
-        id: 28,
-        name: "Bread Pudding",
-        category: "desserts",
-        price: 350,
-        description: "Warm pudding with bourbon sauce",
-        image: "https://images.pexels.com/photos/28097283/pexels-photo-28097283.jpeg"
-      },
-      {
-        id: 29,
-        name: "Ice Cream Sundae",
-        category: "desserts",
-        price: 300,
-        description: "Vanilla ice cream with hot fudge and toppings",
-        image: "https://images.pexels.com/photos/9501344/pexels-photo-9501344.jpeg"
-      },
-      {
-        id: 30,
-        name: "Fruit Tart",
-        category: "desserts",
-        price: 400,
-        description: "Buttery crust with pastry cream and fresh fruit",
-        image: "https://images.pexels.com/photos/461431/pexels-photo-461431.jpeg"
-      },
-      
-      // Beverages (10 items)
-      {
-        id: 31,
-        name: "Red Wine",
-        category: "beverages",
-        price: 600,
-        description: "Glass of premium Cabernet Sauvignon",
-        image: "https://images.pexels.com/photos/95960/pexels-photo-95960.jpeg"
-      },
-      {
-        id: 32,
-        name: "Craft Cocktail",
-        category: "beverages",
-        price: 500,
-        description: "Seasonal ingredients, house-made syrups",
-        image: "https://images.pexels.com/photos/8084719/pexels-photo-8084719.jpeg"
-      },
-      {
-        id: 33,
-        name: "Local Beer",
-        category: "beverages",
-        price: 250,
-        description: "Rotating selection of craft brews",
-        image: "https://images.pexels.com/photos/3660307/pexels-photo-3660307.jpeg"
-      },
-      {
-        id: 34,
-        name: "Iced Tea",
-        category: "beverages",
-        price: 150,
-        description: "Freshly brewed sweet or unsweetened",
-        image: "https://images.pexels.com/photos/16826278/pexels-photo-16826278.jpeg"
-      },
-      {
-        id: 35,
-        name: "Lemonade",
-        category: "beverages",
-        price: 130,
-        description: "Homemade with fresh lemons",
-        image: "https://images.pexels.com/photos/31000076/pexels-photo-31000076.jpeg"
-      },
-      {
-        id: 36,
-        name: "Espresso",
-        category: "beverages",
-        price: 120,
-        description: "Single or double shot",
-        image: "https://images.pexels.com/photos/32339281/pexels-photo-32339281.jpeg"
-      },
-      {
-        id: 37,
-        name: "Cappuccino",
-        category: "beverages",
-        price: 180,
-        description: "Espresso with steamed milk foam",
-        image: "https://images.pexels.com/photos/8488379/pexels-photo-8488379.jpeg"
-      },
-      {
-        id: 38,
-        name: "White Wine",
-        category: "beverages",
-        price: 600,
-        description: "Glass of Chardonnay or Sauvignon Blanc",
-        image: "https://images.pexels.com/photos/11238673/pexels-photo-11238673.jpeg"
-      },
-      {
-        id: 39,
-        name: "Sparkling Water",
-        category: "beverages",
-        price: 150,
-        description: "Imported Italian sparkling water",
-        image: "https://images.pexels.com/photos/26859058/pexels-photo-26859058.jpeg"
-      },
-      {
-        id: 40,
-        name: "Fresh Juice",
-        category: "beverages",
-        price: 180,
-        description: "Daily selection of fresh squeezed juices",
-        image: "https://images.pexels.com/photos/11009201/pexels-photo-11009201.jpeg"
-      }
-    ];
+    // Get menu items from PHP/database instead of hardcoded array
+    const menuItems = <?php echo json_encode($menuItems); ?>;
+
+    // Convert string IDs and prices to numbers for JavaScript compatibility
+    menuItems.forEach(item => {
+        item.id = parseInt(item.id);
+        item.price = parseInt(item.price);
+    });
 
     // DOM Elements
     const menuContainer = document.getElementById('menu-container');
@@ -1385,10 +1115,12 @@ if ($isLoggedIn) {
 
     // Initialize the page
     function init() {
-      renderMenu();
-      setupEventListeners();
-      if (isLoggedIn) {
-        loadCartFromStorage();
+      if (menuItems.length > 0) {
+        renderMenu();
+        setupEventListeners();
+        if (isLoggedIn) {
+          loadCartFromStorage();
+        }
       }
     }
 
@@ -1410,25 +1142,36 @@ if ($isLoggedIn) {
 
     // Render menu items
     function renderMenu(filter = 'all') {
+      if (!menuContainer) return;
+      
       menuContainer.innerHTML = '';
       
       const filteredItems = filter === 'all' 
         ? menuItems 
         : menuItems.filter(item => item.category === filter);
       
+      if (filteredItems.length === 0) {
+        menuContainer.innerHTML = '<div class="no-items"><h3>No items found in this category</h3><p>Try selecting a different category.</p></div>';
+        return;
+      }
+      
       filteredItems.forEach((item, index) => {
         const menuItem = document.createElement('div');
         menuItem.className = 'menu-item';
         menuItem.dataset.category = item.category;
         menuItem.style.setProperty('--item-index', index);
+        
+        // Handle missing images with a placeholder
+        const imageUrl = item.image || 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image';
+        
         menuItem.innerHTML = `
-          <img src="${item.image}" class="menu-item-img" alt="${item.name}">
+          <img src="${imageUrl}" class="menu-item-img" alt="${item.name}" onerror="this.src='https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'">
           <div class="menu-item-content">
             <div class="menu-item-title">
               <span>${item.name}</span>
               <span class="menu-item-price">₹${item.price}</span>
             </div>
-            <p class="menu-item-desc">${item.description}</p>
+            <p class="menu-item-desc">${item.description || 'No description available'}</p>
             <div class="menu-item-actions">
               <div class="quantity-control">
                 <button class="quantity-btn minus" data-id="${item.id}">-</button>
@@ -1516,49 +1259,51 @@ if ($isLoggedIn) {
       }
 
       // Menu item actions (delegated)
-      menuContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart') || e.target.classList.contains('order-now')) {
-          if (!isLoggedIn) {
-            showNotification('Please login to add items to cart!', 'error');
-            loginRequiredOverlay.classList.add('show');
-            return;
-          }
-        }
-
-        if (e.target.classList.contains('add-to-cart')) {
-          const itemId = parseInt(e.target.dataset.id);
-          const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-          const quantity = parseInt(quantityInput.value);
-          addToCart(itemId, quantity);
-        }
-
-        if (e.target.classList.contains('order-now')) {
-          const itemId = parseInt(e.target.dataset.id);
-          const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-          const quantity = parseInt(quantityInput.value);
-          
-          // Add item to cart
-          addToCart(itemId, quantity);
-          
-          // Save cart and redirect directly to checkout
-          saveCartToStorage();
-          window.location.href = 'checkout.php';
-        }
-
-        if (e.target.classList.contains('quantity-btn')) {
-          const itemId = parseInt(e.target.dataset.id);
-          const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
-          let quantity = parseInt(quantityInput.value);
-
-          if (e.target.classList.contains('plus')) {
-            quantity++;
-          } else if (e.target.classList.contains('minus') && quantity > 1) {
-            quantity--;
+      if (menuContainer) {
+        menuContainer.addEventListener('click', (e) => {
+          if (e.target.classList.contains('add-to-cart') || e.target.classList.contains('order-now')) {
+            if (!isLoggedIn) {
+              showNotification('Please login to add items to cart!', 'error');
+              loginRequiredOverlay.classList.add('show');
+              return;
+            }
           }
 
-          quantityInput.value = quantity;
-        }
-      });
+          if (e.target.classList.contains('add-to-cart')) {
+            const itemId = parseInt(e.target.dataset.id);
+            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            const quantity = parseInt(quantityInput.value);
+            addToCart(itemId, quantity);
+          }
+
+          if (e.target.classList.contains('order-now')) {
+            const itemId = parseInt(e.target.dataset.id);
+            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            const quantity = parseInt(quantityInput.value);
+            
+            // Add item to cart
+            addToCart(itemId, quantity);
+            
+            // Save cart and redirect directly to checkout
+            saveCartToStorage();
+            window.location.href = 'checkout.php';
+          }
+
+          if (e.target.classList.contains('quantity-btn')) {
+            const itemId = parseInt(e.target.dataset.id);
+            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            let quantity = parseInt(quantityInput.value);
+
+            if (e.target.classList.contains('plus')) {
+              quantity++;
+            } else if (e.target.classList.contains('minus') && quantity > 1) {
+              quantity--;
+            }
+
+            quantityInput.value = quantity;
+          }
+        });
+      }
     }
 
     // Add item to cart
@@ -1582,7 +1327,7 @@ if ($isLoggedIn) {
           name: menuItem.name,
           price: menuItem.price,
           quantity: quantity,
-          image: menuItem.image
+          image: menuItem.image || 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'
         });
       }
 
@@ -1622,7 +1367,7 @@ if ($isLoggedIn) {
         cartItem.className = 'cart-item';
         cartItem.style.animationDelay = `${index * 0.1}s`;
         cartItem.innerHTML = `
-          <img src="${item.image}" class="cart-item-img" alt="${item.name}">
+          <img src="${item.image}" class="cart-item-img" alt="${item.name}" onerror="this.src='https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'">
           <button class="cart-item-remove" data-id="${item.id}">&times;</button>
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.name}</h4>
