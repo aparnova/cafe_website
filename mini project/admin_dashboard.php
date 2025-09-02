@@ -409,13 +409,13 @@
     .delay-5 { animation-delay: 0.5s; }
     .delay-6 { animation-delay: 0.6s; }
     .delay-7 { animation-delay: 0.7s; }
+    .delay-8 { animation-delay: 0.8s; }
   </style>
 </head>
 <body>
 
 <div class="sidebar">
   <h2>Westley's Resto Cafe</h2>
-  <a href="admin_dashboard.php"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
   <a href="view_customers.php"><i class="fas fa-users"></i> <span class="menu-text">Customers</span></a>
   <a href="manage_menu.php"><i class="fas fa-utensils"></i> <span class="menu-text">Menu Editor</span></a>
   <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
@@ -424,6 +424,7 @@
   <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
   <a href="view_aboutus.php"><i class="fas fa-info-circle"></i> <span class="menu-text">About Us</span></a>
   <a href="view_contact_us.php"><i class="fas fa-phone"></i> <span class="menu-text">Contact Us</span></a>
+  <a href="view_recipes.php"><i class="fas fa-book"></i> <span class="menu-text">Recipes</span></a>
   <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
 </div>
 
@@ -485,6 +486,12 @@
       <h3>Contact Us</h3>
       <p>Manage contact information and location details</p>
       <a href="view_contact_us.php">Edit Contact Info</a>
+    </div>
+    <div class="card animate-fade delay-8" onclick="window.location.href='view_recipes.php'">
+      <div class="card-icon"><i class="fas fa-book"></i></div>
+      <h3>Recipe Management</h3>
+      <p>Create and manage recipes for your menu items</p>
+      <a href="view_recipes.php">Manage Recipes</a>
     </div>
   </div>
 

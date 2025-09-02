@@ -40,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
 // Functions
 function submitRecipe($conn) {
     try {
+        $conn->begin_transaction();
+        
         $fullname = trim($_POST['authorName'] ?? '');
         $email = trim($_POST['authorEmail'] ?? '');
         $title = trim($_POST['recipeTitle'] ?? '');
@@ -79,55 +81,76 @@ function submitRecipe($conn) {
             }
         }
         
-        // Check if user exists, if not create user
-        $user_check = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $user_check->bind_param("s", $email);
-        $user_check->execute();
-        $user_result = $user_check->get_result();
+        // Check if author exists, if not create new author
+        $author_stmt = $conn->prepare("SELECT id FROM authors WHERE email = ?");
+        $author_stmt->bind_param("s", $email);
+        $author_stmt->execute();
+        $author_result = $author_stmt->get_result();
         
-        if ($user_result->num_rows > 0) {
-            $user = $user_result->fetch_assoc();
-            $user_id = $user['id'];
+        if ($author_result->num_rows > 0) {
+            $author_id = $author_result->fetch_assoc()['id'];
         } else {
-            // Create new user
-            $phone = ''; // Default empty phone
-            $password_hash = password_hash($email, PASSWORD_DEFAULT); // Use email as default password
-            
-            $user_stmt = $conn->prepare("INSERT INTO users (fullname, email, phone, password) VALUES (?, ?, ?, ?)");
-            $user_stmt->bind_param("ssss", $fullname, $email, $phone, $password_hash);
-            
-            if ($user_stmt->execute()) {
-                $user_id = $conn->insert_id;
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Error creating user account']);
-                return;
-            }
+            // Create new author
+            $insert_author_stmt = $conn->prepare("INSERT INTO authors (name, email) VALUES (?, ?)");
+            $insert_author_stmt->bind_param("ss", $fullname, $email);
+            $insert_author_stmt->execute();
+            $author_id = $conn->insert_id;
         }
         
         // Insert recipe
-        $recipe_stmt = $conn->prepare("INSERT INTO recipes (user_id, title, description, ingredients, instructions, photo_url, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
-        $recipe_stmt->bind_param("isssss", $user_id, $title, $description, $ingredients, $instructions, $photo_url);
+        $recipe_stmt = $conn->prepare("INSERT INTO recipes (author_id, title, description, photo_url, status) VALUES (?, ?, ?, ?, 'pending')");
+        $recipe_stmt->bind_param("isss", $author_id, $title, $description, $photo_url);
         
         if ($recipe_stmt->execute()) {
+            $recipe_id = $conn->insert_id;
+            
+            // Insert ingredients
+            $ingredients_array = array_map('trim', explode(',', $ingredients));
+            $ingredient_stmt = $conn->prepare("INSERT INTO recipe_ingredients (recipe_id, ingredient) VALUES (?, ?)");
+            
+            foreach ($ingredients_array as $ingredient) {
+                if (!empty($ingredient)) {
+                    $ingredient_stmt->bind_param("is", $recipe_id, $ingredient);
+                    $ingredient_stmt->execute();
+                }
+            }
+            
+            // Insert instructions
+            $instructions_array = preg_split('/\d+\.|\n/', $instructions);
+            $instruction_stmt = $conn->prepare("INSERT INTO recipe_instructions (recipe_id, step_number, instruction) VALUES (?, ?, ?)");
+            
+            $step_number = 1;
+            foreach ($instructions_array as $instruction) {
+                $instruction = trim($instruction);
+                if (!empty($instruction)) {
+                    $instruction_stmt->bind_param("iis", $recipe_id, $step_number, $instruction);
+                    $instruction_stmt->execute();
+                    $step_number++;
+                }
+            }
+            
+            $conn->commit();
             echo json_encode(['success' => true, 'message' => 'Recipe submitted successfully! It will be reviewed before publishing.']);
         } else {
+            $conn->rollback();
             echo json_encode(['success' => false, 'message' => 'Error submitting recipe']);
         }
         
     } catch (Exception $e) {
+        $conn->rollback();
         echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
     }
 }
 
 function getRecipes($conn) {
     try {
-        // Get parameters from both POST and GET
         $filter = $_POST['filter'] ?? $_GET['filter'] ?? 'all';
         $search = $_POST['search'] ?? $_GET['search'] ?? '';
         
-        $sql = "SELECT r.*, u.fullname as author_name
+        // Query with JOIN to get author information
+        $sql = "SELECT r.*, a.name as author_name, a.email as author_email 
                 FROM recipes r 
-                JOIN users u ON r.user_id = u.id 
+                JOIN authors a ON r.author_id = a.id 
                 WHERE r.status = 'approved'";
         
         $params = [];
@@ -161,6 +184,32 @@ function getRecipes($conn) {
         
         $recipes = [];
         while ($row = $result->fetch_assoc()) {
+            // Get ingredients for this recipe
+            $ingredients_stmt = $conn->prepare("SELECT ingredient FROM recipe_ingredients WHERE recipe_id = ?");
+            $ingredients_stmt->bind_param("i", $row['id']);
+            $ingredients_stmt->execute();
+            $ingredients_result = $ingredients_stmt->get_result();
+            
+            $ingredients = [];
+            while ($ingredient_row = $ingredients_result->fetch_assoc()) {
+                $ingredients[] = $ingredient_row['ingredient'];
+            }
+            $row['ingredients'] = implode(', ', $ingredients);
+            
+            // Get instructions for this recipe
+            $instructions_stmt = $conn->prepare("SELECT instruction FROM recipe_instructions WHERE recipe_id = ? ORDER BY step_number");
+            $instructions_stmt->bind_param("i", $row['id']);
+            $instructions_stmt->execute();
+            $instructions_result = $instructions_stmt->get_result();
+            
+            $instructions = [];
+            $step = 1;
+            while ($instruction_row = $instructions_result->fetch_assoc()) {
+                $instructions[] = $step . '. ' . $instruction_row['instruction'];
+                $step++;
+            }
+            $row['instructions'] = implode("\n", $instructions);
+            
             $recipes[] = $row;
         }
         
@@ -173,9 +222,10 @@ function getRecipes($conn) {
 
 function getFeaturedRecipes($conn) {
     try {
-        $sql = "SELECT r.*, u.fullname as author_name
+        // Query with JOIN to get author information for featured recipes
+        $sql = "SELECT r.*, a.name as author_name, a.email as author_email 
                 FROM recipes r 
-                JOIN users u ON r.user_id = u.id 
+                JOIN authors a ON r.author_id = a.id 
                 WHERE r.status = 'approved' AND r.featured = 1 
                 ORDER BY r.created_at DESC";
         
@@ -183,6 +233,32 @@ function getFeaturedRecipes($conn) {
         $recipes = [];
         
         while ($row = $result->fetch_assoc()) {
+            // Get ingredients for this recipe
+            $ingredients_stmt = $conn->prepare("SELECT ingredient FROM recipe_ingredients WHERE recipe_id = ?");
+            $ingredients_stmt->bind_param("i", $row['id']);
+            $ingredients_stmt->execute();
+            $ingredients_result = $ingredients_stmt->get_result();
+            
+            $ingredients = [];
+            while ($ingredient_row = $ingredients_result->fetch_assoc()) {
+                $ingredients[] = $ingredient_row['ingredient'];
+            }
+            $row['ingredients'] = implode(', ', $ingredients);
+            
+            // Get instructions for this recipe
+            $instructions_stmt = $conn->prepare("SELECT instruction FROM recipe_instructions WHERE recipe_id = ? ORDER BY step_number");
+            $instructions_stmt->bind_param("i", $row['id']);
+            $instructions_stmt->execute();
+            $instructions_result = $instructions_stmt->get_result();
+            
+            $instructions = [];
+            $step = 1;
+            while ($instruction_row = $instructions_result->fetch_assoc()) {
+                $instructions[] = $step . '. ' . $instruction_row['instruction'];
+                $step++;
+            }
+            $row['instructions'] = implode("\n", $instructions);
+            
             $recipes[] = $row;
         }
         
@@ -429,6 +505,7 @@ function getFeaturedRecipes($conn) {
       font-size: 1rem;
       transition: border-color 0.3s ease;
       font-family: var(--default-font);
+      box-sizing: border-box;
     }
 
     .form-group input:focus,
@@ -710,6 +787,7 @@ function getFeaturedRecipes($conn) {
       border-radius: 25px;
       font-size: 1.1rem;
       transition: all 0.3s ease;
+      box-sizing: border-box;
     }
 
     .search-bar:focus {
@@ -1044,7 +1122,7 @@ function getFeaturedRecipes($conn) {
                     </div>
                     <div class="recipe-content">
                         <div class="recipe-title">${recipe.title}</div>
-                        <div class="recipe-author">By: ${recipe.author_name}</div>
+                        <div class="recipe-author">By: ${recipe.author_name} (${recipe.author_email})</div>
                         <div class="recipe-description">${recipe.description || 'No description available'}</div>
                         <div class="recipe-actions">
                             <button class="view-btn" onclick="viewRecipe(${recipe.id})">View Recipe</button>
@@ -1077,7 +1155,7 @@ function getFeaturedRecipes($conn) {
             
             modalContent.innerHTML = `
                 <h2 style="color: var(--accent-color); margin-bottom: 1rem;">${recipe.title}</h2>
-                <p style="color: color-mix(in srgb, var(--default-color), transparent 30%); font-style: italic; margin-bottom: 1rem;">Recipe by ${recipe.author_name}</p>
+                <p style="color: color-mix(in srgb, var(--default-color), transparent 30%); font-style: italic; margin-bottom: 1rem;">Recipe by ${recipe.author_name} (${recipe.author_email})</p>
                 
                 ${recipe.photo_url ? `<img src="${recipe.photo_url}" alt="${recipe.title}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; margin-bottom: 1rem;">` : ''}
                 
@@ -1090,8 +1168,8 @@ function getFeaturedRecipes($conn) {
                 
                 <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">Instructions:</h3>
                 <div style="background: color-mix(in srgb, var(--default-color), transparent 95%); padding: 1rem; border-radius: 8px;">
-                    ${recipe.instructions.split(/\d+\.|\n/).filter(step => step.trim()).map((step, index) => 
-                        step.trim() ? `<div style="margin-bottom: 0.5rem;"><strong>${index + 1}.</strong> ${step.trim()}</div>` : ''
+                    ${recipe.instructions.split('\n').filter(step => step.trim()).map((step, index) => 
+                        step.trim() ? `<div style="margin-bottom: 0.5rem;">${step.trim()}</div>` : ''
                     ).join('')}
                 </div>
             `;
@@ -1166,7 +1244,7 @@ function getFeaturedRecipes($conn) {
                                 </div>
                                 <div class="recipe-content">
                                     <div class="recipe-title">${recipe.title}</div>
-                                    <div class="recipe-author">By: ${recipe.author_name} - ⭐ Chef of the Month</div>
+                                    <div class="recipe-author">By: ${recipe.author_name} (${recipe.author_email}) - ⭐ Chef of the Month</div>
                                     <div class="recipe-description">${recipe.description || 'No description available'}</div>
                                     <div class="recipe-actions">
                                         <button class="view-btn" onclick="viewRecipe(${recipe.id})">View Recipe</button>
