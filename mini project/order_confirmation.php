@@ -2,51 +2,52 @@
 session_start();
 require 'db.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user']) || !isset($_SESSION['role'])) {
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'customer') {
     header("Location: login.php");
     exit();
 }
 
-// Get order ID from URL
-$order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
-
-if ($order_id === 0) {
+// Check if order_id exists
+if (!isset($_GET['order_id'])) {
     header("Location: menu.php");
     exit();
 }
 
-// Get user ID
-$stmt = $conn->prepare("SELECT id FROM users WHERE fullname = ?");
-$stmt->bind_param("s", $_SESSION['user']);
-$stmt->execute();
-$result = $stmt->get_result();
-$userData = $result->fetch_assoc();
-$user_id = $userData['id'];
+$order_id = intval($_GET['order_id']);
+$user_id = $_SESSION['user_id'];
 
 // Fetch order details
-$stmt = $conn->prepare("
-    SELECT o.*, u.fullname 
-    FROM orders o 
-    JOIN users u ON o.user_id = u.id 
-    WHERE o.id = ? AND o.user_id = ?
-");
-$stmt->bind_param("ii", $order_id, $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$order = $result->fetch_assoc();
+$order_query = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+$order_query->bind_param("ii", $order_id, $user_id);
+$order_query->execute();
+$order_result = $order_query->get_result();
 
-if (!$order) {
-    header("Location: menu.php");
+if ($order_result->num_rows === 0) {
+    echo "<h2 style='text-align:center;color:red;'>Invalid order or access denied!</h2>";
     exit();
 }
 
+$order = $order_result->fetch_assoc();
+
 // Fetch order items
-$stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");
-$stmt->bind_param("i", $order_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$order_items = $result->fetch_all(MYSQLI_ASSOC);
+$items_query = $conn->prepare("SELECT oi.*, m.name FROM order_items oi 
+                               JOIN menu_items m ON oi.menu_id = m.id 
+                               WHERE oi.order_id = ?");
+$items_query->bind_param("i", $order_id);
+$items_query->execute();
+$items_result = $items_query->get_result();
+
+// Define order status progression
+$status_progression = [
+    'Pending' => 1,
+    'Processing' => 2,
+    'Out for Delivery' => 3,
+    'Delivered' => 4,
+    'Cancelled' => 0
+];
+
+$current_status = $order['status'];
+$current_level = isset($status_progression[$current_status]) ? $status_progression[$current_status] : 1;
 ?>
 
 <!DOCTYPE html>
@@ -227,17 +228,6 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
       margin: 0 0 10px;
     }
 
-    .order-status {
-      display: inline-block;
-      background: var(--success-color);
-      color: white;
-      padding: 8px 20px;
-      border-radius: 25px;
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
     /* Order Info */
     .order-info {
       display: grid;
@@ -383,11 +373,19 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
 
     .timeline-step.active .timeline-icon {
       background: var(--success-color);
+    }
+
+    .timeline-step.current .timeline-icon {
+      background: var(--success-color);
       animation: pulse 2s infinite;
     }
 
     .timeline-step.pending .timeline-icon {
       background: color-mix(in srgb, var(--default-color), transparent 70%);
+    }
+
+    .timeline-step.cancelled .timeline-icon {
+      background: #ef4444;
     }
 
     @keyframes pulse {
@@ -400,6 +398,17 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
       color: var(--default-color);
       font-size: 12px;
       font-weight: 600;
+    }
+
+    .timeline-step.active .timeline-label,
+    .timeline-step.current .timeline-label {
+      color: var(--success-color);
+      font-weight: 700;
+    }
+
+    .timeline-step.cancelled .timeline-label {
+      color: #ef4444;
+      font-weight: 700;
     }
 
     /* Action Buttons */
@@ -445,6 +454,21 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
       background: var(--accent-color);
       color: var(--contrast-color);
     }
+
+    /* Status Badges */
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .Pending { background: #fef3c7; color: #92400e; }
+    .Processing { background: #bfdbfe; color: #1e3a8a; }
+    .Out { background: #fef08a; color: #854d0e; }
+    .Delivered { background: #d1fae5; color: #065f46; }
+    .Cancelled { background: #fee2e2; color: #991b1b; }
 
     /* Responsive */
     @media (max-width: 768px) {
@@ -503,14 +527,14 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
           <i class="fas fa-check"></i>
         </div>
         <h1 class="success-title">Order Confirmed!</h1>
-        <p class="success-subtitle">Thank you for choosing Westley's Resto Cafe</p>
+        <p class="success-subtitle">Thank you, <b><?php echo $_SESSION['user']; ?></b>! Your order has been placed successfully.</p>
       </div>
 
       <!-- Order Details -->
       <div class="order-card">
         <div class="order-header">
           <h2 class="order-id">Order #<?php echo $order['id']; ?></h2>
-          <span class="order-status"><?php echo ucfirst($order['status']); ?></span>
+          <span class="status <?php echo $order['status']; ?>"><?php echo $order['status']; ?></span>
         </div>
 
         <div class="order-info">
@@ -518,15 +542,11 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
             <h3><i class="fas fa-user"></i> Customer Details</h3>
             <div class="info-item">
               <span class="info-label">Name:</span>
-              <span class="info-value"><?php echo htmlspecialchars($order['fullname']); ?></span>
+              <span class="info-value"><?php echo $_SESSION['user']; ?></span>
             </div>
             <div class="info-item">
-              <span class="info-label">Phone:</span>
-              <span class="info-value"><?php echo htmlspecialchars($order['phone']); ?></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Address:</span>
-              <span class="info-value"><?php echo htmlspecialchars($order['delivery_address']); ?></span>
+              <span class="info-label">Payment:</span>
+              <span class="info-value"><?php echo ucfirst(str_replace('_', ' ', $order['payment_method'])); ?></span>
             </div>
           </div>
 
@@ -541,84 +561,105 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
               <span class="info-value"><?php echo date('h:i A', strtotime($order['created_at'])); ?></span>
             </div>
             <div class="info-item">
-              <span class="info-label">Total:</span>
-              <span class="info-value">₹<?php echo $order['total_amount']; ?></span>
+              <span class="info-label">Address:</span>
+              <span class="info-value"><?php echo htmlspecialchars($order['delivery_address']); ?></span>
             </div>
           </div>
         </div>
 
         <div class="order-items">
           <h3><i class="fas fa-receipt"></i> Your Order</h3>
-          <?php foreach ($order_items as $item): ?>
+          <?php while ($item = $items_result->fetch_assoc()) { ?>
           <div class="item-row">
             <div class="item-details">
-              <div class="item-name"><?php echo htmlspecialchars($item['item_name']); ?></div>
-              <div class="item-quantity">₹<?php echo $item['item_price']; ?> × <?php echo $item['quantity']; ?></div>
+              <div class="item-name"><?php echo $item['name']; ?></div>
+              <div class="item-quantity">₹<?php echo $item['price']; ?> × <?php echo $item['quantity']; ?></div>
             </div>
-            <div class="item-price">₹<?php echo $item['subtotal']; ?></div>
+            <div class="item-price">₹<?php echo $item['price'] * $item['quantity']; ?></div>
           </div>
-          <?php endforeach; ?>
+          <?php } ?>
 
           <div class="order-total">
-            <strong>Total Amount: <span class="total-amount">₹<?php echo $order['total_amount']; ?></span></strong>
+            <strong>Total Amount: <span class="total-amount">₹<?php echo $order['total_price']; ?></span></strong>
           </div>
         </div>
-
-        <?php if ($order['notes']): ?>
-        <div class="info-section">
-          <h3><i class="fas fa-sticky-note"></i> Special Instructions</h3>
-          <p class="info-value"><?php echo htmlspecialchars($order['notes']); ?></p>
-        </div>
-        <?php endif; ?>
       </div>
 
       <!-- Order Timeline -->
       <div class="order-timeline">
         <h3 class="timeline-title">Order Progress</h3>
-        <div class="timeline-steps">
-          <div class="timeline-step active">
-            <div class="timeline-icon">
-              <i class="fas fa-check"></i>
-            </div>
-            <div class="timeline-label">Order Placed</div>
+        <?php if ($current_status === 'Cancelled'): ?>
+          <div style="text-align: center; color: #ef4444; font-size: 18px; font-weight: bold;">
+            <i class="fas fa-times-circle"></i> Order Cancelled
           </div>
-          <div class="timeline-step pending">
-            <div class="timeline-icon">
-              <i class="fas fa-clock"></i>
+        <?php else: ?>
+          <div class="timeline-steps">
+            <!-- Order Placed -->
+            <div class="timeline-step <?php echo ($current_level >= 1) ? 'active' : 'pending'; ?>">
+              <div class="timeline-icon">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="timeline-label">Order Placed</div>
             </div>
-            <div class="timeline-label">Confirmed</div>
-          </div>
-          <div class="timeline-step pending">
-            <div class="timeline-icon">
-              <i class="fas fa-utensils"></i>
+
+            <!-- Confirmed/Processing -->
+            <div class="timeline-step <?php 
+              if ($current_status === 'Processing' && $current_level >= 2) {
+                echo 'current';
+              } elseif ($current_level > 2) {
+                echo 'active';
+              } else {
+                echo 'pending';
+              }
+            ?>">
+              <div class="timeline-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="timeline-label">Processing</div>
             </div>
-            <div class="timeline-label">Preparing</div>
-          </div>
-          <div class="timeline-step pending">
-            <div class="timeline-icon">
-              <i class="fas fa-truck"></i>
+
+            <!-- Out for Delivery -->
+            <div class="timeline-step <?php 
+              if ($current_status === 'Out for Delivery' && $current_level >= 3) {
+                echo 'current';
+              } elseif ($current_level > 3) {
+                echo 'active';
+              } else {
+                echo 'pending';
+              }
+            ?>">
+              <div class="timeline-icon">
+                <i class="fas fa-truck"></i>
+              </div>
+              <div class="timeline-label">Out for Delivery</div>
             </div>
-            <div class="timeline-label">On the Way</div>
-          </div>
-          <div class="timeline-step pending">
-            <div class="timeline-icon">
-              <i class="fas fa-home"></i>
+
+            <!-- Delivered -->
+            <div class="timeline-step <?php 
+              if ($current_status === 'Delivered' && $current_level >= 4) {
+                echo 'current';
+              } else {
+                echo 'pending';
+              }
+            ?>">
+              <div class="timeline-icon">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="timeline-label">Delivered</div>
             </div>
-            <div class="timeline-label">Delivered</div>
           </div>
-        </div>
+        <?php endif; ?>
       </div>
 
-      
       <!-- Action Buttons -->
       <div class="action-buttons">
-        <a href="menu.php" class="btn btn-primary">
-          <i class="fas fa-plus"></i>
-          Order More
-        </a>
-        <a href="my_orders.php" class="btn btn-secondary">
+        <a href="my_orders.php" class="btn btn-primary">
           <i class="fas fa-list"></i>
-          View All Orders
+           My Orders
+        </a>
+        <a href="menu.php" class="btn btn-secondary">
+          <i class="fas fa-utensils"></i>
+          Continue Ordering
         </a>
       </div>
     </div>

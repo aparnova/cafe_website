@@ -254,6 +254,60 @@ if ($result) {
       width: 100%;
     }
 
+    /* Search Container */
+    .search-container {
+      margin: 0 auto 30px;
+      max-width: 500px;
+      position: relative;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      color: var(--default-color);
+      z-index: 1;
+    }
+
+    #menu-search {
+      width: 100%;
+      padding: 12px 45px 12px 45px;
+      border-radius: 50px;
+      border: 1px solid var(--accent-color);
+      background: var(--surface-color);
+      color: var(--default-color);
+      font-family: var(--default-font);
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    #menu-search:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color), transparent 70%);
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 15px;
+      background: none;
+      border: none;
+      color: var(--default-color);
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+      display: none;
+    }
+
+    .clear-search-btn:hover {
+      opacity: 1;
+    }
+
     /* Menu Section */
     .menu {
       background: var(--background-color);
@@ -740,6 +794,7 @@ if ($result) {
       display: flex;
       gap: 15px;
       justify-content: center;
+      flex-wrap: wrap;
     }
 
     .login-redirect-btn {
@@ -833,6 +888,19 @@ if ($result) {
       transform: translateY(-2px);
     }
 
+    /* No results message */
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--default-color);
+    }
+
+    .no-results h3 {
+      color: var(--accent-color);
+      margin-bottom: 15px;
+    }
+
     /* Animation Keyframes */
     @keyframes fadeInUp {
       from {
@@ -903,7 +971,7 @@ if ($result) {
       50% {
         transform: scale(1.1);
       }
-      100% {
+      to {
         transform: scale(1);
       }
     }
@@ -917,7 +985,7 @@ if ($result) {
         transform: scale(25, 25);
         opacity: 0.3;
       }
-      100% {
+      to {
         opacity: 0;
         transform: scale(40, 40);
       }
@@ -972,6 +1040,16 @@ if ($result) {
         padding: 6px 10px;
         font-size: 12px;
       }
+
+      .login-required-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .login-redirect-btn, .cancel-btn {
+        width: 100%;
+        max-width: 200px;
+      }
     }
 
     @media (min-width: 992px) {
@@ -1008,7 +1086,6 @@ if ($result) {
               <span class="header-cart-count" id="header-cart-count">0</span>
             </div>
           <?php else: ?>
-            <button class="login-btn" id="show-login-btn" onclick="window.location.href='login.php'">Login</button>
           <?php endif; ?>
         </div>
       </div>
@@ -1051,6 +1128,15 @@ if ($result) {
           <li data-category="desserts">Desserts</li>
           <li data-category="beverages">Beverages</li>
         </ul>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="menu-search" placeholder="Search menu items...">
+            <button id="clear-search" class="clear-search-btn">&times;</button>
+          </div>
+        </div>
 
         <div class="menu-container" id="menu-container">
           <!-- Menu items will be loaded here by JavaScript -->
@@ -1109,6 +1195,8 @@ if ($result) {
     const loginRequiredOverlay = document.getElementById('login-required-overlay');
     const cancelLoginBtn = document.getElementById('cancel-login-btn');
     const logoutBtn = document.getElementById('logout-btn');
+    const menuSearch = document.getElementById('menu-search');
+    const clearSearchBtn = document.getElementById('clear-search');
 
     // App state
     let cart = [];
@@ -1140,28 +1228,42 @@ if ($result) {
       }
     }
 
-    // Render menu items
-    function renderMenu(filter = 'all') {
+    // Filter menu items based on category and search term
+    function filterMenuItems(category, searchTerm = '') {
       if (!menuContainer) return;
       
       menuContainer.innerHTML = '';
       
-      const filteredItems = filter === 'all' 
-        ? menuItems 
-        : menuItems.filter(item => item.category === filter);
+      // First filter by category
+      let filteredItems = category === 'all' 
+        ? [...menuItems] 
+        : menuItems.filter(item => item.category === category);
+      
+      // Then filter by search term if provided
+      if (searchTerm) {
+        filteredItems = filteredItems.filter(item => 
+          item.name.toLowerCase().includes(searchTerm) || 
+          (item.description && item.description.toLowerCase().includes(searchTerm))
+        );
+      }
       
       if (filteredItems.length === 0) {
-        menuContainer.innerHTML = '<div class="no-items"><h3>No items found in this category</h3><p>Try selecting a different category.</p></div>';
+        menuContainer.innerHTML = `
+          <div class="no-results">
+            <h3>No items found</h3>
+            <p>Try a different search term or category.</p>
+          </div>
+        `;
         return;
       }
       
+      // Render the filtered items
       filteredItems.forEach((item, index) => {
         const menuItem = document.createElement('div');
         menuItem.className = 'menu-item';
         menuItem.dataset.category = item.category;
         menuItem.style.setProperty('--item-index', index);
         
-        // Handle missing images with a placeholder
         const imageUrl = item.image || 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image';
         
         menuItem.innerHTML = `
@@ -1187,6 +1289,42 @@ if ($result) {
       });
     }
 
+    // Render menu items
+    function renderMenu(filter = 'all') {
+      const searchTerm = menuSearch ? menuSearch.value.toLowerCase().trim() : '';
+      filterMenuItems(filter, searchTerm);
+    }
+
+    // Handle search input
+    function handleSearch() {
+      const searchTerm = menuSearch.value.toLowerCase().trim();
+      
+      // Show/hide clear button based on input
+      if (searchTerm.length > 0) {
+        clearSearchBtn.style.display = 'block';
+      } else {
+        clearSearchBtn.style.display = 'none';
+      }
+      
+      // Get current active filter
+      const activeFilter = document.querySelector('.menu-filters li.filter-active').dataset.category;
+      
+      // Filter menu items
+      filterMenuItems(activeFilter, searchTerm);
+    }
+
+    // Clear search
+    function clearSearch() {
+      menuSearch.value = '';
+      clearSearchBtn.style.display = 'none';
+      
+      // Get current active filter
+      const activeFilter = document.querySelector('.menu-filters li.filter-active').dataset.category;
+      
+      // Re-render menu with current filter
+      renderMenu(activeFilter);
+    }
+
     // Setup event listeners
     function setupEventListeners() {
       // Filter buttons
@@ -1194,9 +1332,23 @@ if ($result) {
         button.addEventListener('click', () => {
           filterButtons.forEach(btn => btn.classList.remove('filter-active'));
           button.classList.add('filter-active');
-          renderMenu(button.dataset.category);
+          
+          // Get current search term
+          const searchTerm = menuSearch ? menuSearch.value.toLowerCase().trim() : '';
+          
+          // Filter with both category and search term
+          filterMenuItems(button.dataset.category, searchTerm);
         });
       });
+
+      // Search functionality
+      if (menuSearch) {
+        menuSearch.addEventListener('input', handleSearch);
+      }
+      
+      if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
+      }
 
       // Login required overlay controls
       if (cancelLoginBtn) {

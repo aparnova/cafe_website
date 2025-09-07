@@ -37,10 +37,31 @@
       height: 100vh;
       background: var(--primary);
       color: #fff;
-      padding-top: 20px;
       transition: all 0.3s ease;
       z-index: 1000;
       box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--secondary);
+    }
+
+    /* Webkit scrollbar styling for sidebar */
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 10px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: #d97706;
     }
 
     .sidebar-collapsed {
@@ -55,13 +76,26 @@
       display: none;
     }
 
+    .sidebar-header {
+      position: sticky;
+      top: 0;
+      background: var(--primary);
+      z-index: 10;
+      padding: 20px 0 10px 0;
+      border-bottom: 1px solid var(--secondary);
+    }
+
     .sidebar h2 {
       text-align: center;
       font-size: 22px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       padding: 0 15px;
       transition: all 0.3s ease;
       white-space: nowrap;
+    }
+
+    .sidebar-content {
+      padding-bottom: 20px;
     }
 
     .sidebar a {
@@ -93,7 +127,7 @@
     }
 
     .main {
-      margin-left: 250px;
+      margin-left: 275px;
       padding: 30px;
       transition: all 0.3s ease;
     }
@@ -104,13 +138,13 @@
 
     .toggle-sidebar {
       position: fixed;
-      top: 10px;
-      left: 250px;
+      top: 15px;
+      left: 245px;
       background: var(--accent);
       color: white;
       border: none;
-      width: 20px;
-      height: 20px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -125,12 +159,12 @@
       transform: scale(1.1);
     }
 
-    .sidebar-collapsed + .main .toggle-sidebar {
+    .sidebar-collapsed ~ .main .toggle-sidebar {
       left: 50px;
       transform: rotate(180deg);
     }
 
-    .sidebar-collapsed + .main .toggle-sidebar:hover {
+    .sidebar-collapsed ~ .main .toggle-sidebar:hover {
       transform: rotate(180deg) scale(1.1);
     }
 
@@ -410,22 +444,29 @@
     .delay-6 { animation-delay: 0.6s; }
     .delay-7 { animation-delay: 0.7s; }
     .delay-8 { animation-delay: 0.8s; }
+    .delay-9 { animation-delay: 0.9s; }
   </style>
 </head>
 <body>
 
 <div class="sidebar">
-  <h2>Westley's Resto Cafe</h2>
-  <a href="view_customers.php"><i class="fas fa-users"></i> <span class="menu-text">Customers</span></a>
-  <a href="manage_menu.php"><i class="fas fa-utensils"></i> <span class="menu-text">Menu Editor</span></a>
-  <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
-  <a href="view_reservations.php"><i class="fas fa-calendar-check"></i> <span class="menu-text">Reservations</span></a>
-  <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
-  <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
-  <a href="view_aboutus.php"><i class="fas fa-info-circle"></i> <span class="menu-text">About Us</span></a>
-  <a href="view_contact_us.php"><i class="fas fa-phone"></i> <span class="menu-text">Contact Us</span></a>
-  <a href="view_recipes.php"><i class="fas fa-book"></i> <span class="menu-text">Recipes</span></a>
-  <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  <div class="sidebar-header">
+    <h2>Westley's Resto Cafe</h2>
+  </div>
+  <div class="sidebar-content">
+    <a href="admin_dashboard.php"><i class="fas fa-users"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="view_customers.php"><i class="fas fa-users"></i> <span class="menu-text">Customers</span></a>
+    <a href="manage_menu.php"><i class="fas fa-utensils"></i> <span class="menu-text">Menu Editor</span></a>
+    <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
+    <a href="view_delivery.php"><i class="fas fa-truck"></i> <span class="menu-text">Delivery</span></a>
+    <a href="view_reservations.php"><i class="fas fa-calendar-check"></i> <span class="menu-text">Reservations</span></a>
+    <a href="view_messages.php"><i class="fas fa-envelope"></i> <span class="menu-text">Messages</span></a>
+    <a href="view_gallery.php"><i class="fas fa-images"></i> <span class="menu-text">Gallery</span></a>
+    <a href="view_aboutus.php"><i class="fas fa-info-circle"></i> <span class="menu-text">About Us</span></a>
+    <a href="view_contact_us.php"><i class="fas fa-phone"></i> <span class="menu-text">Contact Us</span></a>
+    <a href="view_recipes.php"><i class="fas fa-book"></i> <span class="menu-text">Recipes</span></a>
+    <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
+  </div>
 </div>
 
 <button class="toggle-sidebar">
@@ -457,37 +498,43 @@
       <p>View and assign delivery orders to your staff</p>
       <a href="view_orders.php">View Orders</a>
     </div>
-    <div class="card animate-fade delay-4" onclick="window.location.href='view_reservations.php'">
+    <div class="card animate-fade delay-4" onclick="window.location.href='view_delivery.php'">
+      <div class="card-icon"><i class="fas fa-truck"></i></div>
+      <h3>Delivery Management</h3>
+      <p>Track and manage delivery orders and delivery personnel</p>
+      <a href="view_delivery.php">Manage Delivery</a>
+    </div>
+    <div class="card animate-fade delay-5" onclick="window.location.href='view_reservations.php'">
       <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
       <h3>Table Reservations</h3>
       <p>Manage upcoming table reservations and bookings</p>
       <a href="view_reservations.php">Check Reservations</a>
     </div>
-    <div class="card animate-fade delay-5" onclick="window.location.href='view_messages.php'">
+    <div class="card animate-fade delay-6" onclick="window.location.href='view_messages.php'">
       <div class="card-icon"><i class="fas fa-envelope"></i></div>
       <h3>Customer Messages</h3>
       <p>Respond to customer inquiries and feedback</p>
       <a href="view_messages.php">View Messages</a>
     </div>
-    <div class="card animate-fade delay-6" onclick="window.location.href='view_gallery.php'">
+    <div class="card animate-fade delay-7" onclick="window.location.href='view_gallery.php'">
       <div class="card-icon"><i class="fas fa-images"></i></div>
       <h3>Gallery Management</h3>
       <p>Upload and manage images for restaurant gallery</p>
       <a href="view_gallery.php">Manage Gallery</a>
     </div>
-    <div class="card animate-fade delay-7" onclick="window.location.href='view_aboutus.php'">
+    <div class="card animate-fade delay-8" onclick="window.location.href='view_aboutus.php'">
       <div class="card-icon"><i class="fas fa-info-circle"></i></div>
       <h3>About Us</h3>
       <p>Manage the about us content for your restaurant</p>
       <a href="view_aboutus.php">Edit About Us</a>
     </div>
-    <div class="card animate-fade delay-7" onclick="window.location.href='view_contact_us.php'">
+    <div class="card animate-fade delay-9" onclick="window.location.href='view_contact_us.php'">
       <div class="card-icon"><i class="fas fa-phone"></i></div>
       <h3>Contact Us</h3>
       <p>Manage contact information and location details</p>
       <a href="view_contact_us.php">Edit Contact Info</a>
     </div>
-    <div class="card animate-fade delay-8" onclick="window.location.href='view_recipes.php'">
+    <div class="card animate-fade delay-9" onclick="window.location.href='view_recipes.php'">
       <div class="card-icon"><i class="fas fa-book"></i></div>
       <h3>Recipe Management</h3>
       <p>Create and manage recipes for your menu items</p>

@@ -2,24 +2,46 @@
 session_start();
 require 'db.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user']) || !isset($_SESSION['role'])) {
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'customer') {
     header("Location: login.php");
     exit();
 }
 
-$currentUser = [
-    'username' => $_SESSION['user'],
-    'role' => $_SESSION['role']
-];
+$user_id = $_SESSION['user_id']; 
+$username = $_SESSION['user'];
 
-// Get user ID from database
-$stmt = $conn->prepare("SELECT id FROM users WHERE fullname = ?");
-$stmt->bind_param("s", $currentUser['username']);
-$stmt->execute();
-$result = $stmt->get_result();
-$userData = $result->fetch_assoc();
-$user_id = $userData['id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $delivery_address = mysqli_real_escape_string($conn, $_POST['delivery_address']);
+    $payment_method = mysqli_real_escape_string($conn, $_POST['payment_method']);
+    $cart = json_decode($_POST['cart'], true);
+
+    if (empty($cart)) {
+        echo json_encode(['status' => 'error', 'message' => 'Your cart is empty!']);
+        exit();
+    }
+
+    // Calculate total price
+    $total_price = 0;
+    foreach ($cart as $item) {
+        $total_price += $item['price'] * $item['quantity'];
+    }
+
+    // Insert into orders table
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, total_price, delivery_address, payment_method, status) VALUES (?, ?, ?, ?, 'Pending')");
+    $stmt->bind_param("idss", $user_id, $total_price, $delivery_address, $payment_method);
+    $stmt->execute();
+    $order_id = $stmt->insert_id;
+
+    // Insert order items
+    $stmt_items = $conn->prepare("INSERT INTO order_items (order_id, menu_id, quantity, price) VALUES (?, ?, ?, ?)");
+    foreach ($cart as $item) {
+        $stmt_items->bind_param("iiid", $order_id, $item['id'], $item['quantity'], $item['price']);
+        $stmt_items->execute();
+    }
+
+    echo json_encode(['status' => 'success', 'order_id' => $order_id]);
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -425,9 +447,7 @@ $user_id = $userData['id'];
         <!-- Order Summary -->
         <div class="section">
           <h2><i class="fas fa-receipt"></i> Order Summary</h2>
-          <div id="order-summary">
-            <!-- Order items will be populated by JavaScript -->
-          </div>
+          <div id="order-summary"></div>
           <div class="order-total">
             <div style="font-size: 18px; margin-bottom: 10px;">
               Total: <span class="total-amount">₹<span id="total-amount">0</span></span>
@@ -442,7 +462,7 @@ $user_id = $userData['id'];
             <div class="form-row">
               <div class="form-group">
                 <label for="customer-name">Full Name *</label>
-                <input type="text" id="customer-name" name="customer_name" required>
+                <input type="text" id="customer-name" name="customer_name" value="<?php echo $_SESSION['user']; ?>" required>
               </div>
               <div class="form-group">
                 <label for="customer-phone">Phone Number *</label>
@@ -507,14 +527,13 @@ $user_id = $userData['id'];
   </div>
 
   <!-- Notification -->
-  <div class="notification" id="notification">
-    Notification message
-  </div>
+  <div class="notification" id="notification">Notification message</div>
 
   <script>
-    // User data from PHP
-    const currentUser = <?php echo json_encode($currentUser); ?>;
-    const userId = <?php echo $user_id; ?>;
+    // Pass PHP username to JS
+    const currentUser = {
+      username: "<?php echo $username; ?>"
+    };
 
     // DOM Elements
     const orderSummary = document.getElementById('order-summary');
@@ -525,7 +544,6 @@ $user_id = $userData['id'];
     const loadingOverlay = document.getElementById('loading-overlay');
     const placeOrderBtn = document.getElementById('place-order-btn');
 
-    // Load cart from localStorage
     let cart = [];
     let total = 0;
 
@@ -535,19 +553,21 @@ $user_id = $userData['id'];
         cart = JSON.parse(savedCart);
         renderOrderSummary();
       } else {
-        // Redirect back to menu if no cart found
-        window.location.href = 'menu.php';
+        cart = [];
+        renderOrderSummary();
       }
     }
 
     function renderOrderSummary() {
-      if (cart.length === 0) {
-        window.location.href = 'menu.php';
-        return;
-      }
-
       orderSummary.innerHTML = '';
       total = 0;
+
+      if (cart.length === 0) {
+        orderSummary.innerHTML = '<p style="color:#ccc;text-align:center;">Your cart is empty.</p>';
+        totalAmount.textContent = 0;
+        orderBtnTotal.textContent = 0;
+        return;
+      }
 
       cart.forEach(item => {
         const itemTotal = item.price * item.quantity;
@@ -573,82 +593,57 @@ $user_id = $userData['id'];
       notification.textContent = message;
       notification.className = `notification ${type}`;
       notification.style.display = 'block';
-
-      setTimeout(() => {
-        notification.style.display = 'none';
-      }, 5000);
+      setTimeout(() => { notification.style.display = 'none'; }, 4000);
     }
 
-    // Form submission
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       if (cart.length === 0) {
         showNotification('Your cart is empty!', 'error');
         return;
       }
 
-      // Get form data
+      // Show loading overlay
+      loadingOverlay.classList.add('show');
+      placeOrderBtn.disabled = true;
+
       const formData = new FormData(checkoutForm);
       const orderData = {
-        user_id: userId,
         customer_name: formData.get('customer_name'),
         customer_phone: formData.get('customer_phone'),
         delivery_address: formData.get('delivery_address'),
         order_notes: formData.get('order_notes'),
         payment_method: formData.get('payment_method'),
-        cart_items: cart,
-        total_amount: total
+        cart: cart
       };
 
-      // Validate required fields
-      if (!orderData.customer_name || !orderData.customer_phone || !orderData.delivery_address) {
-        showNotification('Please fill in all required fields!', 'error');
-        return;
-      }
-
-      // Show loading
-      loadingOverlay.classList.add('show');
-      placeOrderBtn.disabled = true;
-
       try {
-        const response = await fetch('process_order.php', {
+        const response = await fetch('checkout.php', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData)
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ ...orderData, cart: JSON.stringify(cart) })
         });
 
         const result = await response.json();
-
-        if (result.success) {
-          // Clear cart
+        if (result.status === 'success') {
           localStorage.removeItem(`cart_${currentUser.username}`);
-          
-          // Show success message
-          showNotification('Order placed successfully! Order ID: ' + result.order_id, 'success');
-          
-          // Redirect to order confirmation page after delay
+          showNotification('Order placed successfully!', 'success');
           setTimeout(() => {
             window.location.href = `order_confirmation.php?order_id=${result.order_id}`;
           }, 2000);
         } else {
-          showNotification(result.message || 'Failed to place order. Please try again.', 'error');
+          showNotification(result.message || 'Order failed!', 'error');
         }
       } catch (error) {
-        console.error('Order submission error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
+        console.error(error);
+        showNotification('Error placing order!', 'error');
       } finally {
         loadingOverlay.classList.remove('show');
         placeOrderBtn.disabled = false;
       }
     });
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
-      loadCart();
-    });
+    document.addEventListener('DOMContentLoaded', loadCart);
   </script>
 </body>
 </html>

@@ -27,21 +27,22 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
         // 2. Check Delivery Boy table
         if (!$response['success']) {
-            $stmt = $conn->prepare("SELECT * FROM delivery_boys WHERE email = ?");
-            $stmt->bind_param("s", $email);
-            $stmt->execute();
-            $deliveryResult = $stmt->get_result();
+    $stmt = $conn->prepare("SELECT * FROM delivery_boys WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $deliveryResult = $stmt->get_result();
 
-            if ($deliveryResult->num_rows === 1) {
-                $delivery = $deliveryResult->fetch_assoc();
-                if ($delivery['password'] === $password) {
-                    $_SESSION['user'] = $delivery['name'];
-                    $_SESSION['role'] = 'delivery';
-                    $_SESSION['delivery_id'] = $delivery['id'];
-                    $response = ['success' => true, 'redirect' => 'delivery_dashboard.php'];
-                }
-            }
+    if ($deliveryResult->num_rows === 1) {
+        $delivery = $deliveryResult->fetch_assoc();
+        // FIXED: Use password_verify instead of direct comparison
+        if (password_verify($password, $delivery['password'])) {
+            $_SESSION['user'] = $delivery['name'];
+            $_SESSION['role'] = 'delivery';
+            $_SESSION['delivery_id'] = $delivery['id'];
+            $response = ['success' => true, 'redirect' => 'delivery_dashboard.php'];
         }
+    }
+}
 
         // 3. Check Users (Customers) table
         if (!$response['success']) {
@@ -91,20 +92,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 2. Check Delivery Boy table
     $stmt = $conn->prepare("SELECT * FROM delivery_boys WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $deliveryResult = $stmt->get_result();
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$deliveryResult = $stmt->get_result();
 
-    if ($deliveryResult->num_rows === 1) {
-        $delivery = $deliveryResult->fetch_assoc();
-        if ($delivery['password'] === $password) {
-            $_SESSION['user'] = $delivery['name'];
-            $_SESSION['role'] = 'delivery';
-            $_SESSION['delivery_id'] = $delivery['id'];
-            header("Location: delivery_dashboard.php");
-            exit();
-        }
+if ($deliveryResult->num_rows === 1) {
+    $delivery = $deliveryResult->fetch_assoc();
+    // FIXED: Use password_verify instead of direct comparison
+    if (password_verify($password, $delivery['password'])) {
+        $_SESSION['user'] = $delivery['name'];
+        $_SESSION['role'] = 'delivery';
+        $_SESSION['delivery_id'] = $delivery['id'];
+        header("Location: delivery_dashboard.php");
+        exit();
     }
+}
 
     // 3. Check Users (Customers) table
     $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");

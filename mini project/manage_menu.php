@@ -70,9 +70,29 @@ $result = $conn->query("
 }
 *{box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--light);color:var(--primary);padding:2rem}
-.container{max-width:1200px;margin:0 auto}
+.container{max-width:1200px;margin:0 auto;position:relative}
 .header{text-align:center;margin-bottom:1.5rem}
 .header h1{font-size:1.8rem;margin-bottom:1rem;animation:fadeIn 0.5s ease-out}
+.back-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+  padding:0.5rem 1rem;
+  background:#6366f1;
+  color:#fff;
+  text-decoration:none;
+  border-radius:var(--radius);
+  transition:var(--transition);
+  font-weight:500;
+  position:absolute;
+  top:0;
+  right:0;
+  z-index:10;
+}
+.back-btn:hover{
+  background:#4f46e5;
+  transform:translateX(2px);
+}
 .card{background:var(--lighter);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:var(--transition);padding:1rem;margin-bottom:1.5rem}
 .card:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.1)}
 table{width:100%;border-collapse:collapse}
@@ -96,6 +116,12 @@ input,select,textarea{width:100%;padding:0.5rem;border:1px solid var(--border);b
 </head>
 <body>
 <div class="container">
+  <!-- Back to Dashboard Button -->
+  <a href="admin_dashboard.php" class="back-btn">
+    <i class="fas fa-arrow-left"></i>
+    Back to Dashboard
+  </a>
+
   <div class="header">
     <h1>Menu Management</h1>
   </div>
