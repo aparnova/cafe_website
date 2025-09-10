@@ -320,17 +320,22 @@ function sanitizeInput($data) {
       display: table-cell;
       width: 60%;
       vertical-align: top;
-      padding: 40px;
+      padding: 45px;
       background: color-mix(in srgb, var(--surface-color), transparent 20%);
       border-radius: 8px;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
-    /* Contact Form Styles */
+    /* Contact Form Styles - IMPROVED ALIGNMENT & SPACING */
+    .contact-form {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
     .contact-form h3 {
       color: var(--heading-color);
-      font-size: 24px;
-      margin-bottom: 30px;
+      font-size: 26px;
+      margin-bottom: 35px;
       font-family: var(--heading-font);
       text-align: center;
       position: relative;
@@ -342,7 +347,7 @@ function sanitizeInput($data) {
       width: 60px;
       height: 2px;
       background: var(--accent-color);
-      margin: 15px auto;
+      margin: 18px auto;
       transition: width 0.3s ease;
     }
 
@@ -355,61 +360,81 @@ function sanitizeInput($data) {
       flex-wrap: wrap;
       gap: 20px;
       margin-bottom: 25px;
+      align-items: stretch;
     }
 
     .form-group {
       flex: 1;
       min-width: 0;
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .form-group.half-width {
       flex: 0 0 calc(50% - 10px);
     }
 
+    .form-group.full-width {
+      flex: 0 0 100%;
+    }
+
     .form-control {
       width: 100%;
-      padding: 15px;
+      padding: 18px 20px;
       font-size: 16px;
       color: var(--default-color);
       background-color: color-mix(in srgb, var(--surface-color), transparent 30%);
-      border: 1px solid color-mix(in srgb, var(--accent-color), transparent 80%);
-      border-radius: 4px;
+      border: 2px solid color-mix(in srgb, var(--accent-color), transparent 80%);
+      border-radius: 6px;
       transition: all 0.4s;
+      box-sizing: border-box;
+      font-family: var(--default-font);
+      line-height: 1.4;
     }
 
     .form-control:focus {
       border-color: var(--accent-color);
       outline: none;
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color), transparent 80%);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color), transparent 85%);
       transform: translateY(-2px);
     }
 
     .form-control::placeholder {
-      color: color-mix(in srgb, var(--default-color), transparent 50%);
+      color: color-mix(in srgb, var(--default-color), transparent 45%);
       transition: opacity 0.3s ease;
     }
 
     .form-control:focus::placeholder {
-      opacity: 0.5;
+      opacity: 0.6;
     }
 
     textarea.form-control {
       min-height: 180px;
       resize: vertical;
+      padding: 20px;
+      line-height: 1.6;
     }
 
-    /* Submit Button with Icon Animation */
+    /* Submit Button Container for Better Alignment */
+    .submit-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 35px;
+      padding-top: 10px;
+    }
+
+    /* Submit Button with Icon Animation - IMPROVED */
     .submit-btn {
       background-color: var(--accent-color);
       color: var(--contrast-color);
       border: none;
-      padding: 15px 30px;
+      padding: 18px 40px;
       font-size: 16px;
       font-weight: 600;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      width: 105%;
+      min-width: 200px;
       transition: all 0.4s ease;
       text-transform: uppercase;
       position: relative;
@@ -417,7 +442,8 @@ function sanitizeInput($data) {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
+      letter-spacing: 0.5px;
     }
 
     .submit-btn .btn-text {
@@ -426,19 +452,21 @@ function sanitizeInput($data) {
 
     .submit-btn .icon {
       position: absolute;
-      right: -30px;
+      right: -35px;
       opacity: 0;
       transition: all 0.4s ease;
-      font-size: 20px;
+      font-size: 18px;
     }
 
     .submit-btn:hover {
       background-color: color-mix(in srgb, var(--accent-color), black 10%);
-      padding-right: 50px;
+      padding-right: 55px;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(205, 164, 94, 0.3);
     }
 
     .submit-btn:hover .btn-text {
-      transform: translateX(-15px);
+      transform: translateX(-18px);
     }
 
     .submit-btn:hover .icon {
@@ -527,12 +555,16 @@ function sanitizeInput($data) {
         margin-bottom: 30px;
       }
       
+      .contact-form-cell {
+        padding: 35px;
+      }
+      
       .form-group.half-width {
         flex: 0 0 100%;
       }
 
       .submit-btn:hover {
-        padding-right: 30px;
+        padding-right: 40px;
       }
     }
 
@@ -543,7 +575,7 @@ function sanitizeInput($data) {
       
       .contact-info-cell,
       .contact-form-cell {
-        padding: 30px;
+        padding: 25px;
       }
       
       .info-item {
@@ -558,7 +590,16 @@ function sanitizeInput($data) {
 
       .form-row {
         gap: 15px;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+      }
+
+      .form-control {
+        padding: 16px 18px;
+      }
+
+      .submit-btn {
+        min-width: 180px;
+        padding: 16px 35px;
       }
       
       .section-title p {
@@ -568,27 +609,34 @@ function sanitizeInput($data) {
 
     /* Form message styles */
     .form-message {
-      display: none;
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 4px;
+      margin: 25px 0;
+      padding: 18px 22px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
     }
 
     .form-message.success {
-      background: rgba(205, 164, 94, 0.2);
-      border-left: 4px solid var(--accent-color);
+      background: rgba(205, 164, 94, 0.15);
+      border: 2px solid var(--accent-color);
       color: var(--accent-color);
     }
 
     .form-message.error {
       background: rgba(220, 53, 69, 0.1);
-      border-left: 4px solid #dc3545;
+      border: 2px solid #dc3545;
       color: #dc3545;
     }
 
     .form-message ul {
-      margin: 10px 0 0 20px;
+      margin: 12px 0 0 0;
       padding: 0;
+      list-style: none;
+      text-align: left;
+    }
+
+    .form-message li {
+      padding: 4px 0;
     }
 
     /* Notification styles */
@@ -720,14 +768,18 @@ function sanitizeInput($data) {
                     </div>
                   </div>
                   
-                  <div class="form-group">
-                    <textarea class="form-control" name="message" placeholder="Your Message" required><?php echo htmlspecialchars($message); ?></textarea>
-                  </div><br>
+                  <div class="form-row">
+                    <div class="form-group full-width">
+                      <textarea class="form-control" name="message" placeholder="Your Message" required><?php echo htmlspecialchars($message); ?></textarea>
+                    </div>
+                  </div>
                   
-                  <button type="submit" class="submit-btn" id="submitBtn">
-                    <span class="btn-text">SEND MESSAGE</span>
-                    <i class="bi bi-send icon"></i>
-                  </button>
+                  <div class="submit-container">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                      <span class="btn-text">SEND MESSAGE</span>
+                      <i class="bi bi-send icon"></i>
+                    </button>
+                  </div>
                 </form>
               </div>
             </div><!-- End Contact Form -->

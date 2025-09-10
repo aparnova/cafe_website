@@ -333,7 +333,7 @@ $_SESSION['form_token'] = $form_token;
 
             <div class="form-group">
               <div class="input-group">
-                <input type="tel" name="phone" id="phone" class="form-control" placeholder=" " autocomplete="off" required>
+                <input type="tel" name="phone" id="phone" class="form-control" placeholder=" " autocomplete="off" required maxlength="10" pattern="[0-9]{10}">
                 <label for="phone">Phone Number</label>
                 <i class="fas fa-phone input-icon"></i>
               </div>
@@ -484,8 +484,60 @@ $_SESSION['form_token'] = $form_token;
       const statusCancel = document.getElementById('status-cancel');
       const statusResult = document.getElementById('status-result');
       const bookingIdInput = document.getElementById('check-booking-id');
+      const phoneInput = document.getElementById('phone');
 
       let currentStep = 1;
+
+      // Phone number validation - only allow digits and limit to 10
+      phoneInput.addEventListener('input', function(e) {
+        // Remove all non-digit characters
+        let value = e.target.value.replace(/\D/g, '');
+        
+        // Limit to 10 digits
+        if (value.length > 10) {
+          value = value.slice(0, 10);
+        }
+        
+        // Update the input value
+        e.target.value = value;
+      });
+
+      // Phone number validation on paste
+      phoneInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        
+        // Get pasted data
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // Remove all non-digit characters and limit to 10
+        let cleanData = pasteData.replace(/\D/g, '');
+        if (cleanData.length > 10) {
+          cleanData = cleanData.slice(0, 10);
+        }
+        
+        // Set the cleaned value
+        e.target.value = cleanData;
+      });
+
+      // Prevent non-digit key presses (except special keys)
+      phoneInput.addEventListener('keydown', function(e) {
+        // Allow backspace, delete, tab, escape, enter, home, end, arrow keys
+        if ([8, 9, 27, 13, 46, 35, 36, 37, 38, 39, 40].includes(e.keyCode) ||
+            // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
+            (e.ctrlKey === true && [65, 67, 86, 88, 90].includes(e.keyCode))) {
+          return;
+        }
+        
+        // Prevent if not a digit (0-9)
+        if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) {
+          e.preventDefault();
+        }
+        
+        // Prevent if already at 10 digits and trying to add more
+        if (e.target.value.length >= 10 && !e.ctrlKey && ![8, 46].includes(e.keyCode)) {
+          e.preventDefault();
+        }
+      });
 
       // Floating labels
       document.querySelectorAll('.form-control').forEach(input => {
@@ -542,6 +594,10 @@ $_SESSION['form_token'] = $form_token;
           if (!name) { showError('Please enter your name'); isValid = false; }
           else if (!email || !validateEmail(email)) { showError('Please enter a valid email address'); isValid = false; }
           else if (!phone) { showError('Please enter your phone number'); isValid = false; }
+          else if (phone.length !== 10 || !validatePhoneNumber(phone)) { 
+            showError('Please enter a valid 10-digit phone number'); 
+            isValid = false; 
+          }
         } else if (step === 2) {
           const date = document.getElementById('date').value;
           const time = document.getElementById('time').value;
@@ -605,6 +661,11 @@ $_SESSION['form_token'] = $form_token;
       
       function validateEmail(email) { 
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); 
+      }
+
+      function validatePhoneNumber(phone) {
+        // Check if phone contains only digits and is exactly 10 digits
+        return /^\d{10}$/.test(phone);
       }
 
       // Form submission
