@@ -761,7 +761,7 @@ function sanitizeInput($data) {
                   
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="tel" class="form-control" name="phone" placeholder="Your Phone" required autocomplete="off" value="<?php echo htmlspecialchars($phone); ?>">
+                      <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone" autocomplete="off" required maxlength="10" pattern="[0-9]{10}">
                     </div>
                     <div class="form-group half-width">
                       <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off" value="<?php echo htmlspecialchars($subject); ?>">
