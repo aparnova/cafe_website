@@ -78,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .container {
       width: 100%;
-      max-width: 1140px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 0 15px;
+      padding: 0 20px;
     }
 
     /* Header Styles */
@@ -92,11 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       top: 0;
       z-index: 997;
       border-bottom: 1px solid var(--surface-color);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     .header .branding {
-      min-height: 60px;
-      padding: 10px 0;
+      min-height: 70px;
+      padding: 15px 0;
     }
 
     .header .container {
@@ -108,11 +109,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .header .logo {
       display: flex;
       align-items: center;
+      gap: 15px;
     }
 
     .header .logo img {
       height: 50px;
-      margin-right: 15px;
     }
 
     .header .logo h1 {
@@ -126,59 +127,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       background: var(--accent-color);
       color: var(--contrast-color);
       border: none;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 25px;
       cursor: pointer;
       font-size: 16px;
-      transition: background 0.3s;
+      font-weight: 500;
+      transition: all 0.3s ease;
       font-family: var(--nav-font);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .back-to-menu:hover {
       background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
     }
 
     /* Main Content */
     .main-content {
-      padding-top: 100px;
-      padding-bottom: 60px;
+      padding-top: 120px;
+      padding-bottom: 80px;
       min-height: 100vh;
     }
 
+    /* Section Title */
+    .section-title {
+      text-align: center;
+      margin-bottom: 50px;
+      padding: 0 20px;
+    }
+
+    .section-title h1 {
+      color: var(--accent-color);
+      font-family: var(--heading-font);
+      font-size: 42px;
+      margin: 0 0 15px 0;
+      font-weight: 600;
+    }
+
+    .section-title p {
+      color: var(--default-color);
+      margin: 0;
+      font-size: 18px;
+    }
+
+    /* Checkout Container */
     .checkout-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      margin-top: 40px;
+      gap: 50px;
+      margin-top: 50px;
+      align-items: start;
     }
 
     .section {
       background: var(--surface-color);
-      border-radius: 15px;
-      padding: 30px;
+      border-radius: 20px;
+      padding: 40px;
       border: 1px solid color-mix(in srgb, var(--accent-color), transparent 70%);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .section:hover {
+      transform: translateY(-5px);
     }
 
     .section h2 {
       color: var(--accent-color);
       font-family: var(--heading-font);
-      font-size: 24px;
-      margin-bottom: 25px;
+      font-size: 28px;
+      margin: 0 0 30px 0;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .section h2 i {
+      font-size: 24px;
     }
 
     /* Order Type Indicator */
     .order-type-indicator {
       background: color-mix(in srgb, var(--accent-color), transparent 90%);
-      border: 1px solid var(--accent-color);
-      border-radius: 8px;
-      padding: 10px 15px;
-      margin-bottom: 20px;
+      border: 2px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-bottom: 30px;
       text-align: center;
+      font-weight: 600;
+      font-size: 16px;
     }
 
     .order-type-indicator.single-order {
@@ -198,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 0;
+      padding: 20px 0;
       border-bottom: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
     }
 
@@ -208,62 +250,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .item-details {
       flex: 1;
+      padding-right: 20px;
     }
 
     .item-name {
       color: var(--heading-color);
       font-weight: 600;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
+      font-size: 18px;
     }
 
     .item-quantity {
       color: var(--default-color);
-      font-size: 14px;
+      font-size: 15px;
     }
 
     .item-price {
       color: var(--accent-color);
       font-weight: bold;
-      font-size: 18px;
+      font-size: 20px;
+      min-width: 80px;
+      text-align: right;
     }
 
     .order-total {
-      margin-top: 20px;
-      padding-top: 20px;
+      margin-top: 30px;
+      padding-top: 25px;
       border-top: 2px solid var(--accent-color);
       text-align: right;
     }
 
     .total-amount {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
       color: var(--accent-color);
     }
 
     /* Form Styles */
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       color: var(--heading-color);
       font-weight: 600;
+      font-size: 16px;
     }
 
     .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 12px 15px;
-      border: 1px solid color-mix(in srgb, var(--default-color), transparent 60%);
-      border-radius: 8px;
+      padding: 15px 18px;
+      border: 2px solid color-mix(in srgb, var(--default-color), transparent 60%);
+      border-radius: 12px;
       background: var(--background-color);
       color: var(--default-color);
       font-family: var(--default-font);
       font-size: 16px;
-      transition: border-color 0.3s;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
 
     .form-group input:focus,
@@ -271,25 +319,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .form-group select:focus {
       outline: none;
       border-color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color), transparent 95%);
     }
 
     .form-group textarea {
       resize: vertical;
-      min-height: 80px;
+      min-height: 100px;
     }
 
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 25px;
+      margin-bottom: 25px;
     }
 
     /* Payment Methods */
     .payment-methods {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
     }
 
     .payment-method {
@@ -307,90 +357,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .payment-method label {
       display: block;
-      padding: 15px;
+      padding: 20px 15px;
       border: 2px solid color-mix(in srgb, var(--default-color), transparent 70%);
-      border-radius: 10px;
+      border-radius: 15px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       background: var(--background-color);
+      font-weight: 500;
     }
 
     .payment-method input[type="radio"]:checked + label {
       border-color: var(--accent-color);
       background: color-mix(in srgb, var(--accent-color), transparent 90%);
       color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(205, 164, 94, 0.3);
     }
 
     .payment-method i {
       display: block;
-      font-size: 24px;
-      margin-bottom: 8px;
+      font-size: 26px;
+      margin-bottom: 10px;
     }
 
     /* Place Order Button */
     .place-order-btn {
       width: 100%;
-      padding: 15px;
+      padding: 18px 20px;
       background: var(--accent-color);
       color: var(--contrast-color);
       border: none;
-      border-radius: 10px;
-      font-size: 18px;
+      border-radius: 15px;
+      font-size: 20px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       font-family: var(--nav-font);
-      margin-top: 20px;
+      margin-top: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
     }
 
     .place-order-btn:hover {
       background: color-mix(in srgb, var(--accent-color), transparent 20%);
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(205, 164, 94, 0.4);
     }
 
     .place-order-btn:disabled {
       background: color-mix(in srgb, var(--default-color), transparent 70%);
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
     /* Empty Order Message */
     .empty-order {
       text-align: center;
-      padding: 40px 20px;
+      padding: 60px 30px;
       color: var(--default-color);
     }
 
     .empty-order h3 {
       color: var(--accent-color);
-      margin-bottom: 15px;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .empty-order p {
+      margin-bottom: 30px;
+      font-size: 16px;
+      line-height: 1.6;
     }
 
     .empty-order a {
       background: var(--accent-color);
       color: var(--contrast-color);
-      padding: 12px 25px;
+      padding: 15px 30px;
       border-radius: 25px;
       text-decoration: none;
       display: inline-block;
-      margin-top: 20px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .empty-order a:hover {
+      background: color-mix(in srgb, var(--accent-color), transparent 20%);
+      transform: translateY(-2px);
     }
 
     /* Notification */
     .notification {
       position: fixed;
-      bottom: 20px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
       background: var(--accent-color);
       color: var(--contrast-color);
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      padding: 18px 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
       z-index: 1001;
       display: none;
       font-size: 16px;
+      font-weight: 500;
+      min-width: 300px;
+      text-align: center;
     }
 
     .notification.error {
@@ -413,6 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       align-items: center;
       justify-content: center;
       z-index: 1002;
+      backdrop-filter: blur(5px);
     }
 
     .loading-overlay.show {
@@ -421,20 +497,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     .loading-content {
       background: var(--surface-color);
-      padding: 40px;
-      border-radius: 15px;
+      padding: 50px 40px;
+      border-radius: 20px;
       text-align: center;
       border: 2px solid var(--accent-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
     .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid color-mix(in srgb, var(--accent-color), transparent 70%);
-      border-top: 3px solid var(--accent-color);
+      width: 60px;
+      height: 60px;
+      border: 4px solid color-mix(in srgb, var(--accent-color), transparent 70%);
+      border-top: 4px solid var(--accent-color);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
+      margin: 0 auto 25px;
+    }
+
+    .loading-content h3 {
+      color: var(--accent-color);
+      margin: 0 0 15px 0;
+      font-size: 24px;
+    }
+
+    .loading-content p {
+      color: var(--default-color);
+      margin: 0;
+      font-size: 16px;
     }
 
     @keyframes spin {
@@ -443,21 +532,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     /* Responsive */
+    @media (max-width: 992px) {
+      .checkout-container {
+        gap: 40px;
+      }
+
+      .section {
+        padding: 35px;
+      }
+    }
+
     @media (max-width: 768px) {
+      .container {
+        padding: 0 15px;
+      }
+
+      .main-content {
+        padding-top: 100px;
+        padding-bottom: 60px;
+      }
+
+      .section-title h1 {
+        font-size: 32px;
+      }
+
       .checkout-container {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 30px;
+      }
+
+      .section {
+        padding: 25px;
+      }
+
+      .section h2 {
+        font-size: 24px;
       }
 
       .form-row {
         grid-template-columns: 1fr;
+        gap: 20px;
       }
 
       .payment-methods {
         grid-template-columns: 1fr;
+        gap: 15px;
       }
 
       .header .logo h1 {
+        font-size: 20px;
+      }
+
+      .back-to-menu {
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .section {
+        padding: 20px;
+      }
+
+      .section h2 {
+        font-size: 22px;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .item-details {
+        padding-right: 15px;
+      }
+
+      .item-name {
+        font-size: 16px;
+      }
+
+      .item-price {
+        font-size: 18px;
+      }
+
+      .total-amount {
+        font-size: 24px;
+      }
+
+      .place-order-btn {
+        padding: 16px;
         font-size: 18px;
       }
     }
@@ -483,9 +643,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <!-- Main Content -->
   <div class="main-content">
     <div class="container">
-      <div class="section-title" style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: var(--accent-color); font-family: var(--heading-font); font-size: 36px; margin: 0;">Checkout</h1>
-        <p style="color: var(--default-color); margin: 10px 0 0;">Complete your order</p>
+      <div class="section-title">
+        <h1>Checkout</h1>
+        <p>Complete your order</p>
       </div>
 
       <div class="checkout-container">
@@ -495,7 +655,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <h2><i class="fas fa-receipt"></i> Order Summary</h2>
           <div id="order-summary"></div>
           <div class="order-total">
-            <div style="font-size: 18px; margin-bottom: 10px;">
+            <div style="font-size: 20px; margin-bottom: 15px;">
               Total: <span class="total-amount">₹<span id="total-amount">0</span></span>
             </div>
           </div>
@@ -567,8 +727,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="loading-overlay" id="loading-overlay">
     <div class="loading-content">
       <div class="loading-spinner"></div>
-      <h3 style="color: var(--accent-color); margin: 0;">Processing Your Order...</h3>
-      <p style="color: var(--default-color); margin: 10px 0 0;">Please wait while we confirm your order</p>
+      <h3>Processing Your Order...</h3>
+      <p>Please wait while we confirm your order</p>
     </div>
   </div>
 
