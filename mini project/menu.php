@@ -1388,14 +1388,14 @@ if ($result) {
           });
         }
 
-        // Checkout button
+        // Checkout button for cart items
         if (checkoutBtn) {
           checkoutBtn.addEventListener('click', () => {
             if (cart.length === 0) {
               showNotification('Your cart is empty!', 'error');
               return;
             }
-            placeOrder();
+            placeOrderFromCart();
           });
         }
 
@@ -1428,17 +1428,30 @@ if ($result) {
             addToCart(itemId, quantity);
           }
 
+          // Order Now button - direct single item ordering (NO CART INVOLVEMENT)
           if (e.target.classList.contains('order-now')) {
             const itemId = parseInt(e.target.dataset.id);
             const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
             const quantity = parseInt(quantityInput.value);
             
-            // Add item to cart
-            addToCart(itemId, quantity);
+            // Find the menu item
+            const menuItem = menuItems.find(item => item.id === itemId);
+            if (!menuItem) return;
             
-            // Save cart and redirect directly to checkout
-            saveCartToStorage();
-            window.location.href = 'checkout.php';
+            // Create the single order item (completely separate from cart)
+            const singleOrderItem = {
+              id: menuItem.id,
+              name: menuItem.name,
+              price: menuItem.price,
+              quantity: quantity,
+              image: menuItem.image || 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'
+            };
+            
+            // Store the single order item in a separate localStorage key
+            localStorage.setItem(`single_order_${currentUser.username}`, JSON.stringify(singleOrderItem));
+            
+            // Redirect directly to checkout with single order parameter
+            window.location.href = 'checkout.php?order_type=single';
           }
 
           if (e.target.classList.contains('quantity-btn')) {
@@ -1458,7 +1471,7 @@ if ($result) {
       }
     }
 
-    // Add item to cart
+    // Add item to cart (only affects cart, not single orders)
     function addToCart(itemId, quantity) {
       if (!isLoggedIn) {
         showNotification('Please login first!', 'error');
@@ -1533,8 +1546,8 @@ if ($result) {
       headerCartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
     }
 
-    // Place order - redirect to checkout
-    function placeOrder() {
+    // Place order from cart - redirect to checkout (for cart items only)
+    function placeOrderFromCart() {
       if (!isLoggedIn) {
         showNotification('Please login first!', 'error');
         return;
@@ -1545,9 +1558,9 @@ if ($result) {
         return;
       }
 
-      // Save cart to localStorage and redirect to checkout
+      // Save cart to localStorage and redirect to checkout for cart orders
       saveCartToStorage();
-      window.location.href = 'checkout.php';
+      window.location.href = 'checkout.php?order_type=cart';
     }
 
     // Show notification

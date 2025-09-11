@@ -9,6 +9,7 @@ if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'customer') {
 
 $user_id = $_SESSION['user_id']; 
 $username = $_SESSION['user'];
+$orderType = isset($_GET['order_type']) ? $_GET['order_type'] : 'cart';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $delivery_address = mysqli_real_escape_string($conn, $_POST['delivery_address']);
@@ -16,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cart = json_decode($_POST['cart'], true);
 
     if (empty($cart)) {
-        echo json_encode(['status' => 'error', 'message' => 'Your cart is empty!']);
+        echo json_encode(['status' => 'error', 'message' => 'Your order is empty!']);
         exit();
     }
 
@@ -168,6 +169,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       font-size: 24px;
       margin-bottom: 25px;
       text-align: center;
+    }
+
+    /* Order Type Indicator */
+    .order-type-indicator {
+      background: color-mix(in srgb, var(--accent-color), transparent 90%);
+      border: 1px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .order-type-indicator.single-order {
+      background: color-mix(in srgb, var(--accent-color), transparent 90%);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .order-type-indicator.cart-order {
+      background: color-mix(in srgb, var(--accent-color), transparent 90%);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
     }
 
     /* Order Summary */
@@ -332,6 +355,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       transform: none;
     }
 
+    /* Empty Order Message */
+    .empty-order {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--default-color);
+    }
+
+    .empty-order h3 {
+      color: var(--accent-color);
+      margin-bottom: 15px;
+    }
+
+    .empty-order a {
+      background: var(--accent-color);
+      color: var(--contrast-color);
+      padding: 12px 25px;
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+    }
+
     /* Notification */
     .notification {
       position: fixed;
@@ -446,6 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="checkout-container">
         <!-- Order Summary -->
         <div class="section">
+          <div id="order-type-indicator" class="order-type-indicator"></div>
           <h2><i class="fas fa-receipt"></i> Order Summary</h2>
           <div id="order-summary"></div>
           <div class="order-total">
@@ -530,10 +576,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="notification" id="notification">Notification message</div>
 
   <script>
-    // Pass PHP username to JS
+    // Pass PHP data to JS
     const currentUser = {
       username: "<?php echo $username; ?>"
     };
+    const orderType = "<?php echo $orderType; ?>"; // 'single' or 'cart'
 
     // DOM Elements
     const orderSummary = document.getElementById('order-summary');
@@ -543,33 +590,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const notification = document.getElementById('notification');
     const loadingOverlay = document.getElementById('loading-overlay');
     const placeOrderBtn = document.getElementById('place-order-btn');
+    const orderTypeIndicator = document.getElementById('order-type-indicator');
 
-    let cart = [];
+    let orderItems = [];
     let total = 0;
 
-    function loadCart() {
-      const savedCart = localStorage.getItem(`cart_${currentUser.username}`);
-      if (savedCart) {
-        cart = JSON.parse(savedCart);
-        renderOrderSummary();
+    function loadOrderItems() {
+      if (orderType === 'single') {
+        // Load single order item
+        const singleOrder = localStorage.getItem(`single_order_${currentUser.username}`);
+        if (singleOrder) {
+          const singleItem = JSON.parse(singleOrder);
+          orderItems = [singleItem];
+          // Clear single order after loading
+          localStorage.removeItem(`single_order_${currentUser.username}`);
+          
+          // Update indicator
+          orderTypeIndicator.textContent = 'Single Item Order';
+          orderTypeIndicator.className = 'order-type-indicator single-order';
+        } else {
+          orderItems = [];
+        }
       } else {
-        cart = [];
-        renderOrderSummary();
+        // Load cart items (default)
+        const cartData = localStorage.getItem(`cart_${currentUser.username}`);
+        if (cartData) {
+          orderItems = JSON.parse(cartData);
+          
+          // Update indicator
+          orderTypeIndicator.textContent = `Cart Order (${orderItems.length} items)`;
+          orderTypeIndicator.className = 'order-type-indicator cart-order';
+        } else {
+          orderItems = [];
+        }
       }
+      
+      renderOrderSummary();
     }
 
     function renderOrderSummary() {
       orderSummary.innerHTML = '';
       total = 0;
 
-      if (cart.length === 0) {
-        orderSummary.innerHTML = '<p style="color:#ccc;text-align:center;">Your cart is empty.</p>';
+      if (orderItems.length === 0) {
+        orderSummary.innerHTML = `
+          <div class="empty-order">
+            <h3>No items to order</h3>
+            <p>Your order is empty. Please go back to the menu to add items.</p>
+            <a href="menu.php">Back to Menu</a>
+          </div>
+        `;
         totalAmount.textContent = 0;
         orderBtnTotal.textContent = 0;
+        placeOrderBtn.disabled = true;
         return;
       }
 
-      cart.forEach(item => {
+      orderItems.forEach(item => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
 
@@ -587,6 +664,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       totalAmount.textContent = total;
       orderBtnTotal.textContent = total;
+      placeOrderBtn.disabled = false;
     }
 
     function showNotification(message, type = 'success') {
@@ -598,8 +676,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (cart.length === 0) {
-        showNotification('Your cart is empty!', 'error');
+      if (orderItems.length === 0) {
+        showNotification('Your order is empty!', 'error');
         return;
       }
 
@@ -614,19 +692,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         delivery_address: formData.get('delivery_address'),
         order_notes: formData.get('order_notes'),
         payment_method: formData.get('payment_method'),
-        cart: cart
+        cart: orderItems
       };
 
       try {
         const response = await fetch('checkout.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ ...orderData, cart: JSON.stringify(cart) })
+          body: new URLSearchParams({ ...orderData, cart: JSON.stringify(orderItems) })
         });
 
         const result = await response.json();
         if (result.status === 'success') {
-          localStorage.removeItem(`cart_${currentUser.username}`);
+          // Clear cart ONLY if this was a cart order, NOT for single orders
+          if (orderType === 'cart') {
+            localStorage.removeItem(`cart_${currentUser.username}`);
+          }
+          // Note: Single order localStorage is already cleared when loading
+          
           showNotification('Order placed successfully!', 'success');
           setTimeout(() => {
             window.location.href = `order_confirmation.php?order_id=${result.order_id}`;
@@ -643,7 +726,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     });
 
-    document.addEventListener('DOMContentLoaded', loadCart);
+    document.addEventListener('DOMContentLoaded', loadOrderItems);
   </script>
 </body>
 </html>

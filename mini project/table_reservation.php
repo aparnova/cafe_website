@@ -518,6 +518,7 @@ $_SESSION['form_token'] = $form_token;
         // Set the cleaned value
         e.target.value = cleanData;
       });
+      
 
       // Prevent non-digit key presses (except special keys)
       phoneInput.addEventListener('keydown', function(e) {
