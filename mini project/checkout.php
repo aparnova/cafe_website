@@ -2,891 +2,789 @@
 session_start();
 require 'db.php';
 
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'customer') {
+// Replace these with your actual Razorpay keys from the dashboard
+$razorpay_key_id = "rzp_test_RGBscspQt4e8A5"; // Replace with your actual key ID
+$razorpay_key_secret = "5bqiEvg3UOUn1dLkDrQ5mhDN"; // Replace with your actual key secret
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
     header("Location: login.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id']; 
-$username = $_SESSION['user'];
-$orderType = isset($_GET['order_type']) ? $_GET['order_type'] : 'cart';
+$user_id = $_SESSION['user_id'];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $delivery_address = mysqli_real_escape_string($conn, $_POST['delivery_address']);
-    $payment_method = mysqli_real_escape_string($conn, $_POST['payment_method']);
-    $cart = json_decode($_POST['cart'], true);
+// Function to create Razorpay order via direct API call
+function createRazorpayOrder($amount, $currency, $receipt, $key_id, $key_secret) {
+    $url = 'https://api.razorpay.com/v1/orders';
+    
+    $data = array(
+        'amount' => $amount,
+        'currency' => $currency,
+        'receipt' => $receipt,
+    );
+    
+    $options = array(
+        'http' => array(
+            'header' => array(
+                'Content-type: application/json',
+                'Authorization: Basic ' . base64_encode($key_id . ':' . $key_secret)
+            ),
+            'method' => 'POST',
+            'content' => json_encode($data)
+        )
+    );
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    
+    if ($result === FALSE) {
+        throw new Exception('Failed to create Razorpay order');
+    }
+    
+    return json_decode($result, true);
+}
 
-    if (empty($cart)) {
-        echo json_encode(['status' => 'error', 'message' => 'Your order is empty!']);
+// Determine order type and get items
+$order_type = $_GET['order_type'] ?? 'cart';
+$cart_items = [];
+$total_price = 0;
+
+if ($order_type === 'direct') {
+    $menu_id = intval($_GET['menu_id'] ?? 0);
+    $quantity = intval($_GET['quantity'] ?? 1);
+    
+    if ($menu_id > 0) {
+        $menu_query = $conn->prepare("SELECT * FROM menu_items WHERE id = ?");
+        $menu_query->bind_param("i", $menu_id);
+        $menu_query->execute();
+        $menu_item = $menu_query->get_result()->fetch_assoc();
+        
+        if ($menu_item) {
+            $cart_items[] = [
+                'id' => $menu_item['id'],
+                'name' => $menu_item['name'],
+                'price' => $menu_item['price'],
+                'quantity' => $quantity,
+                'total' => $menu_item['price'] * $quantity
+            ];
+            $total_price = $menu_item['price'] * $quantity;
+            
+            $_SESSION['direct_order'] = [
+                $menu_id => [
+                    'name' => $menu_item['name'],
+                    'price' => $menu_item['price'],
+                    'quantity' => $quantity
+                ]
+            ];
+        } else {
+            $_SESSION['error'] = 'Item not found';
+            header("Location: menu.php");
+            exit();
+        }
+    } else {
+        $_SESSION['error'] = 'Invalid item selected';
+        header("Location: menu.php");
         exit();
     }
-
-    // Calculate total price
-    $total_price = 0;
-    foreach ($cart as $item) {
-        $total_price += $item['price'] * $item['quantity'];
+} else {
+    if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
+        $menu_ids = implode(',', array_keys($_SESSION['cart']));
+        $menu_query = $conn->query("SELECT * FROM menu_items WHERE id IN ($menu_ids)");
+        
+        while ($menu_item = $menu_query->fetch_assoc()) {
+            $cart_item = $_SESSION['cart'][$menu_item['id']];
+            $cart_items[] = [
+                'id' => $menu_item['id'],
+                'name' => $menu_item['name'],
+                'price' => $menu_item['price'],
+                'quantity' => $cart_item['quantity'],
+                'total' => $menu_item['price'] * $cart_item['quantity']
+            ];
+            $total_price += $menu_item['price'] * $cart_item['quantity'];
+        }
+    } else {
+        $_SESSION['error'] = 'Your cart is empty';
+        header("Location: menu.php");
+        exit();
     }
-
-    // Insert into orders table
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, total_price, delivery_address, payment_method, status) VALUES (?, ?, ?, ?, 'Pending')");
-    $stmt->bind_param("idss", $user_id, $total_price, $delivery_address, $payment_method);
-    $stmt->execute();
-    $order_id = $stmt->insert_id;
-
-    // Insert order items
-    $stmt_items = $conn->prepare("INSERT INTO order_items (order_id, menu_id, quantity, price) VALUES (?, ?, ?, ?)");
-    foreach ($cart as $item) {
-        $stmt_items->bind_param("iiid", $order_id, $item['id'], $item['quantity'], $item['price']);
-        $stmt_items->execute();
-    }
-
-    echo json_encode(['status' => 'success', 'order_id' => $order_id]);
-    exit();
 }
+
+// Handle AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    
+    if ($action === 'create_razorpay_order') {
+        header('Content-Type: application/json');
+        
+        try {
+            $name = trim($_POST['fullname']);
+            $phone = trim($_POST['phone']);
+            $email = trim($_POST['email']);
+            $address = trim($_POST['address']);
+            $payment_method = $_POST['payment_method'];
+            $order_type = $_POST['order_type'] ?? 'cart';
+            
+            if (empty($name) || empty($phone) || empty($address)) {
+                throw new Exception('Please fill all required fields');
+            }
+            
+            $items_to_process = [];
+            if ($order_type === 'direct' && isset($_SESSION['direct_order'])) {
+                $items_to_process = $_SESSION['direct_order'];
+            } elseif ($order_type === 'cart' && isset($_SESSION['cart'])) {
+                $items_to_process = $_SESSION['cart'];
+            } else {
+                throw new Exception('No items found to order');
+            }
+            
+            $total_price = 0;
+            foreach ($items_to_process as $item) {
+                $total_price += $item['price'] * $item['quantity'];
+            }
+            
+            if ($total_price <= 0) {
+                throw new Exception('Invalid order total');
+            }
+            
+            // Create Razorpay order using direct API call
+            $receipt = 'order_' . time() . '_' . $user_id;
+            $razorpay_order = createRazorpayOrder(
+                $total_price * 100, // Amount in paise
+                'INR',
+                $receipt,
+                $razorpay_key_id,
+                $razorpay_key_secret
+            );
+            
+            if (!isset($razorpay_order['id'])) {
+                throw new Exception('Failed to create Razorpay order: ' . ($razorpay_order['error']['description'] ?? 'Unknown error'));
+            }
+            
+            $razorpay_order_id = $razorpay_order['id'];
+            
+            // Insert order into database
+            $insert_order = $conn->prepare("INSERT INTO orders (user_id, customer_name, customer_phone, delivery_address, total_price, payment_method, payment_status, status, razorpay_order_id, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'Payment Pending', ?, NOW())");
+            $insert_order->bind_param("isssiss", $user_id, $name, $phone, $address, $total_price, $payment_method, $razorpay_order_id);
+            
+            if (!$insert_order->execute()) {
+                throw new Exception('Failed to create order: ' . $insert_order->error);
+            }
+            
+            $order_id = $conn->insert_id;
+            
+            // Insert order items
+            $insert_item = $conn->prepare("INSERT INTO order_items (order_id, menu_id, quantity, price) VALUES (?, ?, ?, ?)");
+            
+            foreach ($items_to_process as $menu_id => $item) {
+                $insert_item->bind_param("iiid", $order_id, $menu_id, $item['quantity'], $item['price']);
+                if (!$insert_item->execute()) {
+                    throw new Exception('Failed to save order items: ' . $insert_item->error);
+                }
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'order_data' => [
+                    'razorpay_order_id' => $razorpay_order_id,
+                    'amount' => $total_price,
+                    'customer_name' => $name,
+                    'customer_email' => $email,
+                    'customer_phone' => $phone,
+                    'order_id' => $order_id
+                ]
+            ]);
+            
+        } catch (Exception $e) {
+            error_log('Razorpay order creation error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        exit();
+    }
+    
+    if ($action === 'place_order') {
+        header('Content-Type: application/json');
+        
+        try {
+            $name = trim($_POST['fullname']);
+            $phone = trim($_POST['phone']);
+            $email = trim($_POST['email']);
+            $address = trim($_POST['address']);
+            $payment_method = $_POST['payment_method'];
+            $order_type = $_POST['order_type'] ?? 'cart';
+            
+            if (empty($name) || empty($phone) || empty($address)) {
+                throw new Exception('Please fill all required fields');
+            }
+            
+            $items_to_process = [];
+            if ($order_type === 'direct' && isset($_SESSION['direct_order'])) {
+                $items_to_process = $_SESSION['direct_order'];
+            } elseif ($order_type === 'cart' && isset($_SESSION['cart'])) {
+                $items_to_process = $_SESSION['cart'];
+            } else {
+                throw new Exception('No items found to order');
+            }
+            
+            $total_price = 0;
+            foreach ($items_to_process as $item) {
+                $total_price += $item['price'] * $item['quantity'];
+            }
+            
+            // Insert order for COD
+            $insert_order = $conn->prepare("INSERT INTO orders (user_id, customer_name, customer_phone, delivery_address, total_price, payment_method, payment_status, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'Pending', NOW())");
+            $insert_order->bind_param("isssds", $user_id, $name, $phone, $address, $total_price, $payment_method);
+            
+            if (!$insert_order->execute()) {
+                throw new Exception('Failed to create order: ' . $insert_order->error);
+            }
+            
+            $order_id = $conn->insert_id;
+            
+            // Insert order items
+            $insert_item = $conn->prepare("INSERT INTO order_items (order_id, menu_id, quantity, price) VALUES (?, ?, ?, ?)");
+            
+            foreach ($items_to_process as $menu_id => $item) {
+                $insert_item->bind_param("iiid", $order_id, $menu_id, $item['quantity'], $item['price']);
+                if (!$insert_item->execute()) {
+                    throw new Exception('Failed to save order items: ' . $insert_item->error);
+                }
+            }
+            
+            // Clear session data
+            if ($order_type === 'direct') {
+                unset($_SESSION['direct_order']);
+            } else {
+                unset($_SESSION['cart']);
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'order_id' => $order_id,
+                'message' => 'Order placed successfully!'
+            ]);
+            
+        } catch (Exception $e) {
+            error_log('COD order creation error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        exit();
+    }
+}
+
+// Get user details
+$user_query = $conn->prepare("SELECT * FROM users WHERE id = ?");
+$user_query->bind_param("i", $user_id);
+$user_query->execute();
+$user = $user_query->get_result()->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - Westley's Resto Cafe</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    /* Font & Color Variables */
-    :root {
-      --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
-      --heading-font: "Playfair Display", sans-serif;
-      --nav-font: "Poppins", sans-serif;
-      --background-color: #0c0b09;
-      --default-color: rgba(255, 255, 255, 0.7);
-      --heading-color: #ffffff;
-      --accent-color: #cda45e;
-      --surface-color: #29261f;
-      --contrast-color: #0c0b09;
-    }
-
-    /* General Styles */
-    body {
-      color: var(--default-color);
-      background-color: var(--background-color);
-      font-family: var(--default-font);
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    /* Header Styles */
-    .header {
-      background-color: var(--background-color);
-      color: var(--default-color);
-      position: fixed;
-      width: 100%;
-      top: 0;
-      z-index: 997;
-      border-bottom: 1px solid var(--surface-color);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    .header .branding {
-      min-height: 70px;
-      padding: 15px 0;
-    }
-
-    .header .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header .logo {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .header .logo img {
-      height: 50px;
-    }
-
-    .header .logo h1 {
-      font-size: 24px;
-      margin: 0;
-      color: var(--heading-color);
-      font-family: var(--heading-font);
-    }
-
-    .back-to-menu {
-      background: var(--accent-color);
-      color: var(--contrast-color);
-      border: none;
-      padding: 12px 24px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      font-family: var(--nav-font);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .back-to-menu:hover {
-      background: color-mix(in srgb, var(--accent-color), transparent 20%);
-      transform: translateY(-2px);
-    }
-
-    /* Main Content */
-    .main-content {
-      padding-top: 120px;
-      padding-bottom: 80px;
-      min-height: 100vh;
-    }
-
-    /* Section Title */
-    .section-title {
-      text-align: center;
-      margin-bottom: 50px;
-      padding: 0 20px;
-    }
-
-    .section-title h1 {
-      color: var(--accent-color);
-      font-family: var(--heading-font);
-      font-size: 42px;
-      margin: 0 0 15px 0;
-      font-weight: 600;
-    }
-
-    .section-title p {
-      color: var(--default-color);
-      margin: 0;
-      font-size: 18px;
-    }
-
-    /* Checkout Container */
-    .checkout-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 50px;
-      margin-top: 50px;
-      align-items: start;
-    }
-
-    .section {
-      background: var(--surface-color);
-      border-radius: 20px;
-      padding: 40px;
-      border: 1px solid color-mix(in srgb, var(--accent-color), transparent 70%);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease;
-    }
-
-    .section:hover {
-      transform: translateY(-5px);
-    }
-
-    .section h2 {
-      color: var(--accent-color);
-      font-family: var(--heading-font);
-      font-size: 28px;
-      margin: 0 0 30px 0;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .section h2 i {
-      font-size: 24px;
-    }
-
-    /* Order Type Indicator */
-    .order-type-indicator {
-      background: color-mix(in srgb, var(--accent-color), transparent 90%);
-      border: 2px solid var(--accent-color);
-      border-radius: 12px;
-      padding: 15px 20px;
-      margin-bottom: 30px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .order-type-indicator.single-order {
-      background: color-mix(in srgb, var(--accent-color), transparent 90%);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-    }
-
-    .order-type-indicator.cart-order {
-      background: color-mix(in srgb, var(--accent-color), transparent 90%);
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-    }
-
-    /* Order Summary */
-    .order-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0;
-      border-bottom: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
-    }
-
-    .order-item:last-child {
-      border-bottom: none;
-    }
-
-    .item-details {
-      flex: 1;
-      padding-right: 20px;
-    }
-
-    .item-name {
-      color: var(--heading-color);
-      font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 18px;
-    }
-
-    .item-quantity {
-      color: var(--default-color);
-      font-size: 15px;
-    }
-
-    .item-price {
-      color: var(--accent-color);
-      font-weight: bold;
-      font-size: 20px;
-      min-width: 80px;
-      text-align: right;
-    }
-
-    .order-total {
-      margin-top: 30px;
-      padding-top: 25px;
-      border-top: 2px solid var(--accent-color);
-      text-align: right;
-    }
-
-    .total-amount {
-      font-size: 28px;
-      font-weight: bold;
-      color: var(--accent-color);
-    }
-
-    /* Form Styles */
-    .form-group {
-      margin-bottom: 25px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 10px;
-      color: var(--heading-color);
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .form-group input,
-    .form-group textarea,
-    .form-group select {
-      width: 100%;
-      padding: 15px 18px;
-      border: 2px solid color-mix(in srgb, var(--default-color), transparent 60%);
-      border-radius: 12px;
-      background: var(--background-color);
-      color: var(--default-color);
-      font-family: var(--default-font);
-      font-size: 16px;
-      transition: all 0.3s ease;
-      box-sizing: border-box;
-    }
-
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      background: color-mix(in srgb, var(--accent-color), transparent 95%);
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-      margin-bottom: 25px;
-    }
-
-    /* Payment Methods */
-    .payment-methods {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .payment-method {
-      position: relative;
-    }
-
-    .payment-method input[type="radio"] {
-      position: absolute;
-      opacity: 0;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      cursor: pointer;
-    }
-
-    .payment-method label {
-      display: block;
-      padding: 20px 15px;
-      border: 2px solid color-mix(in srgb, var(--default-color), transparent 70%);
-      border-radius: 15px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: var(--background-color);
-      font-weight: 500;
-    }
-
-    .payment-method input[type="radio"]:checked + label {
-      border-color: var(--accent-color);
-      background: color-mix(in srgb, var(--accent-color), transparent 90%);
-      color: var(--accent-color);
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(205, 164, 94, 0.3);
-    }
-
-    .payment-method i {
-      display: block;
-      font-size: 26px;
-      margin-bottom: 10px;
-    }
-
-    /* Place Order Button */
-    .place-order-btn {
-      width: 100%;
-      padding: 18px 20px;
-      background: var(--accent-color);
-      color: var(--contrast-color);
-      border: none;
-      border-radius: 15px;
-      font-size: 20px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-family: var(--nav-font);
-      margin-top: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .place-order-btn:hover {
-      background: color-mix(in srgb, var(--accent-color), transparent 20%);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(205, 164, 94, 0.4);
-    }
-
-    .place-order-btn:disabled {
-      background: color-mix(in srgb, var(--default-color), transparent 70%);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    /* Empty Order Message */
-    .empty-order {
-      text-align: center;
-      padding: 60px 30px;
-      color: var(--default-color);
-    }
-
-    .empty-order h3 {
-      color: var(--accent-color);
-      margin-bottom: 20px;
-      font-size: 24px;
-    }
-
-    .empty-order p {
-      margin-bottom: 30px;
-      font-size: 16px;
-      line-height: 1.6;
-    }
-
-    .empty-order a {
-      background: var(--accent-color);
-      color: var(--contrast-color);
-      padding: 15px 30px;
-      border-radius: 25px;
-      text-decoration: none;
-      display: inline-block;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-
-    .empty-order a:hover {
-      background: color-mix(in srgb, var(--accent-color), transparent 20%);
-      transform: translateY(-2px);
-    }
-
-    /* Notification */
-    .notification {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent-color);
-      color: var(--contrast-color);
-      padding: 18px 30px;
-      border-radius: 12px;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-      z-index: 1001;
-      display: none;
-      font-size: 16px;
-      font-weight: 500;
-      min-width: 300px;
-      text-align: center;
-    }
-
-    .notification.error {
-      background: #ff6b6b;
-    }
-
-    .notification.success {
-      background: #4CAF50;
-    }
-
-    /* Loading Overlay */
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1002;
-      backdrop-filter: blur(5px);
-    }
-
-    .loading-overlay.show {
-      display: flex;
-    }
-
-    .loading-content {
-      background: var(--surface-color);
-      padding: 50px 40px;
-      border-radius: 20px;
-      text-align: center;
-      border: 2px solid var(--accent-color);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .loading-spinner {
-      width: 60px;
-      height: 60px;
-      border: 4px solid color-mix(in srgb, var(--accent-color), transparent 70%);
-      border-top: 4px solid var(--accent-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 25px;
-    }
-
-    .loading-content h3 {
-      color: var(--accent-color);
-      margin: 0 0 15px 0;
-      font-size: 24px;
-    }
-
-    .loading-content p {
-      color: var(--default-color);
-      margin: 0;
-      font-size: 16px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Responsive */
-    @media (max-width: 992px) {
-      .checkout-container {
-        gap: 40px;
-      }
-
-      .section {
-        padding: 35px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .container {
-        padding: 0 15px;
-      }
-
-      .main-content {
-        padding-top: 100px;
-        padding-bottom: 60px;
-      }
-
-      .section-title h1 {
-        font-size: 32px;
-      }
-
-      .checkout-container {
-        grid-template-columns: 1fr;
-        gap: 30px;
-      }
-
-      .section {
-        padding: 25px;
-      }
-
-      .section h2 {
-        font-size: 24px;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-
-      .payment-methods {
-        grid-template-columns: 1fr;
-        gap: 15px;
-      }
-
-      .header .logo h1 {
-        font-size: 20px;
-      }
-
-      .back-to-menu {
-        padding: 10px 18px;
-        font-size: 14px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .section {
-        padding: 20px;
-      }
-
-      .section h2 {
-        font-size: 22px;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .item-details {
-        padding-right: 15px;
-      }
-
-      .item-name {
-        font-size: 16px;
-      }
-
-      .item-price {
-        font-size: 18px;
-      }
-
-      .total-amount {
-        font-size: 24px;
-      }
-
-      .place-order-btn {
-        padding: 16px;
-        font-size: 18px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Westley's Resto Cafe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body {
+            background-color: #0c0b09;
+            color: rgba(255,255,255,0.8);
+            font-family: "Roboto", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #0c0b09;
+            border-bottom: 1px solid #29261f;
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo h1 {
+            color: #cda45e;
+            margin: 0;
+            font-family: "Playfair Display", serif;
+            font-size: 24px;
+        }
+        
+        .nav-links a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background-color: #cda45e;
+            color: #0c0b09;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 120px auto 50px auto;
+            padding: 20px;
+        }
+        
+        .checkout-form {
+            background-color: #29261f;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #4CAF50;
+        }
+        
+        h1, h2 {
+            color: #cda45e;
+            font-family: "Playfair Display", serif;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .order-summary {
+            background-color: #1a1816;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #3a3530;
+        }
+        
+        .summary-title {
+            color: #cda45e;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .item-quantity {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .item-price {
+            font-weight: 600;
+            color: #cda45e;
+        }
+        
+        .total-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #cda45e;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 20px;
+            font-weight: bold;
+            color: #cda45e;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #cda45e;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a1816;
+            border: 1px solid #3a3530;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #cda45e;
+        }
+        
+        .payment-methods {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .payment-option {
+            flex: 1;
+            position: relative;
+        }
+        
+        .payment-option input[type="radio"] {
+            display: none;
+        }
+        
+        .payment-option label {
+            display: block;
+            padding: 15px;
+            background-color: #1a1816;
+            border: 2px solid #3a3530;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-option input[type="radio"]:checked + label {
+            border-color: #cda45e;
+            background-color: rgba(205, 164, 94, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #cda45e;
+            color: #0c0b09;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            background-color: #f7a25e;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            display: none;
+            max-width: 350px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .notification.success { background: #10b981; }
+        .notification.error { background: #ef4444; }
+        .notification.info { background: #3b82f6; }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 100px auto 30px auto;
+                padding: 15px;
+            }
+            
+            .payment-methods {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="branding">
-      <div class="container">
+
+<div class="header">
+    <div class="header-content">
         <div class="logo">
-          <img src="img.png" alt="Westley's Resto Cafe">
-          <h1>Westley's Resto Cafe</h1>
+            <h1>Westley's Resto Cafe</h1>
         </div>
-        <a href="menu.php" class="back-to-menu">
-          <i class="fas fa-arrow-left"></i>
-          Back to Menu
-        </a>
-      </div>
+        <div class="nav-links">
+            <a href="menu.php"><i class="fas fa-utensils"></i> Menu</a>
+            <a href="my_orders.php"><i class="fas fa-clipboard-list"></i> My Orders</a>
+            <a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </div>
-  </header>
+</div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="container">
-      <div class="section-title">
-        <h1>Checkout</h1>
-        <p>Complete your order</p>
-      </div>
-
-      <div class="checkout-container">
-        <!-- Order Summary -->
-        <div class="section">
-          <div id="order-type-indicator" class="order-type-indicator"></div>
-          <h2><i class="fas fa-receipt"></i> Order Summary</h2>
-          <div id="order-summary"></div>
-          <div class="order-total">
-            <div style="font-size: 20px; margin-bottom: 15px;">
-              Total: <span class="total-amount">₹<span id="total-amount">0</span></span>
+<div class="container">
+    <div class="checkout-form">
+        <h1><i class="fas fa-credit-card"></i> Checkout</h1>
+        
+        <div class="order-summary">
+            <div class="summary-title">
+                <i class="fas fa-receipt"></i> Order Summary
             </div>
-          </div>
+            
+            <?php foreach ($cart_items as $item): ?>
+                <div class="order-item">
+                    <div class="item-details">
+                        <div class="item-name"><?php echo htmlspecialchars($item['name']); ?></div>
+                        <div class="item-quantity">Quantity: <?php echo $item['quantity']; ?></div>
+                    </div>
+                    <div class="item-price">₹<?php echo $item['total']; ?></div>
+                </div>
+            <?php endforeach; ?>
+            
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Total Amount:</span>
+                    <span>₹<?php echo $total_price; ?></span>
+                </div>
+            </div>
         </div>
-
-        <!-- Customer Details & Payment -->
-        <div class="section">
-          <h2><i class="fas fa-user"></i> Your Details</h2>
-          <form id="checkout-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="customer-name">Full Name *</label>
-                <input type="text" id="customer-name" name="customer_name" value="<?php echo $_SESSION['user']; ?>" required>
-              </div>
-              <div class="form-group">
-                <label for="customer-phone">Phone Number *</label>
-                <input type="tel" id="customer-phone" name="customer_phone" required>
-              </div>
-            </div>
-
+        
+        <form id="checkout-form">
+            <input type="hidden" name="order_type" value="<?php echo htmlspecialchars($order_type); ?>">
+            
             <div class="form-group">
-              <label for="delivery-address">Delivery Address *</label>
-              <textarea id="delivery-address" name="delivery_address" placeholder="Enter your complete address" required></textarea>
+                <label for="fullname">Full Name *</label>
+                <input type="text" id="fullname" name="fullname" value="<?php echo htmlspecialchars($user['fullname']); ?>" required>
             </div>
-
+            
             <div class="form-group">
-              <label for="order-notes">Special Instructions (Optional)</label>
-              <textarea id="order-notes" name="order_notes" placeholder="Any special requests or notes for the chef"></textarea>
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" required>
             </div>
-
+            
             <div class="form-group">
-              <label>Payment Method *</label>
-              <div class="payment-methods">
-                <div class="payment-method">
-                  <input type="radio" id="cash-on-delivery" name="payment_method" value="cash_on_delivery" checked>
-                  <label for="cash-on-delivery">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Cash on Delivery
-                  </label>
-                </div>
-                <div class="payment-method">
-                  <input type="radio" id="online-payment" name="payment_method" value="online_payment">
-                  <label for="online-payment">
-                    <i class="fas fa-credit-card"></i>
-                    Online Payment
-                  </label>
-                </div>
-                <div class="payment-method">
-                  <input type="radio" id="upi-payment" name="payment_method" value="upi_payment">
-                  <label for="upi-payment">
-                    <i class="fab fa-google-pay"></i>
-                    UPI Payment
-                  </label>
-                </div>
-              </div>
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
             </div>
-
-            <button type="submit" class="place-order-btn" id="place-order-btn">
-              <i class="fas fa-check-circle"></i>
-              Place Order - ₹<span id="order-btn-total">0</span>
+            
+            <div class="form-group">
+                <label for="address">Delivery Address *</label>
+                <textarea id="address" name="address" rows="3" required placeholder="Enter your complete delivery address"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Method</label>
+                <div class="payment-methods">
+                    <div class="payment-option">
+                        <input type="radio" id="razorpay" name="payment_method" value="razorpay" checked>
+                        <label for="razorpay">
+                            <i class="fas fa-credit-card"></i><br>
+                            Online Payment<br>
+                            <small>(Razorpay)</small>
+                        </label>
+                    </div>
+                    <div class="payment-option">
+                        <input type="radio" id="cod" name="payment_method" value="cash_on_delivery">
+                        <label for="cod">
+                            <i class="fas fa-money-bill-wave"></i><br>
+                            Cash on Delivery<br>
+                            <small>(COD)</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" class="btn" onclick="processPayment()">
+                <i class="fas fa-shopping-cart"></i> Place Order - ₹<?php echo $total_price; ?>
             </button>
-          </form>
-        </div>
-      </div>
+        </form>
     </div>
-  </div>
+</div>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loading-overlay">
-    <div class="loading-content">
-      <div class="loading-spinner"></div>
-      <h3>Processing Your Order...</h3>
-      <p>Please wait while we confirm your order</p>
-    </div>
-  </div>
+<div class="notification" id="payment-notification"></div>
 
-  <!-- Notification -->
-  <div class="notification" id="notification">Notification message</div>
+<script>
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('payment-notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.style.display = 'block';
+    notification.style.opacity = '1';
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 300);
+    }, 4000);
+}
 
-  <script>
-    // Pass PHP data to JS
-    const currentUser = {
-      username: "<?php echo $username; ?>"
-    };
-    const orderType = "<?php echo $orderType; ?>"; // 'single' or 'cart'
-
-    // DOM Elements
-    const orderSummary = document.getElementById('order-summary');
-    const totalAmount = document.getElementById('total-amount');
-    const orderBtnTotal = document.getElementById('order-btn-total');
-    const checkoutForm = document.getElementById('checkout-form');
-    const notification = document.getElementById('notification');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const placeOrderBtn = document.getElementById('place-order-btn');
-    const orderTypeIndicator = document.getElementById('order-type-indicator');
-
-    let orderItems = [];
-    let total = 0;
-
-    function loadOrderItems() {
-      if (orderType === 'single') {
-        // Load single order item
-        const singleOrder = localStorage.getItem(`single_order_${currentUser.username}`);
-        if (singleOrder) {
-          const singleItem = JSON.parse(singleOrder);
-          orderItems = [singleItem];
-          // Clear single order after loading
-          localStorage.removeItem(`single_order_${currentUser.username}`);
-          
-          // Update indicator
-          orderTypeIndicator.textContent = 'Single Item Order';
-          orderTypeIndicator.className = 'order-type-indicator single-order';
-        } else {
-          orderItems = [];
-        }
-      } else {
-        // Load cart items (default)
-        const cartData = localStorage.getItem(`cart_${currentUser.username}`);
-        if (cartData) {
-          orderItems = JSON.parse(cartData);
-          
-          // Update indicator
-          orderTypeIndicator.textContent = `Cart Order (${orderItems.length} items)`;
-          orderTypeIndicator.className = 'order-type-indicator cart-order';
-        } else {
-          orderItems = [];
-        }
-      }
-      
-      renderOrderSummary();
-    }
-
-    function renderOrderSummary() {
-      orderSummary.innerHTML = '';
-      total = 0;
-
-      if (orderItems.length === 0) {
-        orderSummary.innerHTML = `
-          <div class="empty-order">
-            <h3>No items to order</h3>
-            <p>Your order is empty. Please go back to the menu to add items.</p>
-            <a href="menu.php">Back to Menu</a>
-          </div>
-        `;
-        totalAmount.textContent = 0;
-        orderBtnTotal.textContent = 0;
-        placeOrderBtn.disabled = true;
+function processPayment() {
+    const form = document.getElementById('checkout-form');
+    const formData = new FormData(form);
+    const paymentMethod = formData.get('payment_method');
+    
+    const name = formData.get('fullname').trim();
+    const phone = formData.get('phone').trim();
+    const address = formData.get('address').trim();
+    
+    if (!name || !phone || !address) {
+        showNotification('Please fill all required fields', 'error');
         return;
-      }
-
-      orderItems.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-
-        const orderItem = document.createElement('div');
-        orderItem.className = 'order-item';
-        orderItem.innerHTML = `
-          <div class="item-details">
-            <div class="item-name">${item.name}</div>
-            <div class="item-quantity">Quantity: ${item.quantity} × ₹${item.price}</div>
-          </div>
-          <div class="item-price">₹${itemTotal}</div>
-        `;
-        orderSummary.appendChild(orderItem);
-      });
-
-      totalAmount.textContent = total;
-      orderBtnTotal.textContent = total;
-      placeOrderBtn.disabled = false;
     }
-
-    function showNotification(message, type = 'success') {
-      notification.textContent = message;
-      notification.className = `notification ${type}`;
-      notification.style.display = 'block';
-      setTimeout(() => { notification.style.display = 'none'; }, 4000);
-    }
-
-    checkoutForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (orderItems.length === 0) {
-        showNotification('Your order is empty!', 'error');
-        return;
-      }
-
-      // Show loading overlay
-      loadingOverlay.classList.add('show');
-      placeOrderBtn.disabled = true;
-
-      const formData = new FormData(checkoutForm);
-      const orderData = {
-        customer_name: formData.get('customer_name'),
-        customer_phone: formData.get('customer_phone'),
-        delivery_address: formData.get('delivery_address'),
-        order_notes: formData.get('order_notes'),
-        payment_method: formData.get('payment_method'),
-        cart: orderItems
-      };
-
-      try {
-        const response = await fetch('checkout.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ ...orderData, cart: JSON.stringify(orderItems) })
+    
+    if (paymentMethod === 'razorpay') {
+        formData.append('action', 'create_razorpay_order');
+        
+        fetch('checkout.php<?php echo $order_type === 'direct' ? '?order_type=direct&menu_id=' . $cart_items[0]['id'] . '&quantity=' . $cart_items[0]['quantity'] : ''; ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                initiateRazorpayPayment(data.order_data);
+            } else {
+                showNotification('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred. Please try again.', 'error');
         });
+    } else {
+        formData.append('action', 'place_order');
+        
+        fetch('checkout.php<?php echo $order_type === 'direct' ? '?order_type=direct&menu_id=' . $cart_items[0]['id'] . '&quantity=' . $cart_items[0]['quantity'] : ''; ?>', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = `order_confirmation.php?order_id=${data.order_id}`;
+                }, 1500);
+            } else {
+                showNotification('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred. Please try again.', 'error');
+        });
+    }
+}
 
-        const result = await response.json();
-        if (result.status === 'success') {
-          // Clear cart ONLY if this was a cart order, NOT for single orders
-          if (orderType === 'cart') {
-            localStorage.removeItem(`cart_${currentUser.username}`);
-          }
-          // Note: Single order localStorage is already cleared when loading
-          
-          showNotification('Order placed successfully!', 'success');
-          setTimeout(() => {
-            window.location.href = `order_confirmation.php?order_id=${result.order_id}`;
-          }, 2000);
-        } else {
-          showNotification(result.message || 'Order failed!', 'error');
+function initiateRazorpayPayment(orderData) {
+    const options = {
+        "key": "<?php echo $razorpay_key_id; ?>",
+        "amount": orderData.amount * 100,
+        "currency": "INR",
+        "name": "Westley's Resto Cafe",
+        "description": "Food Order Payment",
+        "order_id": orderData.razorpay_order_id,
+        "handler": function (response) {
+            showNotification('Payment successful! Verifying...', 'info');
+            
+            fetch('payment_verify.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'razorpay_order_id': response.razorpay_order_id,
+                    'razorpay_payment_id': response.razorpay_payment_id,
+                    'razorpay_signature': response.razorpay_signature
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Payment verified successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = `order_confirmation.php?order_id=${data.order_id}`;
+                    }, 1500);
+                } else {
+                    showNotification('Payment verification failed: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Verification Error:', error);
+                showNotification('Payment verification failed. Please contact support.', 'error');
+            });
+        },
+        "prefill": {
+            "name": orderData.customer_name,
+            "email": orderData.customer_email,
+            "contact": orderData.customer_phone
+        },
+        "theme": {
+            "color": "#cda45e"
+        },
+        "modal": {
+            "ondismiss": function() {
+                showNotification('Payment cancelled', 'error');
+            }
         }
-      } catch (error) {
-        console.error(error);
-        showNotification('Error placing order!', 'error');
-      } finally {
-        loadingOverlay.classList.remove('show');
-        placeOrderBtn.disabled = false;
-      }
+    };
+
+    const rzp = new Razorpay(options);
+    
+    rzp.on('payment.failed', function (response) {
+        fetch('update_payment_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'razorpay_order_id': orderData.razorpay_order_id,
+                'status': 'failed',
+                'error_description': response.error.description
+            })
+        });
+        
+        showNotification('Payment failed: ' + response.error.description, 'error');
     });
 
-    document.addEventListener('DOMContentLoaded', loadOrderItems);
-  </script>
+    rzp.open();
+}
+</script>
+
 </body>
 </html>

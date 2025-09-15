@@ -3,11 +3,12 @@ session_start();
 require 'db.php';
 
 // Check if user is logged in
-$isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['role']);
+$isLoggedIn = isset($_SESSION['user_id']) && isset($_SESSION['role']);
 $currentUser = null;
 
 if ($isLoggedIn) {
     $currentUser = [
+        'user_id' => $_SESSION['user_id'],
         'username' => $_SESSION['user'],
         'role' => $_SESSION['role']
     ];
@@ -1086,6 +1087,10 @@ if ($result) {
               <span class="header-cart-count" id="header-cart-count">0</span>
             </div>
           <?php else: ?>
+            <button class="login-btn" onclick="window.location.href='login.php'">
+              <i class="fas fa-sign-in-alt"></i>
+              Login
+            </button>
           <?php endif; ?>
         </div>
       </div>
@@ -1133,7 +1138,7 @@ if ($result) {
         <div class="search-container">
           <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="menu-search" placeholder="Search menu items...">
+            <input type="text" id="menu-search" placeholder="Search menu items..." autocomplete="off">
             <button id="clear-search" class="clear-search-btn">&times;</button>
           </div>
         </div>
@@ -1149,7 +1154,7 @@ if ($result) {
   <!-- Cart Sidebar -->
   <div class="cart-sidebar" id="cart-sidebar">
     <div class="cart-header">
-      <h3>Your Order</h3>
+      <h3>Your Cart</h3>
       <button class="close-cart" id="close-cart">&times;</button>
     </div>
     <div class="cart-items-container" id="cart-items">
@@ -1172,13 +1177,13 @@ if ($result) {
     const isLoggedIn = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
     const currentUser = <?php echo $isLoggedIn ? json_encode($currentUser) : 'null'; ?>;
 
-    // Get menu items from PHP/database instead of hardcoded array
+    // Get menu items from PHP/database
     const menuItems = <?php echo json_encode($menuItems); ?>;
 
     // Convert string IDs and prices to numbers for JavaScript compatibility
     menuItems.forEach(item => {
         item.id = parseInt(item.id);
-        item.price = parseInt(item.price);
+        item.price = parseFloat(item.price);
     });
 
     // DOM Elements
@@ -1207,25 +1212,48 @@ if ($result) {
         renderMenu();
         setupEventListeners();
         if (isLoggedIn) {
-          loadCartFromStorage();
+          loadCartFromSession();
         }
       }
     }
 
-    // Load cart from localStorage if user is logged in
-    function loadCartFromStorage() {
-      const savedCart = localStorage.getItem(`cart_${currentUser.username}`);
-      if (savedCart) {
-        cart = JSON.parse(savedCart);
-        updateCart();
-      }
+    // Load cart from session storage if user is logged in
+    function loadCartFromSession() {
+      if (!isLoggedIn) return;
+      
+      fetch('get_cart.php')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.cart) {
+            cart = data.cart;
+            updateCart();
+          }
+        })
+        .catch(error => {
+          console.error('Error loading cart:', error);
+        });
     }
 
-    // Save cart to localStorage
-    function saveCartToStorage() {
-      if (isLoggedIn) {
-        localStorage.setItem(`cart_${currentUser.username}`, JSON.stringify(cart));
-      }
+    // Save cart to session
+    function saveCartToSession() {
+      if (!isLoggedIn) return;
+      
+      fetch('save_cart.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cart: cart })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          console.error('Failed to save cart:', data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error saving cart:', error);
+      });
     }
 
     // Filter menu items based on category and search term
@@ -1280,7 +1308,7 @@ if ($result) {
                 <input type="text" class="quantity-input" value="1" data-id="${item.id}" readonly>
                 <button class="quantity-btn plus" data-id="${item.id}">+</button>
               </div>
-              <button class="add-to-cart" data-id="${item.id}">Add</button>
+              <button class="add-to-cart" data-id="${item.id}">Add to Cart</button>
               <button class="order-now" data-id="${item.id}">Order Now</button>
             </div>
           </div>
@@ -1395,7 +1423,8 @@ if ($result) {
               showNotification('Your cart is empty!', 'error');
               return;
             }
-            placeOrderFromCart();
+            // Redirect to checkout for cart orders
+            window.location.href = 'checkout.php?order_type=cart';
           });
         }
 
@@ -1428,30 +1457,14 @@ if ($result) {
             addToCart(itemId, quantity);
           }
 
-          // Order Now button - direct single item ordering (NO CART INVOLVEMENT)
+          // Order Now button - direct single item ordering
           if (e.target.classList.contains('order-now')) {
             const itemId = parseInt(e.target.dataset.id);
             const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
             const quantity = parseInt(quantityInput.value);
             
-            // Find the menu item
-            const menuItem = menuItems.find(item => item.id === itemId);
-            if (!menuItem) return;
-            
-            // Create the single order item (completely separate from cart)
-            const singleOrderItem = {
-              id: menuItem.id,
-              name: menuItem.name,
-              price: menuItem.price,
-              quantity: quantity,
-              image: menuItem.image || 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'
-            };
-            
-            // Store the single order item in a separate localStorage key
-            localStorage.setItem(`single_order_${currentUser.username}`, JSON.stringify(singleOrderItem));
-            
-            // Redirect directly to checkout with single order parameter
-            window.location.href = 'checkout.php?order_type=single';
+            // Redirect directly to checkout with direct order parameters
+            window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
           }
 
           if (e.target.classList.contains('quantity-btn')) {
@@ -1471,7 +1484,7 @@ if ($result) {
       }
     }
 
-    // Add item to cart (only affects cart, not single orders)
+    // Add item to cart (only affects cart, not direct orders)
     function addToCart(itemId, quantity) {
       if (!isLoggedIn) {
         showNotification('Please login first!', 'error');
@@ -1497,7 +1510,7 @@ if ($result) {
       }
 
       updateCart();
-      saveCartToStorage();
+      saveCartToSession();
       showNotification(`${quantity} ${menuItem.name} added to cart`, 'success');
     }
 
@@ -1505,7 +1518,7 @@ if ($result) {
     function removeFromCart(itemId) {
       cart = cart.filter(item => item.id !== itemId);
       updateCart();
-      saveCartToStorage();
+      saveCartToSession();
       showNotification('Item removed from cart', 'success');
     }
 
@@ -1542,25 +1555,8 @@ if ($result) {
         cartItems.appendChild(cartItem);
       });
 
-      cartTotal.textContent = total;
+      cartTotal.textContent = total.toFixed(2);
       headerCartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
-    }
-
-    // Place order from cart - redirect to checkout (for cart items only)
-    function placeOrderFromCart() {
-      if (!isLoggedIn) {
-        showNotification('Please login first!', 'error');
-        return;
-      }
-
-      if (cart.length === 0) {
-        showNotification('Your cart is empty!', 'error');
-        return;
-      }
-
-      // Save cart to localStorage and redirect to checkout for cart orders
-      saveCartToStorage();
-      window.location.href = 'checkout.php?order_type=cart';
     }
 
     // Show notification

@@ -54,11 +54,12 @@ $orders_query = $conn->prepare("
     WHERE o.assigned_to = ? 
     ORDER BY 
         CASE 
-            WHEN o.status = 'Processing' THEN 1
-            WHEN o.status = 'Out for Delivery' THEN 2
-            WHEN o.status = 'Delivered' THEN 3
-            WHEN o.status = 'Cancelled' THEN 4
-            ELSE 5
+            WHEN o.status = 'Confirmed' THEN 1
+            WHEN o.status = 'Processing' THEN 2
+            WHEN o.status = 'Out for Delivery' THEN 3
+            WHEN o.status = 'Delivered' THEN 4
+            WHEN o.status = 'Cancelled' THEN 5
+            ELSE 6
         END,
         o.created_at DESC
 ");
@@ -66,15 +67,18 @@ $orders_query->bind_param("i", $delivery_id);
 $orders_query->execute();
 $orders_result = $orders_query->get_result();
 
-// Get statistics
+// Get enhanced statistics
 $stats_query = $conn->prepare("
     SELECT 
-        COUNT(*) as total_assigned,
+        COUNT(*) as total_orders,
+        SUM(CASE WHEN status IN ('Confirmed', 'Processing', 'Out for Delivery') THEN 1 ELSE 0 END) as active_orders,
         SUM(CASE WHEN status = 'Processing' THEN 1 ELSE 0 END) as pending_pickup,
         SUM(CASE WHEN status = 'Out for Delivery' THEN 1 ELSE 0 END) as out_for_delivery,
-        SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) as delivered_today
+        SUM(CASE WHEN status = 'Delivered' THEN 1 ELSE 0 END) as total_delivered,
+        SUM(CASE WHEN status = 'Delivered' AND DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as delivered_today,
+        SUM(CASE WHEN status = 'Delivered' THEN total_price ELSE 0 END) as total_earnings
     FROM orders 
-    WHERE assigned_to = ? AND DATE(created_at) = CURDATE()
+    WHERE assigned_to = ?
 ");
 $stats_query->bind_param("i", $delivery_id);
 $stats_query->execute();
@@ -192,7 +196,7 @@ $stats = $stats_result->fetch_assoc();
 
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -213,9 +217,11 @@ $stats = $stats_result->fetch_assoc();
         }
 
         .stat-card.total { border-left-color: var(--info); }
-        .stat-card.pending { border-left-color: var(--warning); }
+        .stat-card.active { border-left-color: var(--warning); }
+        .stat-card.pending { border-left-color: #f97316; }
         .stat-card.transit { border-left-color: var(--accent); }
         .stat-card.delivered { border-left-color: var(--success); }
+        .stat-card.earnings { border-left-color: #8b5cf6; }
 
         .stat-icon {
             font-size: 40px;
@@ -223,9 +229,11 @@ $stats = $stats_result->fetch_assoc();
         }
 
         .stat-icon.total { color: var(--info); }
-        .stat-icon.pending { color: var(--warning); }
+        .stat-icon.active { color: var(--warning); }
+        .stat-icon.pending { color: #f97316; }
         .stat-icon.transit { color: var(--accent); }
         .stat-icon.delivered { color: var(--success); }
+        .stat-icon.earnings { color: #8b5cf6; }
 
         .stat-value {
             font-size: 32px;
@@ -295,6 +303,11 @@ $stats = $stats_result->fetch_assoc();
             letter-spacing: 0.5px;
         }
 
+        .status-confirmed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
         .status-processing {
             background: #bfdbfe;
             color: #1e3a8a;
@@ -313,6 +326,39 @@ $stats = $stats_result->fetch_assoc();
         .status-cancelled {
             background: #fee2e2;
             color: #991b1b;
+        }
+
+        .payment-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .payment-razorpay-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .payment-razorpay-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .payment-razorpay-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .payment-cod {
+            background: #e5e7eb;
+            color: #374151;
         }
 
         .action-btn {
@@ -582,6 +628,16 @@ $stats = $stats_result->fetch_assoc();
                 font-size: 10px;
             }
         }
+
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .orders-table {
+                font-size: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -590,7 +646,7 @@ $stats = $stats_result->fetch_assoc();
     <div class="header">
         <h1>
             <i class="fas fa-truck"></i>
-            Delivery Portal - Westley's Resto Cafe
+            Delivery Portal - Westley's Resto Café
         </h1>
         <div class="user-info">
             <div class="user-details">
@@ -606,14 +662,21 @@ $stats = $stats_result->fetch_assoc();
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Enhanced Statistics Cards -->
     <div class="stats-container">
         <div class="stat-card total">
             <div class="stat-icon total">
                 <i class="fas fa-clipboard-list"></i>
             </div>
-            <div class="stat-value"><?php echo $stats['total_assigned']; ?></div>
-            <div class="stat-label">Today's Orders</div>
+            <div class="stat-value"><?php echo $stats['total_orders']; ?></div>
+            <div class="stat-label">Total Orders</div>
+        </div>
+        <div class="stat-card active">
+            <div class="stat-icon active">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stat-value"><?php echo $stats['active_orders']; ?></div>
+            <div class="stat-label">Active Orders</div>
         </div>
         <div class="stat-card pending">
             <div class="stat-icon pending">
@@ -633,8 +696,15 @@ $stats = $stats_result->fetch_assoc();
             <div class="stat-icon delivered">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <div class="stat-value"><?php echo $stats['delivered_today']; ?></div>
-            <div class="stat-label">Delivered Today</div>
+            <div class="stat-value"><?php echo $stats['total_delivered']; ?></div>
+            <div class="stat-label">Total Delivered</div>
+        </div>
+        <div class="stat-card earnings">
+            <div class="stat-icon earnings">
+                <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="stat-value">₹<?php echo number_format($stats['total_earnings'], 0); ?></div>
+            <div class="stat-label">Total Earnings</div>
         </div>
     </div>
 
@@ -653,7 +723,7 @@ $stats = $stats_result->fetch_assoc();
                         <th>Customer</th>
                         <th>Phone</th>
                         <th>Address</th>
-                        <th>Total Amount</th>
+                        <th>Amount & Payment</th>
                         <th>Status</th>
                         <th>Order Date</th>
                         <th>Items</th>
@@ -671,29 +741,63 @@ $stats = $stats_result->fetch_assoc();
                                         <i class="fas fa-phone"></i> <?php echo $order['customer_phone']; ?>
                                     </a>
                                 <?php else: ?>
-                                    <span class="text-muted">N/A</span>
+                                    <span style="color: #9ca3af;">N/A</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php echo htmlspecialchars($order['delivery_address']); ?>
-                                <button class="action-btn btn-info" onclick="openMap('<?php echo urlencode($order['delivery_address']); ?>')">
+                                <br>
+                                <button class="action-btn btn-info" onclick="openMap('<?php echo urlencode($order['delivery_address']); ?>')" style="margin-top: 5px;">
                                     <i class="fas fa-map"></i> Navigate
                                 </button>
                             </td>
-                            <td><strong>₹<?php echo number_format($order['total_price'], 2); ?></strong></td>
+                            <td>
+                                <strong style="font-size: 16px;">₹<?php echo number_format($order['total_price'], 2); ?></strong>
+                                <br>
+                                <?php 
+                                $payment_method = $order['payment_method'];
+                                $payment_status = isset($order['payment_status']) ? $order['payment_status'] : '';
+                                
+                                if ($payment_method === 'razorpay'): 
+                                    switch ($payment_status) {
+                                        case 'paid':
+                                            echo '<span class="payment-badge payment-razorpay-paid"><i class="fas fa-check-circle"></i> Paid Online</span>';
+                                            break;
+                                        case 'pending':
+                                            echo '<span class="payment-badge payment-razorpay-pending"><i class="fas fa-clock"></i> Payment Pending</span>';
+                                            break;
+                                        case 'failed':
+                                            echo '<span class="payment-badge payment-razorpay-failed"><i class="fas fa-times-circle"></i> Payment Failed</span>';
+                                            break;
+                                        default:
+                                            echo '<span class="payment-badge payment-razorpay-pending"><i class="fas fa-question-circle"></i> Unknown Status</span>';
+                                    }
+                                elseif ($payment_method === 'cash_on_delivery'): 
+                                    echo '<span class="payment-badge payment-cod"><i class="fas fa-money-bill-wave"></i> Cash on Delivery</span>';
+                                endif; 
+                                ?>
+                            </td>
                             <td>
                                 <span class="status-badge status-<?php echo strtolower(str_replace(' ', '-', $order['status'])); ?>">
                                     <?php echo $order['status']; ?>
                                 </span>
                             </td>
-                            <td><?php echo date('M d, Y H:i', strtotime($order['created_at'])); ?></td>
+                            <td>
+                                <?php echo date('M d, Y', strtotime($order['created_at'])); ?>
+                                <br>
+                                <small style="color: #6b7280;"><?php echo date('H:i', strtotime($order['created_at'])); ?></small>
+                            </td>
                             <td>
                                 <button class="order-items-btn" onclick="showOrderItems(<?php echo $order['id']; ?>)">
                                     <i class="fas fa-eye"></i> View Items
                                 </button>
                             </td>
                             <td>
-                                <?php if ($order['status'] === 'Processing'): ?>
+                                <?php if ($order['status'] === 'Confirmed'): ?>
+                                    <button class="action-btn btn-warning" onclick="updateStatus(<?php echo $order['id']; ?>, 'Processing')">
+                                        <i class="fas fa-play"></i> Start Preparing
+                                    </button>
+                                <?php elseif ($order['status'] === 'Processing'): ?>
                                     <button class="action-btn btn-warning" onclick="updateStatus(<?php echo $order['id']; ?>, 'Out for Delivery')">
                                         <i class="fas fa-truck"></i> Picked Up
                                     </button>
@@ -701,6 +805,14 @@ $stats = $stats_result->fetch_assoc();
                                     <button class="action-btn btn-success" onclick="updateStatus(<?php echo $order['id']; ?>, 'Delivered')">
                                         <i class="fas fa-check-circle"></i> Delivered
                                     </button>
+                                <?php elseif ($order['status'] === 'Delivered'): ?>
+                                    <span style="color: #10b981; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-check-circle"></i> Completed
+                                    </span>
+                                <?php elseif ($order['status'] === 'Cancelled'): ?>
+                                    <span style="color: #ef4444; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-times-circle"></i> Cancelled
+                                    </span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -746,7 +858,20 @@ function showNotification(message, type = 'success') {
 }
 
 function updateStatus(orderId, status) {
-    const actionText = status === 'Out for Delivery' ? 'mark this order as picked up' : 'mark this order as delivered';
+    let actionText = '';
+    switch (status) {
+        case 'Processing':
+            actionText = 'start preparing this order';
+            break;
+        case 'Out for Delivery':
+            actionText = 'mark this order as picked up';
+            break;
+        case 'Delivered':
+            actionText = 'mark this order as delivered';
+            break;
+        default:
+            actionText = `update this order status to ${status}`;
+    }
     
     if (!confirm(`Are you sure you want to ${actionText}?`)) {
         return;

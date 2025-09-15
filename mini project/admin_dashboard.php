@@ -1,4 +1,84 @@
-<?php include 'db.php'; session_start(); ?>
+<?php 
+include 'db.php'; 
+session_start(); 
+
+// Get statistics for the dashboard
+$stats = [];
+
+// Total Customers
+$customer_query = "SELECT COUNT(*) as total FROM users ";
+$customer_result = $conn->query($customer_query);
+$stats['total_customers'] = $customer_result->fetch_assoc()['total'];
+
+// Total Orders
+$orders_query = "SELECT COUNT(*) as total FROM orders";
+$orders_result = $conn->query($orders_query);
+$stats['total_orders'] = $orders_result->fetch_assoc()['total'];
+
+// Total Revenue with payment status consideration
+$revenue_query = "SELECT SUM(total_price) as total FROM orders WHERE status != 'Cancelled' AND (payment_method = 'cash_on_delivery' OR (payment_method = 'razorpay' AND payment_status = 'paid'))";                                                                                                                                                   $revenue_result = $conn->query($revenue_query);
+$revenue_result = $conn->query($revenue_query);
+$stats['total_revenue'] = $revenue_result->fetch_assoc()['total'] ?? 0;
+
+// Total Reservations
+$reservations_query = "SELECT COUNT(*) as total FROM reservations";
+$reservations_result = $conn->query($reservations_query);
+$stats['total_reservations'] = $reservations_result->fetch_assoc()['total'];
+
+// Total Messages
+$messages_query = "SELECT COUNT(*) as total FROM contact_submissions";
+$messages_result = $conn->query($messages_query);
+$stats['total_messages'] = $messages_result->fetch_assoc()['total'];
+
+// Today's Orders
+$today_query = "SELECT COUNT(*) as total FROM orders WHERE DATE(created_at) = CURDATE()";
+$today_result = $conn->query($today_query);
+$stats['today_orders'] = $today_result->fetch_assoc()['total'];
+
+// Today's Revenue
+$today_revenue_query = "SELECT SUM(total_price) as total FROM orders WHERE DATE(created_at) = CURDATE() AND status != 'Cancelled' AND (payment_method = 'cash_on_delivery' OR (payment_method = 'razorpay' AND payment_status = 'paid'))";
+$today_revenue_result = $conn->query($today_revenue_query);
+$stats['today_revenue'] = $today_revenue_result->fetch_assoc()['total'] ?? 0;
+
+// Total Recipes
+$recipes_query = "SELECT COUNT(*) as total FROM recipes";
+$recipes_result = $conn->query($recipes_query);
+$stats['total_recipes'] = $recipes_result->fetch_assoc()['total'];
+
+// Payment Statistics (keeping this for reference)
+$payment_stats_query = "SELECT 
+    COUNT(CASE WHEN payment_method = 'razorpay' THEN 1 END) as online_payments,
+    COUNT(CASE WHEN payment_method = 'cash_on_delivery' THEN 1 END) as cod_payments,
+    COUNT(CASE WHEN payment_method = 'razorpay' AND payment_status = 'paid' THEN 1 END) as successful_payments,
+    COUNT(CASE WHEN payment_method = 'razorpay' AND payment_status = 'failed' THEN 1 END) as failed_payments,
+    COUNT(CASE WHEN payment_method = 'razorpay' AND payment_status = 'pending' THEN 1 END) as pending_payments
+    FROM orders";
+$payment_stats_result = $conn->query($payment_stats_query);
+$payment_stats = $payment_stats_result->fetch_assoc();
+
+// Recent Orders for activity feed
+$recent_orders_query = "SELECT o.id, o.status, o.payment_method, o.payment_status, o.created_at,
+    COALESCE(o.customer_name, u.fullname) as customer_name
+    FROM orders o 
+    LEFT JOIN users u ON o.user_id = u.id 
+    ORDER BY o.created_at DESC 
+    LIMIT 10";
+$recent_orders_result = $conn->query($recent_orders_query);
+$recent_orders = [];
+while ($row = $recent_orders_result->fetch_assoc()) {
+    $recent_orders[] = $row;
+}
+
+// Menu Items Count (keeping for reference)
+$menu_query = "SELECT COUNT(*) as total FROM menu_items";
+$menu_result = $conn->query($menu_query);
+$stats['total_menu_items'] = $menu_result->fetch_assoc()['total'];
+
+// Delivery Boys Count (keeping for reference)
+$delivery_query = "SELECT COUNT(*) as total FROM delivery_boys";
+$delivery_result = $conn->query($delivery_query);
+$stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -219,11 +299,85 @@
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
     }
 
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      border-left: 4px solid var(--accent);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05));
+      border-radius: 0 0 0 50px;
+    }
+
+    .stat-icon {
+      font-size: 24px;
+      color: var(--accent);
+      margin-bottom: 15px;
+    }
+
+    .stat-title {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .positive {
+      color: var(--success);
+    }
+
+    .negative {
+      color: var(--danger);
+    }
+
+    .neutral {
+      color: #6b7280;
+    }
+
     .card-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 25px;
-      margin-top: 20px;
+      margin-top: 30px;
     }
 
     .card {
@@ -302,70 +456,28 @@
       color: var(--primary);
     }
 
-    .stats-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 20px;
-      margin: 30px 0;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .stat-title {
-      font-size: 14px;
-      color: #6b7280;
-      margin-bottom: 10px;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    .stat-change {
-      font-size: 12px;
-      margin-top: 5px;
-    }
-
-    .positive {
-      color: var(--success);
-    }
-
-    .negative {
-      color: var(--danger);
-    }
-
     .recent-activity {
       background: white;
-      border-radius: 10px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 25px;
       margin-top: 30px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
 
     .activity-title {
-      font-size: 18px;
+      font-size: 20px;
       margin-bottom: 20px;
       color: var(--primary);
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .activity-item {
       display: flex;
       align-items: center;
-      padding: 10px 0;
+      padding: 15px 0;
       border-bottom: 1px solid #f3f4f6;
     }
 
@@ -374,8 +486,8 @@
     }
 
     .activity-icon {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       border-radius: 50%;
       background: #f3f4f6;
       display: flex;
@@ -383,6 +495,7 @@
       justify-content: center;
       margin-right: 15px;
       color: var(--accent);
+      font-size: 18px;
     }
 
     .activity-content {
@@ -392,11 +505,52 @@
     .activity-message {
       font-size: 14px;
       margin-bottom: 5px;
+      color: var(--primary);
     }
 
     .activity-time {
       font-size: 12px;
       color: #9ca3af;
+    }
+
+    .activity-status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-confirmed { background: #d1fae5; color: #065f46; }
+    .status-processing { background: #bfdbfe; color: #1e3a8a; }
+    .status-delivered { background: #d1fae5; color: #065f46; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .status-payment-pending { background: #fef3c7; color: #92400e; }
+    .status-payment-failed { background: #fee2e2; color: #991b1b; }
+
+    .payment-info {
+      font-size: 10px;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .payment-success { color: var(--success); }
+    .payment-failed { color: var(--danger); }
+    .payment-pending { color: var(--warning); }
+
+    .no-activity {
+      text-align: center;
+      color: #9ca3af;
+      padding: 40px 0;
+    }
+
+    .no-activity i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      color: #d1d5db;
     }
 
     @media(max-width: 768px) {
@@ -423,6 +577,10 @@
       
       .card-container {
         grid-template-columns: 1fr;
+      }
+
+      .stats-container {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       }
     }
 
@@ -454,7 +612,7 @@
     <h2>Westley's Resto Cafe</h2>
   </div>
   <div class="sidebar-content">
-    <a href="admin_dashboard.php"><i class="fas fa-users"></i> <span class="menu-text">Dashboard</span></a>
+    <a href="admin_dashboard.php"><i class="fas fa-tachometer-alt"></i> <span class="menu-text">Dashboard</span></a>
     <a href="view_customers.php"><i class="fas fa-users"></i> <span class="menu-text">Customers</span></a>
     <a href="manage_menu.php"><i class="fas fa-utensils"></i> <span class="menu-text">Menu Editor</span></a>
     <a href="view_orders.php"><i class="fas fa-receipt"></i> <span class="menu-text">Orders</span></a>
@@ -476,9 +634,93 @@
 <div class="main">
   <div class="header">
     <h1>Admin Dashboard</h1>
-    
+    <div class="user-avatar">A</div>
   </div>
 
+  <!-- Statistics Cards -->
+  <div class="stats-container">
+    <div class="stat-card animate-fade">
+      <div class="stat-icon"><i class="fas fa-users"></i></div>
+      <div class="stat-title">Total Customers</div>
+      <div class="stat-value"><?php echo number_format($stats['total_customers']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-info-circle"></i>
+        Registered users
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-1">
+      <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+      <div class="stat-title">Total Orders</div>
+      <div class="stat-value"><?php echo number_format($stats['total_orders']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-calendar"></i>
+        All time orders
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-2">
+      <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+      <div class="stat-title">Total Revenue</div>
+      <div class="stat-value">₹<?php echo number_format($stats['total_revenue'], 2); ?></div>
+      <div class="stat-change positive">
+        <i class="fas fa-check-circle"></i>
+        Confirmed payments only
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-3">
+      <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+      <div class="stat-title">Total Reservations</div>
+      <div class="stat-value"><?php echo number_format($stats['total_reservations']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-table"></i>
+        Table bookings
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-4">
+      <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+      <div class="stat-title">Total Messages</div>
+      <div class="stat-value"><?php echo number_format($stats['total_messages']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-comments"></i>
+        Customer inquiries
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-5">
+      <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+      <div class="stat-title">Today's Orders</div>
+      <div class="stat-value"><?php echo number_format($stats['today_orders']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-today"></i>
+        <?php echo date('M d, Y'); ?>
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-6">
+      <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+      <div class="stat-title">Today's Revenue</div>
+      <div class="stat-value">₹<?php echo number_format($stats['today_revenue'], 2); ?></div>
+      <div class="stat-change positive">
+        <i class="fas fa-trending-up"></i>
+        Today's earnings
+      </div>
+    </div>
+
+    <div class="stat-card animate-fade delay-7">
+      <div class="stat-icon"><i class="fas fa-book"></i></div>
+      <div class="stat-title">Total Recipes</div>
+      <div class="stat-value"><?php echo number_format($stats['total_recipes']); ?></div>
+      <div class="stat-change neutral">
+        <i class="fas fa-utensils"></i>
+        Recipe collection
+      </div>
+    </div>
+  </div>
+
+  <!-- Management Cards -->
   <div class="card-container">
     <div class="card animate-fade delay-1" onclick="window.location.href='view_customers.php'">
       <div class="card-icon"><i class="fas fa-users"></i></div>
@@ -516,33 +758,49 @@
       <p>Respond to customer inquiries and feedback</p>
       <a href="view_messages.php">View Messages</a>
     </div>
-    <div class="card animate-fade delay-7" onclick="window.location.href='view_gallery.php'">
-      <div class="card-icon"><i class="fas fa-images"></i></div>
-      <h3>Gallery Management</h3>
-      <p>Upload and manage images for restaurant gallery</p>
-      <a href="view_gallery.php">Manage Gallery</a>
-    </div>
-    <div class="card animate-fade delay-8" onclick="window.location.href='view_aboutus.php'">
-      <div class="card-icon"><i class="fas fa-info-circle"></i></div>
-      <h3>About Us</h3>
-      <p>Manage the about us content for your restaurant</p>
-      <a href="view_aboutus.php">Edit About Us</a>
-    </div>
-    <div class="card animate-fade delay-9" onclick="window.location.href='view_contact_us.php'">
-      <div class="card-icon"><i class="fas fa-phone"></i></div>
-      <h3>Contact Us</h3>
-      <p>Manage contact information and location details</p>
-      <a href="view_contact_us.php">Edit Contact Info</a>
-    </div>
-    <div class="card animate-fade delay-9" onclick="window.location.href='view_recipes.php'">
-      <div class="card-icon"><i class="fas fa-book"></i></div>
-      <h3>Recipe Management</h3>
-      <p>Create and manage recipes for your menu items</p>
-      <a href="view_recipes.php">Manage Recipes</a>
-    </div>
   </div>
 
-  
+  <!-- Recent Activity -->
+  <div class="recent-activity animate-fade delay-8">
+    <div class="activity-title">
+      <i class="fas fa-clock"></i>
+      Recent Order Activity
+    </div>
+    
+    <?php if (!empty($recent_orders)): ?>
+      <?php foreach ($recent_orders as $order): ?>
+        <div class="activity-item">
+          <div class="activity-icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-message">
+              Order #<?php echo $order['id']; ?> by <?php echo htmlspecialchars($order['customer_name']); ?>
+            </div>
+            <div class="activity-time">
+              <?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?>
+            </div>
+            <?php if ($order['payment_method'] === 'razorpay'): ?>
+              <div class="payment-info payment-<?php echo $order['payment_status']; ?>">
+                <i class="fas fa-credit-card"></i>
+                Online - <?php echo ucfirst($order['payment_status']); ?>
+              </div>
+            <?php endif; ?>
+          </div>
+          <div class="activity-status status-<?php echo strtolower(str_replace(' ', '-', $order['status'])); ?>">
+            <?php echo $order['status']; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php else: ?>
+      <div class="no-activity">
+        <i class="fas fa-inbox"></i>
+        <h3>No Recent Activity</h3>
+        <p>Recent orders will appear here</p>
+      </div>
+    <?php endif; ?>
+  </div>
+</div>
 
 <script>
   // Toggle sidebar
@@ -585,6 +843,11 @@
   
   // Run on scroll
   window.addEventListener('scroll', animateOnScroll);
+
+  // Auto-refresh stats every 5 minutes
+  setInterval(() => {
+    location.reload();
+  }, 300000);
 </script>
 
 </body>

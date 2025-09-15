@@ -1,4 +1,5 @@
 <?php
+// Enhanced my_orders.php with real-time status updates
 session_start();
 require 'db.php';
 
@@ -10,33 +11,55 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 
 $user_id = $_SESSION['user_id'];
 
-// Handle order cancellation
+// AJAX endpoint for real-time status updates
+if (isset($_GET['action']) && $_GET['action'] === 'get_status_updates') {
+    header('Content-Type: application/json');
+    
+    $orders_query = $conn->prepare("SELECT id, status, payment_status FROM orders WHERE user_id = ? ORDER BY created_at DESC");
+    $orders_query->bind_param("i", $user_id);
+    $orders_query->execute();
+    $orders_result = $orders_query->get_result();
+    
+    $orders = [];
+    while ($order = $orders_result->fetch_assoc()) {
+        $orders[] = $order;
+    }
+    
+    echo json_encode(['success' => true, 'orders' => $orders]);
+    exit();
+}
+
+// Handle order cancellation (existing code)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel_order') {
+    header('Content-Type: application/json');
     $response = ['success' => false, 'message' => ''];
     
     $order_id = intval($_POST['order_id']);
     
-    // Verify this order belongs to the current user and can be cancelled
-    $verify_stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ? AND (status = 'Pending' OR status = 'Processing') AND assigned_to IS NULL");
+    $verify_stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ? AND (status = 'Pending' OR status = 'Processing' OR status = 'Payment Pending') AND (assigned_to IS NULL OR assigned_to = '')");
     $verify_stmt->bind_param("ii", $order_id, $user_id);
     $verify_stmt->execute();
     $verify_result = $verify_stmt->get_result();
     
     if ($verify_result->num_rows > 0) {
-        // Update order status to cancelled
-        $cancel_stmt = $conn->prepare("UPDATE orders SET status = 'Cancelled' WHERE id = ? AND user_id = ?");
-        $cancel_stmt->bind_param("ii", $order_id, $user_id);
+        $order = $verify_result->fetch_assoc();
         
-        if ($cancel_stmt->execute()) {
-            $response = ['success' => true, 'message' => 'Order cancelled successfully!'];
+        if (isset($order['payment_status']) && $order['payment_status'] === 'paid') {
+            $response = ['success' => false, 'message' => 'Cannot cancel order with successful payment. Please contact support.'];
         } else {
-            $response = ['success' => false, 'message' => 'Failed to cancel order. Please try again.'];
+            $cancel_stmt = $conn->prepare("UPDATE orders SET status = 'Cancelled' WHERE id = ? AND user_id = ?");
+            $cancel_stmt->bind_param("ii", $order_id, $user_id);
+            
+            if ($cancel_stmt->execute()) {
+                $response = ['success' => true, 'message' => 'Order cancelled successfully!'];
+            } else {
+                $response = ['success' => false, 'message' => 'Failed to cancel order. Please try again.'];
+            }
         }
     } else {
-        $response = ['success' => false, 'message' => 'This order cannot be cancelled. It may have already been assigned for delivery or is in an advanced stage.'];
+        $response = ['success' => false, 'message' => 'This order cannot be cancelled.'];
     }
     
-    header('Content-Type: application/json');
     echo json_encode($response);
     exit();
 }
@@ -84,23 +107,11 @@ $orders_result = $orders_query->get_result();
             padding: 0 20px;
         }
         
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
         .logo h1 {
             color: #cda45e;
             margin: 0;
             font-family: "Playfair Display", serif;
             font-size: 24px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
         }
         
         .nav-links a {
@@ -129,6 +140,91 @@ $orders_result = $orders_query->get_result();
             margin-bottom: 40px;
             font-family: "Playfair Display", serif;
             font-size: 32px;
+        }
+        
+        .status-tracker {
+            background-color: #1a1816;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3530;
+        }
+        
+        .tracker-title {
+            color: #cda45e;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .status-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-icon.completed {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .step-icon.active {
+            background-color: #f59e0b;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .step-icon.pending {
+            background-color: #374151;
+            color: #9ca3af;
+        }
+        
+        .step-label {
+            font-size: 12px;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+        
+        .step-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #374151;
+            z-index: 1;
+        }
+        
+        .step-line-progress {
+            height: 100%;
+            background-color: #10b981;
+            transition: width 0.5s ease;
         }
         
         .order-card {
@@ -169,13 +265,27 @@ $orders_result = $orders_query->get_result();
             display: inline-block;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-update-animation {
+            animation: statusUpdate 0.6s ease;
+        }
+        
+        @keyframes statusUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background-color: #f59e0b; }
+            100% { transform: scale(1); }
         }
         
         .Pending { background: #fef3c7; color: #92400e; }
         .Processing { background: #bfdbfe; color: #1e3a8a; }
-        .Out { background: #fef08a; color: #854d0e; }
+        .Confirmed { background: #d1fae5; color: #065f46; }
+        .Out\ for\ Delivery { background: #fef08a; color: #854d0e; }
         .Delivered { background: #d1fae5; color: #065f46; }
         .Cancelled { background: #fee2e2; color: #991b1b; }
+        .Payment\ Failed { background: #fee2e2; color: #991b1b; }
+        .Payment\ Pending { background: #fef3c7; color: #92400e; }
 
         .order-info {
             display: grid;
@@ -195,6 +305,35 @@ $orders_result = $orders_query->get_result();
         .order-info i {
             color: #cda45e;
             width: 16px;
+        }
+
+        .payment-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .payment-status.paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .payment-status.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .payment-status.failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .order-items {
@@ -290,10 +429,62 @@ $orders_result = $orders_query->get_result();
             transform: translateY(-1px);
         }
         
-        .cancel-btn:disabled {
-            background-color: #6b7280;
-            cursor: not-allowed;
-            transform: none;
+        .retry-payment-btn {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        .retry-payment-btn:hover {
+            background-color: #d97706;
+            transform: translateY(-1px);
+        }
+        
+        .refresh-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .refresh-indicator.show {
+            display: flex;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease;
+            max-width: 350px;
+        }
+        
+        .notification.success { background: #10b981; }
+        .notification.error { background: #ef4444; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         
         .empty-state {
@@ -319,102 +510,6 @@ $orders_result = $orders_query->get_result();
             font-weight: bold;
         }
         
-        .empty-state a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 90px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 2000;
-            display: none;
-            animation: slideIn 0.3s ease;
-            max-width: 350px;
-        }
-        
-        .notification.success {
-            background: #10b981;
-        }
-        
-        .notification.error {
-            background: #ef4444;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 3000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-        }
-        
-        .modal-content {
-            background-color: #29261f;
-            margin: 15% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            color: rgba(255,255,255,0.9);
-        }
-        
-        .modal h3 {
-            color: #cda45e;
-            margin-bottom: 15px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
-        }
-        
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .modal-btn.confirm {
-            background-color: #ef4444;
-            color: white;
-        }
-        
-        .modal-btn.cancel {
-            background-color: #6b7280;
-            color: white;
-        }
-        
-        .modal-btn:hover {
-            transform: translateY(-1px);
-        }
-        
         @media (max-width: 768px) {
             .container {
                 width: 95%;
@@ -430,19 +525,19 @@ $orders_result = $orders_query->get_result();
                 flex-direction: column;
             }
             
-            .nav-links {
-                gap: 10px;
+            .status-steps {
+                flex-direction: column;
+                gap: 15px;
             }
             
-            .header-content {
-                padding: 0 15px;
+            .step-line {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
     <div class="header-content">
         <div class="logo">
@@ -460,10 +555,59 @@ $orders_result = $orders_query->get_result();
 
     <?php if ($orders_result->num_rows > 0): ?>
         <?php while ($order = $orders_result->fetch_assoc()): ?>
-            <div class="order-card">
+            <div class="order-card" data-order-id="<?php echo $order['id']; ?>">
                 <div class="order-header">
                     <h2>Order #<?php echo $order['id']; ?></h2>
-                    <span class="status <?php echo $order['status']; ?>"><?php echo $order['status']; ?></span>
+                    <span class="status status-<?php echo strtolower(str_replace(' ', '-', $order['status'])); ?>" data-status="<?php echo $order['status']; ?>">
+                        <?php echo $order['status']; ?>
+                    </span>
+                </div>
+                
+                <!-- Order Progress Tracker -->
+                <div class="status-tracker">
+                    <div class="tracker-title">
+                        <i class="fas fa-route"></i> Order Progress
+                    </div>
+                    <div class="status-steps">
+                        <div class="step-line">
+                            <div class="step-line-progress" data-progress="0"></div>
+                        </div>
+                        
+                        <div class="status-step">
+                            <div class="step-icon pending" data-step="pending">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="step-label">Order Placed</div>
+                        </div>
+                        
+                        <div class="status-step">
+                            <div class="step-icon pending" data-step="confirmed">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="step-label">Confirmed</div>
+                        </div>
+                        
+                        <div class="status-step">
+                            <div class="step-icon pending" data-step="processing">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div class="step-label">Preparing</div>
+                        </div>
+                        
+                        <div class="status-step">
+                            <div class="step-icon pending" data-step="delivery">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="step-label">Out for Delivery</div>
+                        </div>
+                        
+                        <div class="status-step">
+                            <div class="step-icon pending" data-step="delivered">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="step-label">Delivered</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="order-info">
@@ -473,8 +617,23 @@ $orders_result = $orders_query->get_result();
                     <p><i class="fas fa-credit-card"></i> <?php echo ucfirst(str_replace('_', ' ', $order['payment_method'])); ?></p>
                 </div>
 
+                <?php if (isset($order['payment_status']) && $order['payment_method'] === 'razorpay'): ?>
+                    <div class="payment-status <?php echo $order['payment_status']; ?>">
+                        <?php if ($order['payment_status'] === 'paid'): ?>
+                            <i class="fas fa-check-circle"></i> Payment Successful
+                        <?php elseif ($order['payment_status'] === 'pending'): ?>
+                            <i class="fas fa-clock"></i> Payment Pending
+                        <?php elseif ($order['payment_status'] === 'failed'): ?>
+                            <i class="fas fa-times-circle"></i> Payment Failed
+                        <?php endif; ?>
+                    </div>
+                <?php elseif ($order['payment_method'] === 'cash_on_delivery'): ?>
+                    <div class="payment-status" style="background: rgba(156, 163, 175, 0.2); color: #9ca3af; border-color: rgba(156, 163, 175, 0.3);">
+                        <i class="fas fa-money-bill-wave"></i> Cash on Delivery
+                    </div>
+                <?php endif; ?>
+
                 <?php
-                // Fetch items for this order
                 $items_query = $conn->prepare("SELECT oi.*, m.name FROM order_items oi JOIN menu_items m ON oi.menu_id = m.id WHERE oi.order_id = ?");
                 $items_query->bind_param("i", $order['id']);
                 $items_query->execute();
@@ -486,7 +645,7 @@ $orders_result = $orders_query->get_result();
                     </div>
                     <?php while ($item = $items_result->fetch_assoc()): ?>
                         <div class="item-row">
-                            <div class="item-name"><?php echo $item['name']; ?></div>
+                            <div class="item-name"><?php echo htmlspecialchars($item['name']); ?></div>
                             <div class="item-quantity">₹<?php echo $item['price']; ?> × <?php echo $item['quantity']; ?></div>
                             <div class="item-price">₹<?php echo $item['price'] * $item['quantity']; ?></div>
                         </div>
@@ -500,19 +659,25 @@ $orders_result = $orders_query->get_result();
                     </a>
                     
                     <?php 
-                    // Show cancel button only for orders that can be cancelled
-                    $can_cancel = ($order['status'] === 'Pending' || $order['status'] === 'Processing') && 
-                                  $order['assigned_to'] === null;
+                    $can_cancel = ($order['status'] === 'Pending' || $order['status'] === 'Processing' || $order['status'] === 'Payment Pending') && 
+                                  (!isset($order['payment_status']) || $order['payment_status'] !== 'paid');
+                    
+                    $can_retry_payment = isset($order['payment_status']) && 
+                                        $order['payment_status'] === 'failed' && 
+                                        $order['payment_method'] === 'razorpay' &&
+                                        $order['status'] !== 'Cancelled';
                     ?>
                     
                     <?php if ($can_cancel): ?>
-                        <button class="btn cancel-btn" onclick="showCancelModal(<?php echo $order['id']; ?>)">
+                        <button class="btn cancel-btn" onclick="cancelOrder(<?php echo $order['id']; ?>)">
                             <i class="fas fa-times"></i> Cancel Order
                         </button>
-                    <?php elseif ($order['status'] === 'Cancelled'): ?>
-                        <span style="color: #ef4444; font-weight: bold;">
-                            <i class="fas fa-times-circle"></i> Cancelled
-                        </span>
+                    <?php endif; ?>
+                    
+                    <?php if ($can_retry_payment): ?>
+                        <a href="retry_payment.php?order_id=<?php echo $order['id']; ?>" class="btn retry-payment-btn">
+                            <i class="fas fa-redo"></i> Retry Payment
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -527,23 +692,17 @@ $orders_result = $orders_query->get_result();
     <?php endif; ?>
 </div>
 
-<!-- Cancel Confirmation Modal -->
-<div id="cancelModal" class="modal">
-    <div class="modal-content">
-        <h3><i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Cancel Order</h3>
-        <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
-        <div class="modal-buttons">
-            <button class="modal-btn confirm" onclick="cancelOrder()">Yes, Cancel</button>
-            <button class="modal-btn cancel" onclick="closeCancelModal()">No, Keep Order</button>
-        </div>
-    </div>
+<!-- Refresh Indicator -->
+<div class="refresh-indicator" id="refresh-indicator">
+    <i class="fas fa-sync-alt"></i>
+    <span>Checking for updates...</span>
 </div>
 
 <!-- Notification -->
 <div class="notification" id="notification"></div>
 
 <script>
-let orderToCancel = null;
+let lastOrderStatuses = {};
 
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
@@ -556,22 +715,115 @@ function showNotification(message, type = 'success') {
     }, 4000);
 }
 
-function showCancelModal(orderId) {
-    orderToCancel = orderId;
-    document.getElementById('cancelModal').style.display = 'block';
+function updateOrderProgress(orderCard, status) {
+    const statusSteps = orderCard.querySelectorAll('.step-icon');
+    const progressBar = orderCard.querySelector('.step-line-progress');
+    
+    // Reset all steps
+    statusSteps.forEach(step => {
+        step.className = 'step-icon pending';
+    });
+    
+    let progress = 0;
+    
+    switch (status) {
+        case 'Pending':
+        case 'Payment Pending':
+            statusSteps[0].className = 'step-icon active';
+            progress = 20;
+            break;
+        case 'Confirmed':
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon active';
+            progress = 40;
+            break;
+        case 'Processing':
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon completed';
+            statusSteps[2].className = 'step-icon active';
+            progress = 60;
+            break;
+        case 'Out for Delivery':
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon completed';
+            statusSteps[2].className = 'step-icon completed';
+            statusSteps[3].className = 'step-icon active';
+            progress = 80;
+            break;
+        case 'Delivered':
+            statusSteps.forEach(step => step.className = 'step-icon completed');
+            progress = 100;
+            break;
+        case 'Cancelled':
+            statusSteps[0].className = 'step-icon completed';
+            progress = 20;
+            break;
+    }
+    
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+    }
 }
 
-function closeCancelModal() {
-    orderToCancel = null;
-    document.getElementById('cancelModal').style.display = 'none';
+function checkForStatusUpdates() {
+    const indicator = document.getElementById('refresh-indicator');
+    indicator.classList.add('show');
+    
+    fetch('my_orders.php?action=get_status_updates')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                data.orders.forEach(order => {
+                    const orderCard = document.querySelector(`[data-order-id="${order.id}"]`);
+                    const statusElement = orderCard?.querySelector('[data-status]');
+                    
+                    if (orderCard && statusElement) {
+                        const currentStatus = statusElement.dataset.status;
+                        const newStatus = order.status;
+                        
+                        // Check if status changed
+                        if (lastOrderStatuses[order.id] && lastOrderStatuses[order.id] !== newStatus) {
+                            // Status updated - show animation and notification
+                            statusElement.classList.add('status-update-animation');
+                            statusElement.textContent = newStatus;
+                            statusElement.dataset.status = newStatus;
+                            statusElement.className = `status status-${newStatus.toLowerCase().replace(/ /g, '-')} status-update-animation`;
+                            
+                            // Update progress tracker
+                            updateOrderProgress(orderCard, newStatus);
+                            
+                            showNotification(`Order #${order.id} status updated to: ${newStatus}`, 'success');
+                            
+                            // Remove animation class after animation completes
+                            setTimeout(() => {
+                                statusElement.classList.remove('status-update-animation');
+                            }, 600);
+                        } else if (!lastOrderStatuses[order.id]) {
+                            // Initial load - just set the progress
+                            updateOrderProgress(orderCard, newStatus);
+                        }
+                        
+                        lastOrderStatuses[order.id] = newStatus;
+                    }
+                });
+            }
+            
+            indicator.classList.remove('show');
+        })
+        .catch(error => {
+            console.error('Error checking for updates:', error);
+            indicator.classList.remove('show');
+        });
 }
 
-function cancelOrder() {
-    if (!orderToCancel) return;
+function cancelOrder(orderId) {
+    if (!confirm('Are you sure you want to cancel this order?')) {
+        return;
+    }
     
     const formData = new FormData();
     formData.append('action', 'cancel_order');
-    formData.append('order_id', orderToCancel);
+    formData.append('order_id', orderId);
     
     fetch('my_orders.php', {
         method: 'POST',
@@ -579,7 +831,6 @@ function cancelOrder() {
     })
     .then(response => response.json())
     .then(data => {
-        closeCancelModal();
         if (data.success) {
             showNotification(data.message, 'success');
             setTimeout(() => location.reload(), 1500);
@@ -588,19 +839,34 @@ function cancelOrder() {
         }
     })
     .catch(error => {
-        closeCancelModal();
         console.error('Error:', error);
         showNotification('An error occurred. Please try again.', 'error');
     });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById('cancelModal');
-    if (event.target === modal) {
-        closeCancelModal();
-    }
-}
+// Initialize status tracking on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize progress bars for all orders
+    document.querySelectorAll('.order-card').forEach(orderCard => {
+        const statusElement = orderCard.querySelector('[data-status]');
+        if (statusElement) {
+            const status = statusElement.dataset.status;
+            updateOrderProgress(orderCard, status);
+            const orderId = orderCard.dataset.orderId;
+            lastOrderStatuses[orderId] = status;
+        }
+    });
+    
+    // Check for updates every 30 seconds
+    setInterval(checkForStatusUpdates, 30000);
+    
+    // Check for updates when page becomes visible (user returns to tab)
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            setTimeout(checkForStatusUpdates, 1000);
+        }
+    });
+});
 </script>
 
 </body>

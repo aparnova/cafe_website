@@ -17,13 +17,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $order_id = intval($_POST['order_id']);
             $status = $_POST['status'];
             
-            $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
-            $stmt->bind_param("si", $status, $order_id);
+            // Check if order exists and get current payment status
+            $check_stmt = $conn->prepare("SELECT payment_status, payment_method FROM orders WHERE id = ?");
+            $check_stmt->bind_param("i", $order_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
             
-            if ($stmt->execute()) {
-                $response = ['success' => true, 'message' => 'Order status updated successfully!'];
+            if ($check_result->num_rows > 0) {
+                $order_data = $check_result->fetch_assoc();
+                
+                // Prevent status change if payment failed or pending for online payments
+                if ($order_data['payment_method'] === 'razorpay' && 
+                    ($order_data['payment_status'] === 'failed' || $order_data['payment_status'] === 'pending') && 
+                    !in_array($status, ['Cancelled', 'Payment Failed'])) {
+                    $response = ['success' => false, 'message' => 'Cannot update status. Payment is ' . $order_data['payment_status'] . '.'];
+                } else {
+                    $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
+                    $stmt->bind_param("si", $status, $order_id);
+                    
+                    if ($stmt->execute()) {
+                        $response = ['success' => true, 'message' => 'Order status updated successfully!'];
+                    } else {
+                        $response = ['success' => false, 'message' => 'Failed to update order status.'];
+                    }
+                }
             } else {
-                $response = ['success' => false, 'message' => 'Failed to update order status.'];
+                $response = ['success' => false, 'message' => 'Order not found.'];
             }
         }
         
@@ -31,16 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $order_id = intval($_POST['order_id']);
             $delivery_boy_id = intval($_POST['delivery_boy_id']);
             
-            // Check if order is cancelled before assigning
-            $check_stmt = $conn->prepare("SELECT status FROM orders WHERE id = ?");
+            // Check if order is cancelled or has payment issues before assigning
+            $check_stmt = $conn->prepare("SELECT status, payment_status, payment_method FROM orders WHERE id = ?");
             $check_stmt->bind_param("i", $order_id);
             $check_stmt->execute();
             $check_result = $check_stmt->get_result();
             
             if ($check_result->num_rows > 0) {
                 $order_data = $check_result->fetch_assoc();
+                
                 if ($order_data['status'] === 'Cancelled') {
                     $response = ['success' => false, 'message' => 'Cannot assign cancelled order.'];
+                } elseif ($order_data['payment_method'] === 'razorpay' && $order_data['payment_status'] !== 'paid') {
+                    $response = ['success' => false, 'message' => 'Cannot assign order with unpaid/failed payment.'];
                 } else {
                     $stmt = $conn->prepare("UPDATE orders SET assigned_to = ?, status = 'Processing' WHERE id = ?");
                     $stmt->bind_param("ii", $delivery_boy_id, $order_id);
@@ -60,10 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_POST['action'] === 'get_order_details') {
             $order_id = intval($_POST['order_id']);
 
-            // Fetch order details with customer & delivery boy info
+            // Fetch order details with customer & delivery boy info, including payment details
             $stmt = $conn->prepare("
-                SELECT o.*, u.fullname AS customer_name, u.email AS customer_email, u.phone AS customer_phone,
-                       db.name AS delivery_boy_name
+                SELECT o.*, 
+                       COALESCE(o.customer_name, u.fullname) AS customer_name,
+                       COALESCE(o.customer_phone, u.phone) AS customer_phone,
+                       u.email AS customer_email,
+                       db.name AS delivery_boy_name,
+                       COALESCE(o.status, 'Pending') AS status
                 FROM orders o
                 LEFT JOIN users u ON o.user_id = u.id
                 LEFT JOIN delivery_boys db ON o.assigned_to = db.id
@@ -75,6 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($order_result->num_rows > 0) {
                 $order = $order_result->fetch_assoc();
+                
+                // Ensure status is not empty
+                if (empty($order['status'])) {
+                    $order['status'] = 'Pending';
+                }
 
                 // Fetch order items
                 $items_stmt = $conn->prepare("
@@ -113,13 +144,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch all orders with customer and delivery boy details
+// Fetch all orders with customer and delivery boy details, including payment information
 $orders_query = "
     SELECT o.*, 
-           u.fullname as customer_name, 
+           COALESCE(o.customer_name, u.fullname) as customer_name,
+           COALESCE(o.customer_phone, u.phone) as customer_phone,
            u.email as customer_email,
-           u.phone as customer_phone,
-           db.name as delivery_boy_name
+           db.name as delivery_boy_name,
+           COALESCE(o.status, 'Pending') as status
     FROM orders o 
     LEFT JOIN users u ON o.user_id = u.id 
     LEFT JOIN delivery_boys db ON o.assigned_to = db.id 
@@ -359,6 +391,36 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
             font-size: 16px;
         }
 
+        .payment-method {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .payment-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-top: 3px;
+            display: inline-block;
+        }
+
+        .payment-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .payment-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .payment-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         .status-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -379,6 +441,11 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
             color: #1e3a8a;
         }
 
+        .status-confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
         .status-out-for-delivery {
             background: #fef08a;
             color: #854d0e;
@@ -390,6 +457,16 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
         }
 
         .status-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-payment-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-payment-failed {
             background: #fee2e2;
             color: #991b1b;
         }
@@ -459,6 +536,12 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -478,7 +561,7 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
             border-radius: 12px;
             padding: 30px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 20px 25px rgba(0,0,0,0.1);
@@ -669,7 +752,7 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
             }
 
             .orders-table {
-                min-width: 1000px;
+                min-width: 1200px;
             }
 
             .orders-table th,
@@ -701,10 +784,21 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                 <select id="status-filter">
                     <option value="">All Orders</option>
                     <option value="Pending">Pending</option>
+                    <option value="Payment Pending">Payment Pending</option>
+                    <option value="Confirmed">Confirmed</option>
                     <option value="Processing">Processing</option>
                     <option value="Out for Delivery">Out for Delivery</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
+                    <option value="Payment Failed">Payment Failed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="payment-filter">Filter by Payment</label>
+                <select id="payment-filter">
+                    <option value="">All Payments</option>
+                    <option value="razorpay">Online Payment</option>
+                    <option value="cash_on_delivery">Cash on Delivery</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -732,7 +826,7 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                         <th>Customer</th>
                         <th>Items</th>
                         <th>Address</th>
-                        <th>Total</th>
+                        <th>Total & Payment</th>
                         <th>Status</th>
                         <th>Delivery</th>
                         <th>Date</th>
@@ -741,7 +835,15 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                 </thead>
                 <tbody>
                     <?php while ($order = $orders_result->fetch_assoc()): ?>
-                        <tr data-status="<?php echo $order['status']; ?>" data-date="<?php echo date('Y-m-d', strtotime($order['created_at'])); ?>">
+                        <?php
+                        // Ensure status is not empty
+                        if (empty($order['status'])) {
+                            $order['status'] = 'Pending';
+                        }
+                        ?>
+                        <tr data-status="<?php echo $order['status']; ?>" 
+                            data-payment="<?php echo $order['payment_method']; ?>" 
+                            data-date="<?php echo date('Y-m-d', strtotime($order['created_at'])); ?>">
                             <td>
                                 <div class="order-id">#<?php echo $order['id']; ?></div>
                             </td>
@@ -793,9 +895,26 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                             </td>
                             <td>
                                 <div class="order-total">₹<?php echo number_format($order['total_price'], 2); ?></div>
-                                <div style="font-size: 11px; color: #6b7280;">
+                                <div class="payment-method">
                                     <?php echo ucwords(str_replace('_', ' ', $order['payment_method'])); ?>
                                 </div>
+                                <?php if ($order['payment_method'] === 'razorpay' && isset($order['payment_status'])): ?>
+                                    <div class="payment-status payment-<?php echo $order['payment_status']; ?>">
+                                        <?php 
+                                        switch($order['payment_status']) {
+                                            case 'paid': echo 'PAID'; break;
+                                            case 'pending': echo 'PENDING'; break;
+                                            case 'failed': echo 'FAILED'; break;
+                                            default: echo 'UNKNOWN';
+                                        }
+                                        ?>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($order['razorpay_payment_id'])): ?>
+                                    <div style="font-size: 10px; color: #6b7280; margin-top: 2px;">
+                                        ID: <?php echo substr($order['razorpay_payment_id'], 0, 12); ?>...
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="status-badge status-<?php echo strtolower(str_replace(' ', '-', $order['status'])); ?>">
@@ -822,10 +941,24 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                             <td>
                                 <div class="actions">
                                     <?php 
-                                    // Only show assign/reassign buttons for orders that are not cancelled or delivered
-                                    if ($order['status'] !== 'Cancelled' && $order['status'] !== 'Delivered'): ?>
-                                        <?php if ($order['status'] === 'Pending' || !$order['delivery_boy_name']): ?>
-                                            <button class="action-btn btn-primary" onclick="openAssignModal(<?php echo $order['id']; ?>)">
+                                    // Determine if order can be assigned based on payment status
+                                    $can_assign = true;
+                                    $assignment_disabled = false;
+                                    $disabled_reason = '';
+                                    
+                                    if ($order['status'] === 'Cancelled' || $order['status'] === 'Delivered') {
+                                        $can_assign = false;
+                                    } elseif ($order['payment_method'] === 'razorpay' && isset($order['payment_status']) && $order['payment_status'] !== 'paid') {
+                                        $assignment_disabled = true;
+                                        $disabled_reason = 'Payment ' . $order['payment_status'];
+                                    }
+                                    ?>
+                                    
+                                    <?php if ($can_assign): ?>
+                                        <?php if ($order['status'] === 'Pending' || $order['status'] === 'Payment Pending' || !$order['delivery_boy_name']): ?>
+                                            <button class="action-btn btn-primary <?php echo $assignment_disabled ? 'disabled' : ''; ?>" 
+                                                    onclick="<?php echo $assignment_disabled ? 'return false;' : 'openAssignModal(' . $order['id'] . ')'; ?>"
+                                                    <?php echo $assignment_disabled ? 'disabled title="' . $disabled_reason . '"' : ''; ?>>
                                                 <i class="fas fa-user-plus"></i> 
                                                 <?php echo $order['delivery_boy_name'] ? 'Reassign' : 'Assign'; ?>
                                             </button>
@@ -833,22 +966,14 @@ while ($row = $delivery_boys_result->fetch_assoc()) {
                                             <button class="action-btn btn-primary" onclick="openAssignModal(<?php echo $order['id']; ?>)">
                                                 <i class="fas fa-edit"></i> Reassign
                                             </button>
-                                        <?php else: ?>
-                                            <span style="font-size: 12px; color: #6b7280;">
-                                                <?php 
-                                                switch($order['status']) {
-                                                    case 'Processing':
-                                                        echo 'Processing';
-                                                        break;
-                                                    case 'Out for Delivery':
-                                                        echo 'Out for Delivery';
-                                                        break;
-                                                    default:
-                                                        echo 'Ready to Assign';
-                                                }
-                                                ?>
-                                            </span>
                                         <?php endif; ?>
+                                        
+                                        <?php if ($assignment_disabled): ?>
+                                            <div style="font-size: 11px; color: #ef4444; margin-top: 5px;">
+                                                <i class="fas fa-exclamation-triangle"></i> <?php echo $disabled_reason; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        
                                     <?php else: ?>
                                         <span style="font-size: 12px; color: #6b7280;">
                                             <?php 
@@ -1003,6 +1128,9 @@ function viewOrderDetails(orderId) {
             const order = data.order;
             const items = data.items;
             
+            // Ensure status is properly set
+            const orderStatus = order.status || 'Pending';
+            
             let itemsHtml = '';
             let totalItemsPrice = 0;
             
@@ -1026,6 +1154,49 @@ function viewOrderDetails(orderId) {
             } else {
                 itemsHtml = '<div style="text-align: center; padding: 20px; color: #6b7280;">No items found for this order</div>';
             }
+
+            // Payment status display
+            let paymentStatusHtml = '';
+            if (order.payment_method === 'razorpay') {
+                let statusColor = '#6b7280';
+                let statusText = 'Unknown';
+                let statusIcon = 'fas fa-question-circle';
+                
+                switch(order.payment_status) {
+                    case 'paid':
+                        statusColor = '#10b981';
+                        statusText = 'Payment Successful';
+                        statusIcon = 'fas fa-check-circle';
+                        break;
+                    case 'pending':
+                        statusColor = '#f59e0b';
+                        statusText = 'Payment Pending';
+                        statusIcon = 'fas fa-clock';
+                        break;
+                    case 'failed':
+                        statusColor = '#ef4444';
+                        statusText = 'Payment Failed';
+                        statusIcon = 'fas fa-times-circle';
+                        break;
+                }
+                
+                paymentStatusHtml = `
+                    <div style="margin: 10px 0;">
+                        <strong>Payment Status:</strong> 
+                        <span style="color: ${statusColor};">
+                            <i class="${statusIcon}"></i> ${statusText}
+                        </span>
+                    </div>
+                `;
+                
+                if (order.razorpay_payment_id) {
+                    paymentStatusHtml += `
+                        <div style="margin: 5px 0; font-size: 12px; color: #6b7280;">
+                            <strong>Payment ID:</strong> ${order.razorpay_payment_id}
+                        </div>
+                    `;
+                }
+            }
             
             content.innerHTML = `
                 <div style="color: var(--primary);">
@@ -1043,8 +1214,9 @@ function viewOrderDetails(orderId) {
                                 <i class="fas fa-info-circle"></i> Order Information
                             </h4>
                             <p><strong>Order ID:</strong> #${order.id}</p>
-                            <p><strong>Status:</strong> <span class="status-badge status-${(order.status || '').toLowerCase().replace(/ /g, '-')}">${order.status || 'Unknown'}</span></p>
-                            <p><strong>Payment:</strong> ${(order.payment_method || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                            <p><strong>Status:</strong> <span class="status-badge status-${orderStatus.toLowerCase().replace(/ /g, '-')}">${orderStatus}</span></p>
+                            <p><strong>Payment Method:</strong> ${(order.payment_method || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                            ${paymentStatusHtml}
                             <p><strong>Date:</strong> ${order.created_at ? new Date(order.created_at).toLocaleString() : 'N/A'}</p>
                         </div>
                     </div>
@@ -1125,47 +1297,20 @@ function showNotification(message, type = 'success') {
     }, 4000);
 }
 
-function updateStatus(orderId, status) {
-    if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'update_status');
-    formData.append('order_id', orderId);
-    formData.append('status', status);
-
-    fetch('view_orders.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred. Please try again.', 'error');
-    });
-}
-
 function applyFilters() {
     const statusFilter = document.getElementById('status-filter');
+    const paymentFilter = document.getElementById('payment-filter');
     const dateFilter = document.getElementById('date-filter');
     const searchInput = document.getElementById('search-input');
     const orderRows = document.querySelectorAll('.orders-table tbody tr');
 
-    if (!statusFilter || !dateFilter || !searchInput) {
+    if (!statusFilter || !paymentFilter || !dateFilter || !searchInput) {
         console.error('Filter elements not found');
         return;
     }
 
     const statusValue = statusFilter.value;
+    const paymentValue = paymentFilter.value;
     const dateValue = dateFilter.value;
     const searchValue = searchInput.value.toLowerCase();
 
@@ -1174,6 +1319,10 @@ function applyFilters() {
         let showRow = true;
 
         if (statusValue && row.dataset.status !== statusValue) {
+            showRow = false;
+        }
+
+        if (paymentValue && row.dataset.payment !== paymentValue) {
             showRow = false;
         }
 
