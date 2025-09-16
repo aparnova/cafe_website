@@ -45,6 +45,21 @@ function createRazorpayOrder($amount, $currency, $receipt, $key_id, $key_secret)
     return json_decode($result, true);
 }
 
+// Function to clear cart after successful order
+function clearCartAfterOrder($user_id, $order_type, $conn) {
+    if ($order_type === 'direct') {
+        unset($_SESSION['direct_order']);
+    } else {
+        // Clear session cart
+        unset($_SESSION['cart']);
+        
+        // Clear database cart as well
+        $clear_cart = $conn->prepare("DELETE FROM user_cart WHERE user_id = ?");
+        $clear_cart->bind_param("i", $user_id);
+        $clear_cart->execute();
+    }
+}
+
 // Determine order type and get items
 $order_type = $_GET['order_type'] ?? 'cart';
 $cart_items = [];
@@ -88,6 +103,7 @@ if ($order_type === 'direct') {
         exit();
     }
 } else {
+    // Cart order - load from both database and session
     if (isset($_SESSION['cart']) && !empty($_SESSION['cart'])) {
         $menu_ids = implode(',', array_keys($_SESSION['cart']));
         $menu_query = $conn->query("SELECT * FROM menu_items WHERE id IN ($menu_ids)");
@@ -104,9 +120,45 @@ if ($order_type === 'direct') {
             $total_price += $menu_item['price'] * $cart_item['quantity'];
         }
     } else {
-        $_SESSION['error'] = 'Your cart is empty';
-        header("Location: menu.php");
-        exit();
+        // Try to load from database if session cart is empty
+        $cart_query = $conn->prepare("
+            SELECT 
+                uc.menu_item_id as id,
+                mi.name,
+                mi.price,
+                uc.quantity
+            FROM user_cart uc
+            JOIN menu_items mi ON uc.menu_item_id = mi.id
+            WHERE uc.user_id = ?
+        ");
+        $cart_query->bind_param("i", $user_id);
+        $cart_query->execute();
+        $result = $cart_query->get_result();
+        
+        $_SESSION['cart'] = [];
+        while ($row = $result->fetch_assoc()) {
+            $cart_items[] = [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'price' => $row['price'],
+                'quantity' => $row['quantity'],
+                'total' => $row['price'] * $row['quantity']
+            ];
+            $total_price += $row['price'] * $row['quantity'];
+            
+            // Sync with session
+            $_SESSION['cart'][$row['id']] = [
+                'name' => $row['name'],
+                'price' => $row['price'],
+                'quantity' => $row['quantity']
+            ];
+        }
+        
+        if (empty($cart_items)) {
+            $_SESSION['error'] = 'Your cart is empty';
+            header("Location: menu.php");
+            exit();
+        }
     }
 }
 
@@ -191,7 +243,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'customer_name' => $name,
                     'customer_email' => $email,
                     'customer_phone' => $phone,
-                    'order_id' => $order_id
+                    'order_id' => $order_id,
+                    'order_type' => $order_type
                 ]
             ]);
             
@@ -254,12 +307,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // Clear session data
-            if ($order_type === 'direct') {
-                unset($_SESSION['direct_order']);
-            } else {
-                unset($_SESSION['cart']);
-            }
+            // Clear cart after successful order
+            clearCartAfterOrder($user_id, $order_type, $conn);
             
             echo json_encode([
                 'success' => true,
@@ -269,6 +318,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } catch (Exception $e) {
             error_log('COD order creation error: ' . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        exit();
+    }
+    
+    // Handle payment success callback (for clearing cart after successful Razorpay payment)
+    if ($action === 'payment_success') {
+        header('Content-Type: application/json');
+        
+        try {
+            $order_id = intval($_POST['order_id']);
+            $order_type = $_POST['order_type'] ?? 'cart';
+            
+            if ($order_id > 0) {
+                // Clear cart after successful payment
+                clearCartAfterOrder($user_id, $order_type, $conn);
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Cart cleared successfully'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Invalid order ID'
+                ]);
+            }
+            
+        } catch (Exception $e) {
+            error_log('Payment success callback error: ' . $e->getMessage());
             echo json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -736,6 +818,8 @@ function initiateRazorpayPayment(orderData) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Clear cart after successful payment verification
+                    clearCartAfterPayment(orderData.order_id, orderData.order_type);
                     showNotification('Payment verified successfully!', 'success');
                     setTimeout(() => {
                         window.location.href = `order_confirmation.php?order_id=${data.order_id}`;
@@ -783,6 +867,30 @@ function initiateRazorpayPayment(orderData) {
     });
 
     rzp.open();
+}
+
+// Function to clear cart after successful payment
+function clearCartAfterPayment(orderId, orderType) {
+    const formData = new FormData();
+    formData.append('action', 'payment_success');
+    formData.append('order_id', orderId);
+    formData.append('order_type', orderType);
+    
+    fetch('checkout.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Cart cleared successfully after payment');
+        } else {
+            console.error('Failed to clear cart:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing cart:', error);
+    });
 }
 </script>
 

@@ -36,14 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update_stmt->bind_param("ss", $razorpay_payment_id, $razorpay_order_id);
         
         if ($update_stmt->execute()) {
-            // Get the updated order ID for redirect
-            $order_stmt = $conn->prepare("SELECT id FROM orders WHERE razorpay_order_id = ?");
+            // Get the updated order details for cart clearing
+            $order_stmt = $conn->prepare("SELECT id, user_id FROM orders WHERE razorpay_order_id = ?");
             $order_stmt->bind_param("s", $razorpay_order_id);
             $order_stmt->execute();
             $order_result = $order_stmt->get_result();
             
             if ($order_result->num_rows > 0) {
                 $order = $order_result->fetch_assoc();
+                $user_id = $order['user_id'];
+                
+                // Clear cart from database for the user
+                if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $user_id) {
+                    // Clear database cart
+                    $clear_cart_stmt = $conn->prepare("DELETE FROM user_cart WHERE user_id = ?");
+                    $clear_cart_stmt->bind_param("i", $user_id);
+                    $clear_cart_stmt->execute();
+                }
                 
                 // Clear session data after successful payment
                 unset($_SESSION['cart']);
@@ -75,3 +84,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'message' => 'Invalid request method'
     ]);
 }
+?>

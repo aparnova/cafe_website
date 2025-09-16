@@ -14,6 +14,131 @@ if ($isLoggedIn) {
     ];
 }
 
+// Handle AJAX requests for cart operations and direct orders
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    header('Content-Type: application/json');
+    
+    if (!$isLoggedIn) {
+        echo json_encode(['success' => false, 'message' => 'User not logged in']);
+        exit;
+    }
+    
+    $user_id = $_SESSION['user_id'];
+    $action = $_POST['action'];
+    
+    try {
+        // Handle direct order setting
+        if ($action === 'set_direct_order') {
+            $menu_id = intval($_POST['menu_id']);
+            $quantity = intval($_POST['quantity']);
+            $name = trim($_POST['name']);
+            $price = floatval($_POST['price']);
+            
+            if ($menu_id > 0 && $quantity > 0 && !empty($name) && $price > 0) {
+                $_SESSION['direct_order'] = [
+                    $menu_id => [
+                        'name' => $name,
+                        'price' => $price,
+                        'quantity' => $quantity
+                    ]
+                ];
+                
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid order data']);
+            }
+            
+        } elseif ($action === 'save_cart') {
+            $cart = json_decode($_POST['cart'], true);
+            
+            // Start transaction
+            $conn->begin_transaction();
+            
+            // Clear existing cart items for this user
+            $stmt = $conn->prepare("DELETE FROM user_cart WHERE user_id = ?");
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            
+            // Clear session cart
+            unset($_SESSION['cart']);
+            
+            // Insert new cart items and update session
+            if (!empty($cart)) {
+                $stmt = $conn->prepare("INSERT INTO user_cart (user_id, menu_item_id, quantity) VALUES (?, ?, ?)");
+                $_SESSION['cart'] = [];
+                
+                foreach ($cart as $item) {
+                    if (isset($item['id']) && isset($item['quantity']) && $item['quantity'] > 0) {
+                        $stmt->bind_param("iii", $user_id, $item['id'], $item['quantity']);
+                        $stmt->execute();
+                        
+                        // Update session cart with menu item details
+                        $_SESSION['cart'][$item['id']] = [
+                            'name' => $item['name'],
+                            'price' => $item['price'],
+                            'quantity' => $item['quantity']
+                        ];
+                    }
+                }
+            }
+            
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => 'Cart saved successfully']);
+            
+        } elseif ($action === 'get_cart') {
+            // Get cart items with menu item details
+            $stmt = $conn->prepare("
+                SELECT 
+                    uc.menu_item_id as id,
+                    mi.name,
+                    mi.price,
+                    mi.image,
+                    uc.quantity
+                FROM user_cart uc
+                JOIN menu_items mi ON uc.menu_item_id = mi.id
+                WHERE uc.user_id = ?
+                ORDER BY uc.created_at DESC
+            ");
+            
+            $stmt->bind_param("i", $user_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $cart = [];
+            $_SESSION['cart'] = [];
+            
+            while ($row = $result->fetch_assoc()) {
+                $cart[] = [
+                    'id' => (int)$row['id'],
+                    'name' => $row['name'],
+                    'price' => (float)$row['price'],
+                    'quantity' => (int)$row['quantity'],
+                    'image' => $row['image'] ?: 'https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'
+                ];
+                
+                // Sync with session
+                $_SESSION['cart'][$row['id']] = [
+                    'name' => $row['name'],
+                    'price' => (float)$row['price'],
+                    'quantity' => (int)$row['quantity']
+                ];
+            }
+            
+            echo json_encode(['success' => true, 'cart' => $cart]);
+        }
+        
+    } catch (Exception $e) {
+        if ($action === 'save_cart') {
+            $conn->rollback();
+        }
+        error_log("Error in cart operation: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Failed to process cart operation']);
+    }
+    
+    $conn->close();
+    exit;
+}
+
 // Fetch menu items from database
 $menuItems = [];
 $result = $conn->query("SELECT * FROM menu_items ORDER BY FIELD(category, 'starters','main','desserts','beverages'), id");
@@ -700,6 +825,12 @@ if ($result) {
       transform: translateY(-2px);
     }
 
+    .checkout-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     /* Cart Button in Header */
     .header-cart {
       display: none;
@@ -1212,38 +1343,45 @@ if ($result) {
         renderMenu();
         setupEventListeners();
         if (isLoggedIn) {
-          loadCartFromSession();
+          loadCartFromDatabase();
         }
       }
     }
 
-    // Load cart from session storage if user is logged in
-    function loadCartFromSession() {
+    // Load cart from database if user is logged in
+    function loadCartFromDatabase() {
       if (!isLoggedIn) return;
       
-      fetch('get_cart.php')
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && data.cart) {
-            cart = data.cart;
-            updateCart();
-          }
-        })
-        .catch(error => {
-          console.error('Error loading cart:', error);
-        });
+      const formData = new FormData();
+      formData.append('action', 'get_cart');
+      
+      fetch(window.location.href, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.cart) {
+          cart = data.cart;
+          updateCart();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading cart:', error);
+      });
     }
 
-    // Save cart to session
-    function saveCartToSession() {
+    // Save cart to database
+    function saveCartToDatabase() {
       if (!isLoggedIn) return;
       
-      fetch('save_cart.php', {
+      const formData = new FormData();
+      formData.append('action', 'save_cart');
+      formData.append('cart', JSON.stringify(cart));
+      
+      fetch(window.location.href, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cart: cart })
+        body: formData
       })
       .then(response => response.json())
       .then(data => {
@@ -1416,15 +1554,55 @@ if ($result) {
           });
         }
 
-        // Checkout button for cart items
+        // Enhanced Checkout button with debugging
         if (checkoutBtn) {
-          checkoutBtn.addEventListener('click', () => {
+          checkoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Checkout button clicked');
+            console.log('Cart contents:', cart);
+            console.log('Cart length:', cart.length);
+            
             if (cart.length === 0) {
+              console.log('Cart is empty - showing notification');
               showNotification('Your cart is empty!', 'error');
               return;
             }
-            // Redirect to checkout for cart orders
-            window.location.href = 'checkout.php?order_type=cart';
+            
+            // Disable button to prevent double clicks
+            checkoutBtn.disabled = true;
+            checkoutBtn.textContent = 'Redirecting...';
+            
+            console.log('Attempting to redirect to checkout...');
+            
+            // Try multiple redirect methods
+            try {
+              // Method 1: Direct assignment
+              window.location.href = 'checkout.php?order_type=cart';
+              
+              // Fallback method after small delay
+              setTimeout(() => {
+                if (window.location.href.indexOf('checkout.php') === -1) {
+                  console.log('First redirect failed, trying fallback...');
+                  window.location.assign('checkout.php?order_type=cart');
+                }
+              }, 500);
+              
+            } catch (error) {
+              console.error('Redirect error:', error);
+              // Form submission fallback
+              const form = document.createElement('form');
+              form.method = 'GET';
+              form.action = 'checkout.php';
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = 'order_type';
+              input.value = 'cart';
+              form.appendChild(input);
+              document.body.appendChild(form);
+              form.submit();
+            }
           });
         }
 
@@ -1452,7 +1630,7 @@ if ($result) {
 
           if (e.target.classList.contains('add-to-cart')) {
             const itemId = parseInt(e.target.dataset.id);
-            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            const quantityInput = document.querySelector(`[data-id="${itemId}"].quantity-input`);
             const quantity = parseInt(quantityInput.value);
             addToCart(itemId, quantity);
           }
@@ -1460,16 +1638,45 @@ if ($result) {
           // Order Now button - direct single item ordering
           if (e.target.classList.contains('order-now')) {
             const itemId = parseInt(e.target.dataset.id);
-            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            const quantityInput = document.querySelector(`[data-id="${itemId}"].quantity-input`);
             const quantity = parseInt(quantityInput.value);
             
-            // Redirect directly to checkout with direct order parameters
-            window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
+            // Get the menu item details for session storage
+            const menuItem = menuItems.find(item => item.id === itemId);
+            if (menuItem) {
+              // Store direct order in session using the same menu.php file
+              const formData = new FormData();
+              formData.append('action', 'set_direct_order');
+              formData.append('menu_id', itemId);
+              formData.append('quantity', quantity);
+              formData.append('name', menuItem.name);
+              formData.append('price', menuItem.price);
+              
+              fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+              })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  // Redirect directly to checkout with direct order parameters
+                  console.log(`Redirecting to checkout for direct order: item ${itemId}, quantity ${quantity}`);
+                  window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
+                } else {
+                  showNotification('Failed to process direct order: ' + data.message, 'error');
+                }
+              })
+              .catch(error => {
+                console.error('Error setting direct order:', error);
+                // Fallback - redirect anyway
+                window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
+              });
+            }
           }
 
           if (e.target.classList.contains('quantity-btn')) {
             const itemId = parseInt(e.target.dataset.id);
-            const quantityInput = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+            const quantityInput = document.querySelector(`[data-id="${itemId}"].quantity-input`);
             let quantity = parseInt(quantityInput.value);
 
             if (e.target.classList.contains('plus')) {
@@ -1510,7 +1717,7 @@ if ($result) {
       }
 
       updateCart();
-      saveCartToSession();
+      saveCartToDatabase();
       showNotification(`${quantity} ${menuItem.name} added to cart`, 'success');
     }
 
@@ -1518,7 +1725,7 @@ if ($result) {
     function removeFromCart(itemId) {
       cart = cart.filter(item => item.id !== itemId);
       updateCart();
-      saveCartToSession();
+      saveCartToDatabase();
       showNotification('Item removed from cart', 'success');
     }
 
@@ -1532,6 +1739,10 @@ if ($result) {
         cartItems.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--default-color);">Your cart is empty</p>';
         cartTotal.textContent = '0';
         headerCartCount.textContent = '0';
+        if (checkoutBtn) {
+          checkoutBtn.disabled = true;
+          checkoutBtn.textContent = 'Cart is Empty';
+        }
         return;
       }
 
@@ -1557,6 +1768,11 @@ if ($result) {
 
       cartTotal.textContent = total.toFixed(2);
       headerCartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+      
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Proceed to Checkout';
+      }
     }
 
     // Show notification
@@ -1574,6 +1790,11 @@ if ($result) {
 
     // Initialize the app
     document.addEventListener('DOMContentLoaded', init);
+
+    // Additional debugging for page load
+    console.log('Menu page loaded');
+    console.log('User logged in:', isLoggedIn);
+    console.log('Menu items count:', menuItems.length);
   </script>
 </body>
 </html>
