@@ -57,8 +57,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($stmt->execute()) {
             $success = true;
-            // Clear form fields
-            $name = $email = $phone = $subject = $message = "";
+            // Redirect to prevent form resubmission and show temporary success message
+            header("Location: " . $_SERVER['PHP_SELF'] . "?success=1");
+            exit();
         } else {
             $errors[] = "Error submitting form. Please try again later.";
         }
@@ -66,6 +67,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->close();
     }
 }
+
+// Check for success message from redirect
+$showSuccessMessage = isset($_GET['success']) && $_GET['success'] == '1';
 
 // Fetch contact settings from database
 $maps_url = '';
@@ -664,6 +668,24 @@ function sanitizeInput($data) {
     .notification i {
       font-size: 20px;
     }
+
+    /* Fade out animation for success message */
+    .fade-out {
+      animation: fadeOut 3s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        display: none;
+      }
+    }
   </style>
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -731,22 +753,20 @@ function sanitizeInput($data) {
               <div class="contact-form">
                 <h3>Send Us a Message</h3>
                 
-                <?php if ($_SERVER["REQUEST_METHOD"] == "POST"): ?>
-                  <?php if ($success): ?>
-                    <div class="form-message success">
-                      <i class="bi bi-check-circle-fill"></i> Your message has been sent successfully!
-                    </div>
-                  <?php elseif (!empty($errors)): ?>
-                    <div class="form-message error">
-                      <i class="bi bi-exclamation-triangle-fill"></i> 
-                      <strong>Error submitting form:</strong>
-                      <ul>
-                        <?php foreach ($errors as $error): ?>
-                          <li><?php echo htmlspecialchars($error); ?></li>
-                        <?php endforeach; ?>
-                      </ul>
-                    </div>
-                  <?php endif; ?>
+                <?php if ($showSuccessMessage): ?>
+                  <div class="form-message success fade-out" id="successMessage">
+                    <i class="bi bi-check-circle-fill"></i> Your message has been sent successfully!
+                  </div>
+                <?php elseif ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($errors)): ?>
+                  <div class="form-message error">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 
+                    <strong>Error submitting form:</strong>
+                    <ul>
+                      <?php foreach ($errors as $error): ?>
+                        <li><?php echo htmlspecialchars($error); ?></li>
+                      <?php endforeach; ?>
+                    </ul>
+                  </div>
                 <?php endif; ?>
                 
                 <form method="post" action="" id="contactForm">
@@ -761,7 +781,7 @@ function sanitizeInput($data) {
                   
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone" autocomplete="off" required maxlength="10" pattern="[0-9]{10}">
+                      <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone" autocomplete="off" required maxlength="10" pattern="[0-9]{10}" value="<?php echo htmlspecialchars($phone); ?>">
                     </div>
                     <div class="form-group half-width">
                       <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off" value="<?php echo htmlspecialchars($subject); ?>">
@@ -798,14 +818,6 @@ function sanitizeInput($data) {
       // Show loading state
       btnText.textContent = 'SENDING...';
       submitBtn.disabled = true;
-      
-      // If the form is valid and being submitted
-      if (this.checkValidity()) {
-        // After form submission, show notification if successful
-        <?php if ($success): ?>
-          showNotification();
-        <?php endif; ?>
-      }
     });
 
     // Function to show notification
@@ -820,9 +832,24 @@ function sanitizeInput($data) {
     }
     
     // Show notification if form was successfully submitted
-    <?php if ($success): ?>
+    <?php if ($showSuccessMessage): ?>
       document.addEventListener('DOMContentLoaded', function() {
         showNotification();
+        
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          const successMessage = document.getElementById('successMessage');
+          if (successMessage) {
+            successMessage.style.display = 'none';
+          }
+        }, 3000);
+        
+        // Clean URL by removing success parameter after showing message
+        setTimeout(() => {
+          const url = new URL(window.location);
+          url.searchParams.delete('success');
+          window.history.replaceState({}, document.title, url.pathname);
+        }, 100);
       });
     <?php endif; ?>
   </script>
