@@ -6,7 +6,7 @@ require 'db.php';
 use Razorpay\Api\Api;
 
 // Razorpay configuration
-$razorpay_key_id = "rzp_test_RGBscspQt4e8A5"; // Replace with your actual key
+$razorpay_key_id = "rzp_test_RGBscspQt4e8A5z"; // Replace with your actual key
 $razorpay_key_secret = "5bqiEvg3UOUn1dLkDrQ5mhDN"; // Replace with your actual secret
 
 // Check if user is logged in

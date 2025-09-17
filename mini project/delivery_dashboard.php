@@ -19,20 +19,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $status = $_POST['status'];
         
         // Verify this order is assigned to current delivery person
-        $verify_stmt = $conn->prepare("SELECT id FROM orders WHERE id = ? AND assigned_to = ?");
+        $verify_stmt = $conn->prepare("SELECT id, payment_method FROM orders WHERE id = ? AND assigned_to = ?");
         $verify_stmt->bind_param("ii", $order_id, $delivery_id);
         $verify_stmt->execute();
         $verify_result = $verify_stmt->get_result();
         
         if ($verify_result->num_rows > 0) {
-            $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ? AND assigned_to = ?");
-            $stmt->bind_param("sii", $status, $order_id, $delivery_id);
+            $order_data = $verify_result->fetch_assoc();
             
-            if ($stmt->execute()) {
+            // Start transaction
+            $conn->begin_transaction();
+            
+            try {
+                // Update order status
+                $stmt = $conn->prepare("UPDATE orders SET status = ? WHERE id = ? AND assigned_to = ?");
+                $stmt->bind_param("sii", $status, $order_id, $delivery_id);
+                $stmt->execute();
+                
+                // If order is marked as delivered and payment method is COD, update payment status
+                if ($status === 'Delivered' && $order_data['payment_method'] === 'cash_on_delivery') {
+                    $payment_stmt = $conn->prepare("UPDATE orders SET payment_status = 'paid' WHERE id = ?");
+                    $payment_stmt->bind_param("i", $order_id);
+                    $payment_stmt->execute();
+                }
+                
+                // Commit transaction
+                $conn->commit();
+                
                 $response = ['success' => true, 'message' => 'Order status updated successfully!'];
-            } else {
+                
+            } catch (Exception $e) {
+                // Rollback transaction on error
+                $conn->rollback();
                 $response = ['success' => false, 'message' => 'Failed to update order status.'];
             }
+            
         } else {
             $response = ['success' => false, 'message' => 'Unauthorized access to this order.'];
         }

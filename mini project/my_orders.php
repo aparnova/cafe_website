@@ -29,7 +29,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_status_updates') {
     exit();
 }
 
-// Handle order cancellation (existing code)
+// Handle order cancellation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel_order') {
     header('Content-Type: application/json');
     $response = ['success' => false, 'message' => ''];
@@ -140,91 +140,6 @@ $orders_result = $orders_query->get_result();
             margin-bottom: 40px;
             font-family: "Playfair Display", serif;
             font-size: 32px;
-        }
-        
-        .status-tracker {
-            background-color: #1a1816;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #3a3530;
-        }
-        
-        .tracker-title {
-            color: #cda45e;
-            font-weight: bold;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-steps {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            margin: 20px 0;
-        }
-        
-        .status-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .step-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-        
-        .step-icon.completed {
-            background-color: #10b981;
-            color: white;
-        }
-        
-        .step-icon.active {
-            background-color: #f59e0b;
-            color: white;
-            animation: pulse 2s infinite;
-        }
-        
-        .step-icon.pending {
-            background-color: #374151;
-            color: #9ca3af;
-        }
-        
-        .step-label {
-            font-size: 12px;
-            text-align: center;
-            color: rgba(255,255,255,0.8);
-            font-weight: 500;
-        }
-        
-        .step-line {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background-color: #374151;
-            z-index: 1;
-        }
-        
-        .step-line-progress {
-            height: 100%;
-            background-color: #10b981;
-            transition: width 0.5s ease;
         }
         
         .order-card {
@@ -476,12 +391,6 @@ $orders_result = $orders_query->get_result();
         .notification.success { background: #10b981; }
         .notification.error { background: #ef4444; }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -524,15 +433,6 @@ $orders_result = $orders_query->get_result();
             .action-buttons {
                 flex-direction: column;
             }
-            
-            .status-steps {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .step-line {
-                display: none;
-            }
         }
     </style>
 </head>
@@ -557,57 +457,10 @@ $orders_result = $orders_query->get_result();
         <?php while ($order = $orders_result->fetch_assoc()): ?>
             <div class="order-card" data-order-id="<?php echo $order['id']; ?>">
                 <div class="order-header">
-                    <h2>Order #<?php echo $order['id']; ?></h2>
+                    <h2>Order Id #<?php echo $order['id']; ?></h2>
                     <span class="status status-<?php echo strtolower(str_replace(' ', '-', $order['status'])); ?>" data-status="<?php echo $order['status']; ?>">
                         <?php echo $order['status']; ?>
                     </span>
-                </div>
-                
-                <!-- Order Progress Tracker -->
-                <div class="status-tracker">
-                    <div class="tracker-title">
-                        <i class="fas fa-route"></i> Order Progress
-                    </div>
-                    <div class="status-steps">
-                        <div class="step-line">
-                            <div class="step-line-progress" data-progress="0"></div>
-                        </div>
-                        
-                        <div class="status-step">
-                            <div class="step-icon pending" data-step="pending">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="step-label">Order Placed</div>
-                        </div>
-                        
-                        <div class="status-step">
-                            <div class="step-icon pending" data-step="confirmed">
-                                <i class="fas fa-check"></i>
-                            </div>
-                            <div class="step-label">Confirmed</div>
-                        </div>
-                        
-                        <div class="status-step">
-                            <div class="step-icon pending" data-step="processing">
-                                <i class="fas fa-utensils"></i>
-                            </div>
-                            <div class="step-label">Preparing</div>
-                        </div>
-                        
-                        <div class="status-step">
-                            <div class="step-icon pending" data-step="delivery">
-                                <i class="fas fa-truck"></i>
-                            </div>
-                            <div class="step-label">Out for Delivery</div>
-                        </div>
-                        
-                        <div class="status-step">
-                            <div class="step-icon pending" data-step="delivered">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="step-label">Delivered</div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="order-info">
@@ -715,56 +568,6 @@ function showNotification(message, type = 'success') {
     }, 4000);
 }
 
-function updateOrderProgress(orderCard, status) {
-    const statusSteps = orderCard.querySelectorAll('.step-icon');
-    const progressBar = orderCard.querySelector('.step-line-progress');
-    
-    // Reset all steps
-    statusSteps.forEach(step => {
-        step.className = 'step-icon pending';
-    });
-    
-    let progress = 0;
-    
-    switch (status) {
-        case 'Pending':
-        case 'Payment Pending':
-            statusSteps[0].className = 'step-icon active';
-            progress = 20;
-            break;
-        case 'Confirmed':
-            statusSteps[0].className = 'step-icon completed';
-            statusSteps[1].className = 'step-icon active';
-            progress = 40;
-            break;
-        case 'Processing':
-            statusSteps[0].className = 'step-icon completed';
-            statusSteps[1].className = 'step-icon completed';
-            statusSteps[2].className = 'step-icon active';
-            progress = 60;
-            break;
-        case 'Out for Delivery':
-            statusSteps[0].className = 'step-icon completed';
-            statusSteps[1].className = 'step-icon completed';
-            statusSteps[2].className = 'step-icon completed';
-            statusSteps[3].className = 'step-icon active';
-            progress = 80;
-            break;
-        case 'Delivered':
-            statusSteps.forEach(step => step.className = 'step-icon completed');
-            progress = 100;
-            break;
-        case 'Cancelled':
-            statusSteps[0].className = 'step-icon completed';
-            progress = 20;
-            break;
-    }
-    
-    if (progressBar) {
-        progressBar.style.width = progress + '%';
-    }
-}
-
 function checkForStatusUpdates() {
     const indicator = document.getElementById('refresh-indicator');
     indicator.classList.add('show');
@@ -789,18 +592,12 @@ function checkForStatusUpdates() {
                             statusElement.dataset.status = newStatus;
                             statusElement.className = `status status-${newStatus.toLowerCase().replace(/ /g, '-')} status-update-animation`;
                             
-                            // Update progress tracker
-                            updateOrderProgress(orderCard, newStatus);
-                            
                             showNotification(`Order #${order.id} status updated to: ${newStatus}`, 'success');
                             
                             // Remove animation class after animation completes
                             setTimeout(() => {
                                 statusElement.classList.remove('status-update-animation');
                             }, 600);
-                        } else if (!lastOrderStatuses[order.id]) {
-                            // Initial load - just set the progress
-                            updateOrderProgress(orderCard, newStatus);
                         }
                         
                         lastOrderStatuses[order.id] = newStatus;
@@ -846,12 +643,11 @@ function cancelOrder(orderId) {
 
 // Initialize status tracking on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize progress bars for all orders
+    // Initialize last order statuses
     document.querySelectorAll('.order-card').forEach(orderCard => {
         const statusElement = orderCard.querySelector('[data-status]');
         if (statusElement) {
             const status = statusElement.dataset.status;
-            updateOrderProgress(orderCard, status);
             const orderId = orderCard.dataset.orderId;
             lastOrderStatuses[orderId] = status;
         }

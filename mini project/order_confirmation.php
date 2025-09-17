@@ -183,6 +183,99 @@ while ($item = $items_result->fetch_assoc()) {
         .Payment\ Failed { background: #fee2e2; color: #991b1b; }
         .Payment\ Pending { background: #fef3c7; color: #92400e; }
         
+        /* Progress Tracker Styles */
+        .status-tracker {
+            background-color: #1a1816;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid #3a3530;
+        }
+        
+        .tracker-title {
+            color: #cda45e;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        
+        .status-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .status-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-icon.completed {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .step-icon.active {
+            background-color: #f59e0b;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .step-icon.pending {
+            background-color: #374151;
+            color: #9ca3af;
+        }
+        
+        .step-label {
+            font-size: 12px;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-weight: 500;
+        }
+        
+        .step-line {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #374151;
+            z-index: 1;
+        }
+        
+        .step-line-progress {
+            height: 100%;
+            background-color: #10b981;
+            transition: width 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .payment-info {
             background: rgba(16, 185, 129, 0.1);
             border: 1px solid rgba(16, 185, 129, 0.3);
@@ -431,6 +524,15 @@ while ($item = $items_result->fetch_assoc()) {
                 width: 40px;
                 height: 40px;
             }
+            
+            .status-steps {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .step-line {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -466,8 +568,55 @@ while ($item = $items_result->fetch_assoc()) {
     <!-- Order Details -->
     <div class="order-details">
         <div class="order-header">
-            <div class="order-number">Order #<?php echo $order['id']; ?></div>
+            <div class="order-number">Order Id #<?php echo $order['id']; ?></div>
             <div class="order-status <?php echo str_replace(' ', '\ ', $order['status']); ?>"><?php echo $order['status']; ?></div>
+        </div>
+
+        <!-- Order Progress Tracker -->
+        <div class="status-tracker">
+            <div class="tracker-title">
+                <i class="fas fa-route"></i> Order Progress
+            </div>
+            <div class="status-steps">
+                <div class="step-line">
+                    <div class="step-line-progress" data-progress="0"></div>
+                </div>
+                
+                <div class="status-step">
+                    <div class="step-icon pending" data-step="pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="step-label">Order Placed</div>
+                </div>
+                
+                <div class="status-step">
+                    <div class="step-icon pending" data-step="confirmed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">Confirmed</div>
+                </div>
+                
+                <div class="status-step">
+                    <div class="step-icon pending" data-step="processing">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="step-label">Preparing</div>
+                </div>
+                
+                <div class="status-step">
+                    <div class="step-icon pending" data-step="delivery">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="step-label">Out for Delivery</div>
+                </div>
+                
+                <div class="status-step">
+                    <div class="step-icon pending" data-step="delivered">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="step-label">Delivered</div>
+                </div>
+            </div>
         </div>
 
         <?php if ($order['payment_method'] === 'razorpay'): ?>
@@ -609,6 +758,81 @@ while ($item = $items_result->fetch_assoc()) {
 </div>
 
 <script>
+// Function to update order progress based on status
+function updateOrderProgress(status) {
+    const statusSteps = document.querySelectorAll('.step-icon');
+    const progressBar = document.querySelector('.step-line-progress');
+    
+    // Reset all steps to pending
+    statusSteps.forEach(step => {
+        step.className = 'step-icon pending';
+    });
+    
+    let progress = 0;
+    
+    // Map status to progress steps - FIXED: Always show "Order Placed" as active for new orders
+    switch (status) {
+        case 'Pending':
+        case 'Payment Pending':
+            // First step (Order Placed) should be active
+            statusSteps[0].className = 'step-icon active';
+            progress = 20;
+            break;
+        case 'Confirmed':
+            // First step completed, second step active
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon active';
+            progress = 40;
+            break;
+        case 'Processing':
+            // First two steps completed, third step active
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon completed';
+            statusSteps[2].className = 'step-icon active';
+            progress = 60;
+            break;
+        case 'Out for Delivery':
+            // First three steps completed, fourth step active
+            statusSteps[0].className = 'step-icon completed';
+            statusSteps[1].className = 'step-icon completed';
+            statusSteps[2].className = 'step-icon completed';
+            statusSteps[3].className = 'step-icon active';
+            progress = 80;
+            break;
+        case 'Delivered':
+            // All steps completed
+            statusSteps.forEach(step => step.className = 'step-icon completed');
+            progress = 100;
+            break;
+        case 'Cancelled':
+            // Show only first step as completed (order was placed but then cancelled)
+            statusSteps[0].className = 'step-icon completed';
+            progress = 20;
+            break;
+        case 'Payment Failed':
+            // Show first step as active (payment issue, but order was attempted)
+            statusSteps[0].className = 'step-icon active';
+            progress = 20;
+            break;
+        default:
+            // Default case - show first step as active for any new status
+            statusSteps[0].className = 'step-icon active';
+            progress = 20;
+            break;
+    }
+    
+    // Update progress bar
+    if (progressBar) {
+        progressBar.style.width = progress + '%';
+    }
+}
+
+// Initialize progress tracker on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const orderStatus = '<?php echo $order['status']; ?>';
+    updateOrderProgress(orderStatus);
+});
+
 // Auto-refresh page every 30 seconds to check for status updates
 <?php if ($order['status'] === 'Pending' || $order['status'] === 'Processing' || $order['status'] === 'Payment Pending'): ?>
     setTimeout(() => {

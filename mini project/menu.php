@@ -675,7 +675,7 @@ if ($result) {
       transform: none;
     }
 
-    /* Cart Section */
+    /* Cart Section - Simplified without slider */
     .cart-sidebar {
       position: fixed;
       top: 0;
@@ -686,23 +686,28 @@ if ($result) {
       box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
       transition: right 0.3s ease-out;
       z-index: 1000;
-      padding: 20px;
-      overflow-y: auto;
-      display: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .cart-sidebar.open {
       right: 0;
-      display: block;
     }
 
     .cart-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      padding: 20px;
       border-bottom: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
+      flex-shrink: 0;
+    }
+
+    .cart-header h3 {
+      margin: 0;
+      color: var(--heading-color);
+      font-size: 20px;
     }
 
     .close-cart {
@@ -718,20 +723,53 @@ if ($result) {
       transform: rotate(90deg);
     }
 
+    /* Cart Content Container */
+    .cart-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    .cart-items-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cart-items-wrapper::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .cart-items-wrapper::-webkit-scrollbar-track {
+      background: var(--background-color);
+      border-radius: 3px;
+    }
+
+    .cart-items-wrapper::-webkit-scrollbar-thumb {
+      background: var(--accent-color);
+      border-radius: 3px;
+    }
+
     .cart-items-container {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: 15px;
     }
 
     .cart-item {
       background: var(--background-color);
       border-radius: 8px;
-      padding: 10px;
+      padding: 15px;
       position: relative;
       animation: slideInRight 0.3s ease forwards;
       opacity: 0;
       transform: translateX(20px);
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
 
     .cart-item:nth-child(odd) {
@@ -743,11 +781,11 @@ if ($result) {
     }
 
     .cart-item-img {
-      width: 100%;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       object-fit: cover;
       border-radius: 5px;
-      margin-bottom: 5px;
+      flex-shrink: 0;
       transition: transform 0.3s ease;
     }
 
@@ -755,10 +793,37 @@ if ($result) {
       transform: scale(1.05);
     }
 
+    .cart-item-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cart-item-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 5px 0;
+      color: var(--heading-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cart-item-price {
+      font-size: 12px;
+      color: var(--accent-color);
+      margin: 0;
+    }
+
+    .cart-item-quantity {
+      font-size: 12px;
+      color: var(--default-color);
+      margin: 5px 0 0 0;
+    }
+
     .cart-item-remove {
       position: absolute;
-      top: 5px;
-      right: 5px;
+      top: 10px;
+      right: 10px;
       background: #ff6b6b;
       color: white;
       border: none;
@@ -782,10 +847,11 @@ if ($result) {
       font-size: 18px;
       font-weight: bold;
       text-align: right;
-      margin: 20px 0;
+      margin-bottom: 15px;
       padding-top: 15px;
       border-top: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
       animation: fadeIn 0.5s ease;
+      flex-shrink: 0;
     }
 
     .checkout-btn {
@@ -800,6 +866,7 @@ if ($result) {
       transition: all 0.3s;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .checkout-btn::after {
@@ -1138,10 +1205,6 @@ if ($result) {
         grid-template-columns: 1fr;
       }
 
-      .cart-items-container {
-        grid-template-columns: 1fr;
-      }
-
       .section-title p {
         font-size: 28px;
       }
@@ -1282,19 +1345,26 @@ if ($result) {
   </section>
 
   <?php if ($isLoggedIn): ?>
-  <!-- Cart Sidebar -->
+  <!-- Simplified Cart Sidebar -->
   <div class="cart-sidebar" id="cart-sidebar">
     <div class="cart-header">
       <h3>Your Cart</h3>
       <button class="close-cart" id="close-cart">&times;</button>
     </div>
-    <div class="cart-items-container" id="cart-items">
-      <!-- Cart items will be added here -->
+    
+    <div class="cart-content">
+      <div class="cart-items-wrapper">
+        <div class="cart-items-container" id="cart-items">
+          <!-- Cart items will be added here -->
+        </div>
+      </div>
+      
+      <div class="cart-total">
+        Total: ₹<span id="cart-total">0</span>
+      </div>
+      
+      <button class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
     </div>
-    <div class="cart-total">
-      Total: ₹<span id="cart-total">0</span>
-    </div>
-    <button class="checkout-btn" id="checkout-btn">Proceed to Checkout</button>
   </div>
   <?php endif; ?>
 
@@ -1554,18 +1624,13 @@ if ($result) {
           });
         }
 
-        // Enhanced Checkout button with debugging
+        // Checkout button
         if (checkoutBtn) {
           checkoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            console.log('Checkout button clicked');
-            console.log('Cart contents:', cart);
-            console.log('Cart length:', cart.length);
-            
             if (cart.length === 0) {
-              console.log('Cart is empty - showing notification');
               showNotification('Your cart is empty!', 'error');
               return;
             }
@@ -1574,24 +1639,17 @@ if ($result) {
             checkoutBtn.disabled = true;
             checkoutBtn.textContent = 'Redirecting...';
             
-            console.log('Attempting to redirect to checkout...');
-            
-            // Try multiple redirect methods
             try {
-              // Method 1: Direct assignment
               window.location.href = 'checkout.php?order_type=cart';
               
-              // Fallback method after small delay
               setTimeout(() => {
                 if (window.location.href.indexOf('checkout.php') === -1) {
-                  console.log('First redirect failed, trying fallback...');
                   window.location.assign('checkout.php?order_type=cart');
                 }
               }, 500);
               
             } catch (error) {
               console.error('Redirect error:', error);
-              // Form submission fallback
               const form = document.createElement('form');
               form.method = 'GET';
               form.action = 'checkout.php';
@@ -1659,8 +1717,6 @@ if ($result) {
               .then(response => response.json())
               .then(data => {
                 if (data.success) {
-                  // Redirect directly to checkout with direct order parameters
-                  console.log(`Redirecting to checkout for direct order: item ${itemId}, quantity ${quantity}`);
                   window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
                 } else {
                   showNotification('Failed to process direct order: ' + data.message, 'error');
@@ -1668,7 +1724,6 @@ if ($result) {
               })
               .catch(error => {
                 console.error('Error setting direct order:', error);
-                // Fallback - redirect anyway
                 window.location.href = `checkout.php?order_type=direct&menu_id=${itemId}&quantity=${quantity}`;
               });
             }
@@ -1691,7 +1746,7 @@ if ($result) {
       }
     }
 
-    // Add item to cart (only affects cart, not direct orders)
+    // Add item to cart
     function addToCart(itemId, quantity) {
       if (!isLoggedIn) {
         showNotification('Please login first!', 'error');
@@ -1729,14 +1784,14 @@ if ($result) {
       showNotification('Item removed from cart', 'success');
     }
 
-    // Update cart display
+    // Update cart display - simplified without slider
     function updateCart() {
       if (!isLoggedIn || !cartItems || !cartTotal || !headerCartCount) return;
 
       cartItems.innerHTML = '';
 
       if (cart.length === 0) {
-        cartItems.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--default-color);">Your cart is empty</p>';
+        cartItems.innerHTML = '<p style="text-align: center; color: var(--default-color); padding: 40px 20px;">Your cart is empty</p>';
         cartTotal.textContent = '0';
         headerCartCount.textContent = '0';
         if (checkoutBtn) {
@@ -1757,11 +1812,12 @@ if ($result) {
         cartItem.style.animationDelay = `${index * 0.1}s`;
         cartItem.innerHTML = `
           <img src="${item.image}" class="cart-item-img" alt="${item.name}" onerror="this.src='https://via.placeholder.com/300x180/29261f/cda45e?text=No+Image'">
-          <button class="cart-item-remove" data-id="${item.id}">&times;</button>
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.name}</h4>
-            <div class="cart-item-price">₹${item.price} × ${item.quantity}</div>
+            <p class="cart-item-price">₹${item.price} × ${item.quantity}</p>
+            <p class="cart-item-quantity">Quantity: ${item.quantity}</p>
           </div>
+          <button class="cart-item-remove" data-id="${item.id}">&times;</button>
         `;
         cartItems.appendChild(cartItem);
       });
@@ -1791,7 +1847,6 @@ if ($result) {
     // Initialize the app
     document.addEventListener('DOMContentLoaded', init);
 
-    // Additional debugging for page load
     console.log('Menu page loaded');
     console.log('User logged in:', isLoggedIn);
     console.log('Menu items count:', menuItems.length);
