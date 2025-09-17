@@ -390,7 +390,7 @@ $_SESSION['form_token'] = $form_token;
             <div class="form-group">
               <div class="input-group">
                 <textarea name="message" id="message" class="form-control" placeholder=" " autocomplete="off"></textarea>
-                <label for="message">Special Requests (Optional)</label>
+                <label for="message">Special Requests (Optional) </label>
               </div>
             </div>
 
