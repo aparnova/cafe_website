@@ -280,6 +280,35 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
       width: 100%;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .pdf-download-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    }
+
+    .pdf-download-btn:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+    }
+
     .user-avatar {
       width: 40px;
       height: 40px;
@@ -297,6 +326,112 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
     .user-avatar:hover {
       transform: scale(1.1);
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    /* PDF Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      position: relative;
+      animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .close:hover {
+      color: var(--danger);
+    }
+
+    .modal h2 {
+      color: var(--primary);
+      margin-bottom: 20px;
+      font-size: 24px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .download-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .download-btn:hover {
+      background: #d97706;
+      transform: translateY(-2px);
     }
 
     .stats-container {
@@ -582,6 +717,16 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
       .stats-container {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       }
+
+      .header-right {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .pdf-download-btn {
+        padding: 8px 16px;
+        font-size: 12px;
+      }
     }
 
     /* Animation classes */
@@ -634,7 +779,41 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
 <div class="main">
   <div class="header">
     <h1>Admin Dashboard</h1>
-    <div class="user-avatar">A</div>
+    <div class="header-right">
+      <button class="pdf-download-btn" onclick="openPdfModal()">
+        <i class="fas fa-file-pdf"></i>
+        Download Revenue Report
+      </button>
+      <div class="user-avatar">A</div>
+    </div>
+  </div>
+
+  <!-- PDF Download Modal -->
+  <div id="pdfModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closePdfModal()">&times;</span>
+      <h2><i class="fas fa-file-pdf"></i> Download Revenue Report</h2>
+      <form id="pdfForm" action="download_revenue_pdf.php" method="post" target="_blank">
+        <div class="form-group">
+          <label for="reportMonth">Select Month:</label>
+          <select id="reportMonth" name="report_month" required>
+            <option value="">Choose a month...</option>
+            <?php
+            // Generate options for the last 12 months
+            for ($i = 0; $i < 12; $i++) {
+              $month = date('Y-m', strtotime("-$i months"));
+              $monthName = date('F Y', strtotime("-$i months"));
+              echo "<option value='$month'>$monthName</option>";
+            }
+            ?>
+          </select>
+        </div>
+        <button type="submit" class="download-btn">
+          <i class="fas fa-download"></i>
+          Download PDF Report
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Statistics Cards -->
@@ -808,6 +987,23 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
     document.querySelector('.sidebar').classList.toggle('sidebar-collapsed');
     document.querySelector('.main').classList.toggle('main-expanded');
   });
+
+  // PDF Modal functions
+  function openPdfModal() {
+    document.getElementById('pdfModal').style.display = 'block';
+  }
+
+  function closePdfModal() {
+    document.getElementById('pdfModal').style.display = 'none';
+  }
+
+  // Close modal when clicking outside of it
+  window.onclick = function(event) {
+    const modal = document.getElementById('pdfModal');
+    if (event.target == modal) {
+      modal.style.display = 'none';
+    }
+  }
 
   // Add hover effect to cards
   const cards = document.querySelectorAll('.card');
