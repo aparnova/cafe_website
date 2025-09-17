@@ -126,6 +126,31 @@ if ($result->num_rows > 0) {
     .header{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;position:relative}
     .header h1{font-size:1.8rem;margin-bottom:1rem;animation:fadeIn 0.5s ease-out;text-align:center}
     
+    /* Back to Dashboard Button */
+    .back-to-dashboard {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background-color: var(--accent-color);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: 'Inter', sans-serif;
+    }
+    .back-to-dashboard:hover {
+        background-color: #b8935a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: white;
+        text-decoration: none;
+    }
+    
     /* Cards and Forms */
     .card {
         background: var(--lighter);
@@ -313,12 +338,23 @@ if ($result->num_rows > 0) {
     @media (max-width: 768px) {
         body { padding: 1rem }
         .item-card { flex-direction: column }
+        .back-to-dashboard {
+            position: static;
+            margin-bottom: 1rem;
+            align-self: flex-end;
+        }
+        .header {
+            align-items: flex-start;
+        }
     }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <a href="admin_dashboard.php" class="back-to-dashboard">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
             <h1>Manage Contact Information</h1>
         </div>
 

@@ -216,38 +216,6 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
       margin-left: 80px;
     }
 
-    .toggle-sidebar {
-      position: fixed;
-      top: 15px;
-      left: 245px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1001;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .toggle-sidebar:hover {
-      transform: scale(1.1);
-    }
-
-    .sidebar-collapsed ~ .main .toggle-sidebar {
-      left: 50px;
-      transform: rotate(180deg);
-    }
-
-    .sidebar-collapsed ~ .main .toggle-sidebar:hover {
-      transform: rotate(180deg) scale(1.1);
-    }
-
     .header {
       display: flex;
       justify-content: space-between;
@@ -635,6 +603,7 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
 
     .activity-content {
       flex: 1;
+      position: relative;
     }
 
     .activity-message {
@@ -680,6 +649,7 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
       text-align: center;
       color: #9ca3af;
       padding: 40px 0;
+      position: relative;
     }
 
     .no-activity i {
@@ -703,11 +673,6 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
       
       .main {
         margin-left: 80px;
-      }
-      
-      .toggle-sidebar {
-        left: 50px;
-        transform: rotate(180deg);
       }
       
       .card-container {
@@ -771,10 +736,6 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
     <a href="homepage.php"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a>
   </div>
 </div>
-
-<button class="toggle-sidebar">
-  <i class="fas fa-chevron-left"></i>
-</button>
 
 <div class="main">
   <div class="header">
@@ -982,12 +943,6 @@ $stats['total_delivery_boys'] = $delivery_result->fetch_assoc()['total'];
 </div>
 
 <script>
-  // Toggle sidebar
-  document.querySelector('.toggle-sidebar').addEventListener('click', function() {
-    document.querySelector('.sidebar').classList.toggle('sidebar-collapsed');
-    document.querySelector('.main').classList.toggle('main-expanded');
-  });
-
   // PDF Modal functions
   function openPdfModal() {
     document.getElementById('pdfModal').style.display = 'block';

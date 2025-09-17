@@ -51,8 +51,6 @@ tr:hover td{background:rgba(237,242,247,0.7)}
 .btn{padding:.45rem .75rem;border-radius:var(--radius);border:none;cursor:pointer;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;gap:0.5rem}
 .btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
 .btn:active{transform:translateY(0)}
-.btn-back{background:#4a5568;color:#fff;text-decoration:none}
-.btn-back:hover{background:#2d3748}
 .btn-refresh{background:#4a5568;color:#fff}
 .btn-refresh:hover{background:#2d3748}
 .note{padding:0.85rem;margin-bottom:1rem;border-radius:var(--radius);animation:fadeIn 0.5s ease-out}
@@ -107,10 +105,6 @@ tr:hover td{background:rgba(237,242,247,0.7)}
       </table>
     </div>
   </div>
-
-  <a href="admin_dashboard.php" class="btn btn-back" style="margin-top:20px;">
-    <i class="fas fa-arrow-left"></i> Back to Dashboard
-  </a>
 </div>
 
 <script>

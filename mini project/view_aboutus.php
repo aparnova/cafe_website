@@ -210,6 +210,7 @@ $about = $about_content->fetch_assoc();
     .admin-container {
       max-width: 1200px;
       margin: 0 auto;
+      position: relative;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -229,6 +230,28 @@ $about = $about_content->fetch_assoc();
       margin-bottom: 1rem;
       animation: fadeIn 0.5s ease-out;
       text-align: center;
+    }
+    
+    /* Dashboard Button */
+    .dashboard-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 0.5rem 1rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+    
+    .dashboard-btn:hover {
+      background: #1a202c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     /* Tabs */
@@ -481,6 +504,11 @@ $about = $about_content->fetch_assoc();
       .why-us-grid {
         grid-template-columns: 1fr;
       }
+      .dashboard-btn {
+        position: relative;
+        margin-bottom: 1rem;
+        align-self: flex-end;
+      }
     }
   </style>
 </head>
@@ -488,6 +516,9 @@ $about = $about_content->fetch_assoc();
   <div class="admin-container">
     <div class="header">
       <h1>Manage About Us Page</h1>
+      <a href="admin_dashboard.php" class="dashboard-btn">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
     </div>
     
     <div class="tabs">

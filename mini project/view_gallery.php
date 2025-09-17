@@ -133,9 +133,32 @@ $grid_items = $conn->query("SELECT * FROM gallery_grid ORDER BY display_order AS
     }
     *{box-sizing:border-box}
     body{font-family:'Inter',sans-serif;background:var(--light);color:var(--primary);padding:2rem}
-    .container{max-width:1200px;margin:0 auto}
+    .container{max-width:1200px;margin:0 auto;position:relative}
     .header{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;position:relative}
     .header h1{font-size:1.8rem;margin-bottom:1rem;animation:fadeIn 0.5s ease-out;text-align:center}
+    
+    /* Back to Dashboard Button */
+    .back-to-dashboard {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--primary);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    
+    .back-to-dashboard:hover {
+        background: #1a202c;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
     
     /* Tabs */
     .tabs {
@@ -361,6 +384,15 @@ $grid_items = $conn->query("SELECT * FROM gallery_grid ORDER BY display_order AS
     
     @media (max-width: 768px) {
         body { padding: 1rem }
+        .back-to-dashboard {
+            position: relative;
+            margin-bottom: 1rem;
+            align-self: flex-end;
+        }
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
         .item-preview { flex: 0 0 100% }
         .item-card { flex-direction: column }
     }
@@ -370,6 +402,9 @@ $grid_items = $conn->query("SELECT * FROM gallery_grid ORDER BY display_order AS
     <div class="container">
         <div class="header">
             <h1>Gallery Management</h1>
+            <a href="admin_dashboard.php" class="back-to-dashboard">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
         </div>
         
         <?php if (isset($_GET['success'])): ?>

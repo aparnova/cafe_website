@@ -231,6 +231,7 @@ $recipes = getRecipesForAdmin($conn, $filter);
     .admin-container {
       max-width: 1200px;
       margin: 0 auto;
+      position: relative;
     }
 
     h1, h2, h3, h4, h5, h6 {
@@ -250,6 +251,29 @@ $recipes = getRecipesForAdmin($conn, $filter);
       margin-bottom: 1rem;
       animation: fadeIn 0.5s ease-out;
       text-align: center;
+    }
+    
+    /* Back to Dashboard Button */
+    .back-to-dashboard {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: var(--primary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .back-to-dashboard:hover {
+      background: #1a202c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     /* Tabs */
@@ -671,6 +695,17 @@ $recipes = getRecipesForAdmin($conn, $filter);
         padding: 1rem; 
       }
       
+      .back-to-dashboard {
+        position: relative;
+        margin-bottom: 1rem;
+        align-self: flex-end;
+      }
+      
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
       .recipe-card {
         flex-direction: column;
       }
@@ -713,6 +748,9 @@ $recipes = getRecipesForAdmin($conn, $filter);
   <div class="admin-container">
     <div class="header">
       <h1>Westley's Resto Cafe - Recipe Management</h1>
+      <a href="admin_dashboard.php" class="back-to-dashboard">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
     </div>
 
     <div id="alert-container"></div>
