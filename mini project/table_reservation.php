@@ -86,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
     }
 }
 
+
 // Handle status check
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'check_status') {
     $booking_id = trim($_POST['booking_id'] ?? '');
