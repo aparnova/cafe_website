@@ -567,30 +567,7 @@ $user = $user_query->get_result()->fetch_assoc();
             background-color: rgba(205, 164, 94, 0.1);
         }
         
-        .btn {
-            width: 100%;
-            padding: 15px;
-            background-color: #cda45e;
-            color: #0c0b09;
-            border: none;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-        
-        .btn:hover {
-            background-color: #f7a25e;
-            transform: translateY(-2px);
-        }
-        
-        .btn:disabled {
-            background-color: #6b7280;
-            cursor: not-allowed;
-            transform: none;
-        }
+        /* Removed the CSS styling for the button to make it simple */
         
         .notification {
             position: fixed;
@@ -710,8 +687,9 @@ $user = $user_query->get_result()->fetch_assoc();
                 </div>
             </div>
             
-            <button type="button" class="btn" onclick="processPayment()">
-                <i class="fas fa-shopping-cart"></i> Place Order - ₹<?php echo $total_price; ?>
+            <!-- Simple button without CSS styling for easier testing -->
+            <button type="button" onclick="processPayment()">
+                Place Order - ₹<?php echo $total_price; ?>
             </button>
         </form>
     </div>
