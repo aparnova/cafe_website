@@ -1,5 +1,8 @@
 <?php
-// Database connection and form processing at the top of the file
+// Start session for better form handling
+session_start();
+
+// Database connection
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -8,14 +11,22 @@ $dbname = "westleys_resto_cafe";
 // Initialize variables
 $name = $email = $phone = $subject = $message = "";
 $errors = [];
-$success = false;
+$showSuccessMessage = false;
 
-// Create connection for form processing
+// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
+}
+
+// Check for success message from session
+if (isset($_SESSION['form_success']) && $_SESSION['form_success'] === true) {
+    $showSuccessMessage = true;
+    unset($_SESSION['form_success']); // Clear it immediately after reading
+    // Clear all form variables on success
+    $name = $email = $phone = $subject = $message = "";
 }
 
 // Process form when submitted
@@ -40,6 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     if (empty($phone)) {
         $errors[] = "Phone number is required";
+    } elseif (!preg_match('/^[0-9]{10}$/', $phone)) {
+        $errors[] = "Phone number must be exactly 10 digits";
     }
     
     if (empty($subject)) {
@@ -56,20 +69,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("sssss", $name, $email, $phone, $subject, $message);
         
         if ($stmt->execute()) {
-            $success = true;
-            // Redirect to prevent form resubmission and show temporary success message
-            header("Location: " . $_SERVER['PHP_SELF'] . "?success=1");
+            $stmt->close();
+            
+            // Clear all form variables before redirect
+            $name = $email = $phone = $subject = $message = "";
+            
+            // Set success flag in session
+            $_SESSION['form_success'] = true;
+            
+            // Redirect to prevent form resubmission
+            header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
             $errors[] = "Error submitting form. Please try again later.";
         }
         
-        $stmt->close();
+        if (isset($stmt)) {
+            $stmt->close();
+        }
     }
+    // If there are errors, the form will redisplay with values intact for correction
 }
-
-// Check for success message from redirect
-$showSuccessMessage = isset($_GET['success']) && $_GET['success'] == '1';
 
 // Fetch contact settings from database
 $maps_url = '';
@@ -109,7 +129,7 @@ function sanitizeInput($data) {
   <title>Contact Us - Westley's Resto Cafe</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Font & Color Variables - Exact copy from menu page */
+    /* Font & Color Variables */
     :root {
       --default-font: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
       --heading-font: "Playfair Display", sans-serif;
@@ -122,7 +142,7 @@ function sanitizeInput($data) {
       --contrast-color: #0c0b09;
     }
 
-    /* General Styles - Exact copy from menu page */
+    /* General Styles */
     body {
       color: var(--default-color);
       background-color: var(--background-color);
@@ -158,7 +178,7 @@ function sanitizeInput($data) {
       padding: 60px 0;
     }
 
-    /* Header Styles - Exact copy from menu page */
+    /* Header Styles */
     .header {
       --background-color: rgba(12, 11, 9, 0.61);
       color: var(--default-color);
@@ -201,7 +221,7 @@ function sanitizeInput($data) {
       font-family: var(--heading-font);
     }
 
-    /* Section Title with Underline Animation - Exact copy from menu page */
+    /* Section Title with Underline Animation */
     .section-title {
       padding-bottom: 60px;
       position: relative;
@@ -255,12 +275,12 @@ function sanitizeInput($data) {
       width: 100%;
     }
 
-    /* Main Content Padding - Matching menu page */
+    /* Main Content Padding */
     .main-content {
       padding-top: 80px;
     }
 
-    /* Contact Section - Using menu page's background approach */
+    /* Contact Section */
     .contact {
       background: url("../img/about-bg.jpg") center center;
       background-size: cover;
@@ -330,7 +350,7 @@ function sanitizeInput($data) {
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
-    /* Contact Form Styles - IMPROVED ALIGNMENT & SPACING */
+    /* Contact Form Styles */
     .contact-form {
       max-width: 100%;
       margin: 0 auto;
@@ -420,7 +440,7 @@ function sanitizeInput($data) {
       line-height: 1.6;
     }
 
-    /* Submit Button Container for Better Alignment */
+    /* Submit Button Container */
     .submit-container {
       display: flex;
       justify-content: center;
@@ -428,7 +448,7 @@ function sanitizeInput($data) {
       padding-top: 10px;
     }
 
-    /* Submit Button with Icon Animation - IMPROVED */
+    /* Submit Button with Icon Animation */
     .submit-btn {
       background-color: var(--accent-color);
       color: var(--contrast-color);
@@ -476,6 +496,11 @@ function sanitizeInput($data) {
     .submit-btn:hover .icon {
       right: 20px;
       opacity: 1;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* Info Items */
@@ -539,6 +564,82 @@ function sanitizeInput($data) {
 
     .info-item:hover p {
       transform: translateX(5px);
+    }
+
+    /* Form message styles */
+    .form-message {
+      margin: 25px 0;
+      padding: 18px 22px;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .form-message.success {
+      background: rgba(205, 164, 94, 0.15);
+      border: 2px solid var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .form-message.error {
+      background: rgba(220, 53, 69, 0.1);
+      border: 2px solid #dc3545;
+      color: #dc3545;
+    }
+
+    .form-message ul {
+      margin: 12px 0 0 0;
+      padding: 0;
+      list-style: none;
+      text-align: left;
+    }
+
+    .form-message li {
+      padding: 4px 0;
+    }
+
+    /* Notification styles */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      background-color: var(--accent-color);
+      color: var(--contrast-color);
+      border-radius: 4px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      z-index: 9999;
+      transform: translateX(200%);
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification i {
+      font-size: 20px;
+    }
+
+    /* Fade out animation */
+    .fade-out {
+      animation: fadeOut 3s ease-out forwards;
+    }
+
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        display: none;
+      }
     }
 
     /* Responsive adjustments */
@@ -608,82 +709,6 @@ function sanitizeInput($data) {
       
       .section-title p {
         font-size: 28px;
-      }
-    }
-
-    /* Form message styles */
-    .form-message {
-      margin: 25px 0;
-      padding: 18px 22px;
-      border-radius: 6px;
-      text-align: center;
-      font-weight: 500;
-    }
-
-    .form-message.success {
-      background: rgba(205, 164, 94, 0.15);
-      border: 2px solid var(--accent-color);
-      color: var(--accent-color);
-    }
-
-    .form-message.error {
-      background: rgba(220, 53, 69, 0.1);
-      border: 2px solid #dc3545;
-      color: #dc3545;
-    }
-
-    .form-message ul {
-      margin: 12px 0 0 0;
-      padding: 0;
-      list-style: none;
-      text-align: left;
-    }
-
-    .form-message li {
-      padding: 4px 0;
-    }
-
-    /* Notification styles */
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 25px;
-      background-color: var(--accent-color);
-      color: var(--contrast-color);
-      border-radius: 4px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      z-index: 9999;
-      transform: translateX(200%);
-      transition: transform 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .notification.show {
-      transform: translateX(0);
-    }
-
-    .notification i {
-      font-size: 20px;
-    }
-
-    /* Fade out animation for success message */
-    .fade-out {
-      animation: fadeOut 3s ease-out forwards;
-    }
-
-    @keyframes fadeOut {
-      0% {
-        opacity: 1;
-      }
-      70% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-        display: none;
       }
     }
   </style>
@@ -772,25 +797,25 @@ function sanitizeInput($data) {
                 <form method="post" action="" id="contactForm">
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="text" class="form-control" name="name" placeholder="Your Name" required autocomplete="off" value="<?php echo htmlspecialchars($name); ?>">
+                      <input type="text" class="form-control" name="name" placeholder="Your Name" required autocomplete="off" value="<?php echo (!empty($errors) && !$showSuccessMessage) ? htmlspecialchars($name) : ''; ?>">
                     </div>
                     <div class="form-group half-width">
-                      <input type="email" class="form-control" name="email" placeholder="Your Email" required autocomplete="off" value="<?php echo htmlspecialchars($email); ?>">
+                      <input type="email" class="form-control" name="email" placeholder="Your Email" required autocomplete="off" value="<?php echo (!empty($errors) && !$showSuccessMessage) ? htmlspecialchars($email) : ''; ?>">
                     </div>
                   </div>
                   
                   <div class="form-row">
                     <div class="form-group half-width">
-                      <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone" autocomplete="off" required maxlength="10" pattern="[0-9]{10}" value="<?php echo htmlspecialchars($phone); ?>">
+                      <input type="tel" name="phone" id="phone" class="form-control" placeholder="Phone" autocomplete="off" required maxlength="10" pattern="[0-9]{10}" value="<?php echo (!empty($errors) && !$showSuccessMessage) ? htmlspecialchars($phone) : ''; ?>">
                     </div>
                     <div class="form-group half-width">
-                      <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off" value="<?php echo htmlspecialchars($subject); ?>">
+                      <input type="text" class="form-control" name="subject" placeholder="Subject" required autocomplete="off" value="<?php echo (!empty($errors) && !$showSuccessMessage) ? htmlspecialchars($subject) : ''; ?>">
                     </div>
                   </div>
                   
                   <div class="form-row">
                     <div class="form-group full-width">
-                      <textarea class="form-control" name="message" placeholder="Your Message" required><?php echo htmlspecialchars($message); ?></textarea>
+                      <textarea class="form-control" name="message" placeholder="Your Message" required><?php echo (!empty($errors) && !$showSuccessMessage) ? htmlspecialchars($message) : ''; ?></textarea>
                     </div>
                   </div>
                   
@@ -810,6 +835,23 @@ function sanitizeInput($data) {
   </main>
 
   <script>
+    // Force form reset on page load (including back button navigation)
+    window.addEventListener('pageshow', function(event) {
+      // Check if page is loaded from cache (back/forward button)
+      if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        // Clear the form
+        document.getElementById('contactForm').reset();
+      }
+    });
+
+    // Clear form on page load
+    window.addEventListener('load', function() {
+      <?php if ($showSuccessMessage): ?>
+        // If success message is showing, clear the form
+        document.getElementById('contactForm').reset();
+      <?php endif; ?>
+    });
+
     // JavaScript to enhance form submission
     document.getElementById('contactForm').addEventListener('submit', function(e) {
       const submitBtn = this.querySelector('button[type="submit"]');
@@ -843,13 +885,6 @@ function sanitizeInput($data) {
             successMessage.style.display = 'none';
           }
         }, 3000);
-        
-        // Clean URL by removing success parameter after showing message
-        setTimeout(() => {
-          const url = new URL(window.location);
-          url.searchParams.delete('success');
-          window.history.replaceState({}, document.title, url.pathname);
-        }, 100);
       });
     <?php endif; ?>
   </script>
