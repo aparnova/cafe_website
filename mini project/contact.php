@@ -221,6 +221,31 @@ function sanitizeInput($data) {
       font-family: var(--heading-font);
     }
 
+    /* Home Button */
+    .home-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      background-color: var(--accent-color);
+      color: var(--contrast-color);
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .home-btn:hover {
+      background-color: color-mix(in srgb, var(--accent-color), white 15%);
+      transform: translateY(-2px) rotate(45deg);
+      box-shadow: 0 5px 15px rgba(205, 164, 94, 0.3);
+    }
+
+    .home-btn i {
+      font-size: 20px;
+      transition: transform 0.3s ease;
+    }
+
     /* Section Title with Underline Animation */
     .section-title {
       padding-bottom: 60px;
@@ -671,6 +696,16 @@ function sanitizeInput($data) {
       .submit-btn:hover {
         padding-right: 40px;
       }
+
+      .home-btn {
+        width: 40px;
+        height: 40px;
+        padding: 10px;
+      }
+
+      .home-btn i {
+        font-size: 18px;
+      }
     }
 
     @media (max-width: 768px) {
@@ -710,6 +745,20 @@ function sanitizeInput($data) {
       .section-title p {
         font-size: 28px;
       }
+
+      .header .logo h1 {
+        font-size: 18px;
+      }
+
+      .home-btn {
+        width: 38px;
+        height: 38px;
+        padding: 9px;
+      }
+
+      .home-btn i {
+        font-size: 16px;
+      }
     }
   </style>
   <!-- Bootstrap Icons -->
@@ -725,6 +774,9 @@ function sanitizeInput($data) {
           <img src="img.png" alt="Westley's Resto Cafe">
           <h1>Westley's Resto Cafe</h1>
         </div>
+        <a href="homepage.php" class="home-btn">
+          <i class="bi bi-arrow-right"></i>
+        </a>
       </div>
     </div>
   </header>
