@@ -168,6 +168,32 @@ $_SESSION['form_token'] = $form_token;
     .header .logo img { height:50px; margin-right:15px; }
     .header .logo h1 { font-size:24px; margin:0; color:var(--heading-color); font-family:var(--heading-font); }
     
+    /* Home button */
+    .top-home-button {
+      position: fixed;
+      top: 20px;
+      right: 85px;
+      background: rgba(205,164,94,0.9);
+      color: var(--contrast-color);
+      border: 1px solid rgba(205,164,94,0.9);
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .top-home-button:hover {
+      background: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
     /* New top status check button */
     .top-status-check {
       position: fixed;
@@ -264,6 +290,12 @@ $_SESSION['form_token'] = $form_token;
         width: 36px;
         height: 36px;
       }
+      .top-home-button {
+        top: 15px;
+        right: 60px;
+        width: 36px;
+        height: 36px;
+      }
     }
   </style>
 </head>
@@ -279,6 +311,11 @@ $_SESSION['form_token'] = $form_token;
       </div>
     </div>
   </header>
+
+  <!-- Home button at the top of the page -->
+  <a href="homepage.php" class="top-home-button" title="Go to Homepage">
+    <i class="fas fa-arrow-left"></i>
+  </a>
 
   <!-- Status check button at the top of the page -->
   <div class="top-status-check" id="open-status-check" title="Check booking status">
