@@ -237,7 +237,7 @@ function sanitizeInput($data) {
 
     .home-btn:hover {
       background-color: color-mix(in srgb, var(--accent-color), white 15%);
-      transform: translateY(-2px) rotate(45deg);
+      transform: translateY(-2px) rotate(180deg);
       box-shadow: 0 5px 15px rgba(205, 164, 94, 0.3);
     }
 

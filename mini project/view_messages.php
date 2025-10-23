@@ -57,7 +57,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             $rowId = (int)$row['id'];
             $status = $row['status'];
             $trClass = ($status === 'unread') ? 'unread' : '';
-            $btnClass = ($status === 'unread') ? 'mark-read' : 'mark-unread';
+            $btnClass = ($status === 'unread') ? 'btn-mark-read' : 'btn-mark-unread';
             $btnText = ($status === 'unread') ? 'Mark as Read' : 'Mark as Unread';
             $nextStatus = ($status === 'unread') ? 'read' : 'unread';
             echo "<tr data-id=\"{$rowId}\" class=\"{$trClass}\">";
@@ -109,9 +109,11 @@ $stmt->close();
 *{box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--light);color:var(--primary);padding:2rem}
 .container{max-width:1200px;margin:0 auto}
-.header{display:flex;flex-direction:column;align-items:center;margin-bottom:1.5rem;position:relative}
-.header h1{font-size:1.8rem;margin-bottom:1rem;animation:fadeIn 0.5s ease-out;text-align:center}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;position:relative;flex-wrap:wrap;gap:1rem}
+.header-left{display:flex;flex-direction:column;align-items:flex-start}
+.header h1{font-size:1.8rem;margin:0 0 1rem 0;animation:fadeIn 0.5s ease-out}
 .header-actions{display:flex;gap:1rem;align-items:center}
+.header-right{display:flex;gap:1rem;align-items:center}
 .card{background:var(--lighter);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transform:translateY(0);transition:var(--transition)}
 .card:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.1)}
 .table-container{overflow-x:auto}
@@ -130,7 +132,7 @@ tr:hover td{background:rgba(237,242,247,0.7)}
 .form-inline{display:flex;gap:.5rem;align-items:center}
 select{padding:.4rem;border-radius:var(--radius);border:1px solid var(--border);min-width:130px;transition:var(--transition)}
 select:focus{outline:none;box-shadow:0 0 0 2px rgba(66,153,225,0.5);transform:scale(1.02)}
-.btn{padding:.45rem .75rem;border-radius:var(--radius);border:none;cursor:pointer;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;gap:0.5rem}
+.btn{padding:.45rem .75rem;border-radius:var(--radius);border:none;cursor:pointer;font-weight:500;transition:var(--transition);display:inline-flex;align-items:center;gap:0.5rem;text-decoration:none}
 .btn:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.1)}
 .btn:active{transform:translateY(0)}
 .btn-sm{font-size:.8rem;padding:.3rem .5rem}
@@ -138,6 +140,8 @@ select:focus{outline:none;box-shadow:0 0 0 2px rgba(66,153,225,0.5);transform:sc
 .btn-update:hover{background:#2c5282}
 .btn-refresh{background:#4a5568;color:#fff}
 .btn-refresh:hover{background:#2d3748}
+.btn-dashboard{background:#805ad5;color:#fff}
+.btn-dashboard:hover{background:#6b46c1}
 .btn-mark-read{background:var(--success);color:#fff}
 .btn-mark-read:hover{background:#2f855a}
 .btn-mark-unread{background:var(--warning);color:#fff}
@@ -145,24 +149,40 @@ select:focus{outline:none;box-shadow:0 0 0 2px rgba(66,153,225,0.5);transform:sc
 .note{padding:0.85rem;margin-bottom:1rem;border-radius:var(--radius);animation:fadeIn 0.5s ease-out}
 .note.success{background:rgba(56,161,105,0.08);border-left:4px solid var(--success);color:var(--success)}
 .note.error{background:rgba(229,62,62,0.06);border-left:4px solid var(--danger);color:var(--danger)}
+.refresh-countdown{background:rgba(74,85,104,0.1);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;color:var(--primary)}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .loading{animation:pulse 1.5s infinite}
 .spin{animation:spin 1s linear infinite}
-.refresh-countdown{position:absolute;right:0;top:0;background:rgba(74,85,104,0.1);padding:0.25rem 0.5rem;border-radius:var(--radius);font-size:0.8rem;color:var(--primary)}
-@media (max-width:768px){body{padding:1rem}th,td{padding:.5rem}.header-actions{flex-direction:column;gap:0.5rem}.refresh-countdown{position:static;margin-top:0.5rem}}
+@media (max-width:768px){
+  body{padding:1rem}
+  th,td{padding:.5rem}
+  .header{flex-direction:column;align-items:stretch}
+  .header-left{align-items:center;width:100%}
+  .header h1{text-align:center}
+  .header-actions{flex-direction:column;gap:0.5rem;width:100%}
+  .header-right{width:100%;justify-content:center}
+  .btn{justify-content:center}
+}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>Contact Messages</h1>
-    <div class="header-actions">
-      <button id="refreshBtn" class="btn btn-refresh">
-        <i class="fas fa-sync-alt"></i> Refresh
-      </button>
-      <div id="refreshCountdown" class="refresh-countdown">Refreshing in 8s</div>
+    <div class="header-left">
+      <h1>Contact Messages</h1>
+      <div class="header-actions">
+        <button id="refreshBtn" class="btn btn-refresh">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <div id="refreshCountdown" class="refresh-countdown">Refreshing in 8s</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <a href="admin_dashboard.php" class="btn btn-dashboard">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
     </div>
   </div>
 
