@@ -13,6 +13,7 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+
 // Helper: generate unique booking id (8 chars alphanumeric)
 function generateBookingId($conn) {
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
